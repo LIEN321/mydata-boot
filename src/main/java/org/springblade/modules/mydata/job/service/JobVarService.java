@@ -1,8 +1,11 @@
 package org.springblade.modules.mydata.job.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
+import org.apache.commons.text.StringSubstitutor;
 import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
@@ -76,7 +79,7 @@ public class JobVarService {
      * @param taskInfo 任务
      */
     public void parseVar(TaskInfo taskInfo) {
-        Set<String> varNames = CollUtil.newHashSet();
+        Set<String> userVarNames = CollUtil.newHashSet();
 
         // 从API的header和param中 解析变量表达式
         Map<String, String> reqHeaders = taskInfo.getReqHeaders();
@@ -84,18 +87,18 @@ public class JobVarService {
 
         if (CollUtil.isNotEmpty(reqHeaders)) {
             //varNames.addAll(MdUtil.parseVarNames(reqHeaders.keySet()));
-            varNames.addAll(MdUtil.parseVarNames(reqHeaders.values()));
+            userVarNames.addAll(MdUtil.parseUserVarNames(reqHeaders.values()));
         }
         if (CollUtil.isNotEmpty(reqParams)) {
             //varNames.addAll(MdUtil.parseVarNames(reqParams.keySet()));
-            varNames.addAll(MdUtil.parseVarNames(reqParams.values()));
+            userVarNames.addAll(MdUtil.parseUserVarNames(reqParams.values()));
         }
         // 若没有变量名，则结束解析
-        if (CollUtil.isEmpty(varNames)) {
+        if (CollUtil.isEmpty(userVarNames)) {
             return;
         }
 
-        taskInfo.appendLog("任务接口中 解析出环境变量名：{}", varNames);
+        taskInfo.appendLog("任务接口中 解析出自定义环境变量名：{}", userVarNames);
 
         // 根据变量名 获取环境变量值
         Long envId = taskInfo.getEnvId();
@@ -103,27 +106,79 @@ public class JobVarService {
         Env env = envService.getById(envId);
 
         // redis中没有缓存 需要查数据库的变量名
-        if (env != null && CollUtil.isNotEmpty(varNames)) {
-            varNames.forEach(varName -> {
+        if (env != null && CollUtil.isNotEmpty(userVarNames)) {
+            userVarNames.forEach(varName -> {
                 // 尝试从redis获取变量
                 EnvVar envVar = EnvVarCache.getEnvVar(env.getTenantId(), envId, varName);
                 if (envVar != null) {
-                    // 缓存对象有效 存入返回结果列表
+                    // 替换环境变量值中的系统内置变量
+                    envVar.setVarValue(parseSysVars(envVar.getVarValue()));
+                    // 环境变量存入返回结果列表
                     envVars.add(envVar);
                 }
             });
         }
 
+        // 将环境变量转化为key:value格式
         Map<String, String> varMap = envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
 
         taskInfo.appendLog("环境变量值：{}", varMap);
 
         // 替换 header和param 中的变量
         if (CollUtil.isNotEmpty(reqHeaders)) {
-            taskInfo.setReqHeaders(MdUtil.replaceVarValues(reqHeaders, varMap));
+            taskInfo.setReqHeaders(replaceVarValues(reqHeaders, varMap));
         }
         if (CollUtil.isNotEmpty(reqParams)) {
-            taskInfo.setReqParams(MdUtil.replaceVarValues(reqParams, varMap));
+            taskInfo.setReqParams(replaceVarValues(reqParams, varMap));
         }
+    }
+
+    /**
+     * 替换用户自定义变量 ${var}
+     *
+     * @param sourceMap 替换前的map数据
+     * @param varMap    变量名-变量值
+     * @return 替换后的数据
+     */
+    private <V> Map<String, V> replaceVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
+        Map<String, V> resultMap = MapUtil.newHashMap();
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
+        sourceMap.forEach((k, v) -> {
+            // 先替换系统内置变量
+            String string = parseSysVars(v.toString());
+            // 再替换用户自定义变量
+            resultMap.put(k, (V) stringSubstitutor.replace(string));
+        });
+
+        return resultMap;
+    }
+
+    /**
+     * 解析处理系统内置变量 {$var}
+     *
+     * @param string 被解析的字符串
+     * @return 替换后的字符串
+     */
+    private String parseSysVars(String string) {
+        // 解析系统内置变量
+        List<String> sysVarNames = MdUtil.parseSysVarNames(string);
+        if (CollUtil.isEmpty(sysVarNames)) {
+            return string;
+        }
+
+        Map<String, String> replaceMap = MapUtil.newHashMap();
+        for (String sysVarName : sysVarNames) {
+            switch (sysVarName) {
+                case "timestamp":
+                    long timestamp = DateUtil.current();
+                    replaceMap.put("timestamp", String.valueOf(timestamp));
+                    break;
+            }
+        }
+
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
+        stringSubstitutor.setVariablePrefix("{$");
+        stringSubstitutor.setVariableSuffix("}");
+        return stringSubstitutor.replace(string);
     }
 }
