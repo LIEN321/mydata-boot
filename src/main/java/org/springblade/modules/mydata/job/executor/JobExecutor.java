@@ -331,18 +331,20 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatchSize(batchSize);
         taskInfo.setFilteredDataList(CollUtil.toList());
 
-        List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
-        // 获取配置映射的数据字段的类型
-        if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
-            // 映射 字段编号：字段类型
-            Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-            Map<String, String> mappingFieldType = MapUtil.newHashMap();
-            task.getFieldMapping().forEach((k, v) -> {
-                mappingFieldType.put(k, fieldTypeMap.get(k));
-            });
+        if (task.getDataId() != null) {
+            List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
+            // 获取配置映射的数据字段的类型
+            if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
+                // 映射 字段编号：字段类型
+                Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> mappingFieldType = MapUtil.newHashMap();
+                task.getFieldMapping().forEach((k, v) -> {
+                    mappingFieldType.put(k, fieldTypeMap.get(k));
+                });
 
-            // 映射字段的类型
-            taskInfo.setMappingFieldType(mappingFieldType);
+                // 映射字段的类型
+                taskInfo.setMappingFieldType(mappingFieldType);
+            }
         }
 
         return taskInfo;
