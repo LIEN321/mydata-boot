@@ -186,8 +186,8 @@ blade:
 mydata:
   mongodb:
     url: mongodb://root:root@192.168.2.80:27017/{}?authSource=admin&ssl=false
-  secure:
-    encrypt-db: false
+#  secure:
+#    encrypt-db: false
 mail:
   # 邮件服务器的SMTP地址，可选，默认为smtp.<发件人邮箱后缀>
   host: 配置邮件服务器地址

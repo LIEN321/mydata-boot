@@ -241,4 +241,14 @@ public class TaskController extends BladeController {
     public R copyTask(@RequestParam Long taskId, @RequestParam Long envId) {
         return R.status(taskService.copyTask(taskId, envId));
     }
+
+    /**
+     * 日志详情
+     */
+    @GetMapping("/log_detail")
+    @ApiOperationSupport(order = 1)
+    @ApiOperation(value = "详情", notes = "传入task")
+    public R<TaskLogVO> logDetail(@RequestParam Long id) {
+        return R.data(TaskLogWrapper.build().detailVO(taskLogService.getById(id)));
+    }
 }

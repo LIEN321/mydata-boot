@@ -38,5 +38,8 @@ public class DataField extends TenantEntity {
      */
     private Integer isId;
 
-
+    /**
+     * 字段类型
+     */
+    private String fieldType;
 }

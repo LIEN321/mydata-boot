@@ -217,6 +217,11 @@ public class TaskInfo implements Serializable {
     private Integer batchSize;
 
     /**
+     * 配置映射的数据字段的类型
+     */
+    private Map<String, String> mappingFieldType;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

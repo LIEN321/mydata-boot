@@ -3,15 +3,11 @@ package org.springblade.common.util;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.EnumUtil;
-import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
-import org.apache.commons.text.StringSubstitutor;
 import org.springblade.common.constant.MdConstant;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -21,9 +17,6 @@ import java.util.Map;
  * @since 2022/7/9
  */
 public class MdUtil {
-
-    // 解析${}的正则表达式
-    private static final String VAR_NAME_PATTERN = "\\$\\{([^}]*)\\}";
 
     /**
      * 校验 数据操作类型 是否有效
@@ -129,60 +122,7 @@ public class MdUtil {
         return map;
     }
 
-    /**
-     * 从字符串中 解析所有${}表达式中的变量名
-     *
-     * @param string 字符串
-     * @return 变量名列表
-     */
-    public static List<String> parseVarNames(String string) {
-        if (StrUtil.isEmpty(string)) {
-            return CollUtil.newArrayList();
-        }
-
-        List<String> varNames = ReUtil.findAll(VAR_NAME_PATTERN, string, 0);
-        if (CollUtil.isNotEmpty(varNames)) {
-            ListIterator<String> iterator = varNames.listIterator();
-            while (iterator.hasNext()) {
-                String varName = iterator.next();
-                varName = getKey(varName);
-                iterator.set(varName);
-            }
-        }
-        return varNames;
-    }
-
-    /**
-     * 从多个字符串中 解析所有${}表达式中的变量名
-     *
-     * @param strings 字符串集合
-     * @return 变量名列表
-     */
-    public static List<String> parseVarNames(Collection<?> strings) {
-        List<String> list = CollUtil.newArrayList();
-        if (CollUtil.isNotEmpty(strings)) {
-            for (Object string : strings) {
-                list.addAll(parseVarNames(string.toString()));
-            }
-        }
-        return list;
-    }
-
-    public static <V> Map<String, V> replaceVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
-        Map<String, V> resultMap = MapUtil.newHashMap();
-        StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
-        sourceMap.forEach((k, v) -> {
-            resultMap.put(k, (V) stringSubstitutor.replace(v));
-        });
-
-        return resultMap;
-    }
-
     public static String getBizDbCode(String tenantId, Long projectId, Long envId) {
         return tenantId + ":" + projectId + ":" + envId;
-    }
-
-    private static String getKey(String g) {
-        return g.substring(2, g.length() - 1);
     }
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.StrPool;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
@@ -43,6 +44,8 @@ public class JobDataService {
     public void parseData(TaskInfo taskInfo, String jsonString) {
         // 获取任务中的字段映射配置
         Map<String, String> fieldMapping = taskInfo.getFieldMapping();
+        // 映射字段的类型
+        Map<String, String> mappingFieldType = taskInfo.getMappingFieldType();
         if (CollUtil.isEmpty(fieldMapping)) {
             taskInfo.appendLog("任务没有配置字段映射，跳过解析业务数据");
             return;
@@ -79,7 +82,7 @@ public class JobDataService {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
-                datacenterData.put(standardCode, jsonObject.get(apiCode));
+                datacenterData.put(standardCode, getValue(mappingFieldType, standardCode, jsonObject.get(apiCode)));
             });
 
             apiResponseDataList.add(datacenterData);
@@ -194,5 +197,35 @@ public class JobDataService {
         // dataService.updateDataCount(task.getTenantId(), task.getDataId());
 
         task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList, dataUpdateList);
+    }
+
+    /**
+     * 根据字段类型配置，将接口数据 转为指定类型
+     *
+     * @param mappingFieldType 映射字段类型
+     * @param fieldCode        映射字段
+     * @param apiValue         接口数据
+     * @return 转换后的数据
+     */
+    private Object getValue(Map<String, String> mappingFieldType, String fieldCode, Object apiValue) {
+        Object value = apiValue;
+        if (CollUtil.isNotEmpty(mappingFieldType)) {
+            String fieldType = mappingFieldType.get(fieldCode);
+            if (StrUtil.isNotEmpty(fieldType)) {
+                switch (fieldType) {
+                    case "int":
+                        value = NumberUtil.parseInt(StrUtil.toString(apiValue));
+                        break;
+                    case "string":
+                        value = StrUtil.toString(apiValue);
+                        break;
+                    case "date":
+                        value = DateUtil.parse(StrUtil.toString(apiValue));
+                        break;
+                }
+            }
+        }
+
+        return value;
     }
 }
