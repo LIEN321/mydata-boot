@@ -14,8 +14,10 @@ import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.job.cache.JobCache;
 import org.springblade.modules.mydata.job.service.JobBatchService;
 import org.springblade.modules.mydata.job.service.JobDataFilterService;
+import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.entity.TaskLog;
+import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.service.ITaskLogService;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +34,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 任务执行器
@@ -58,6 +61,9 @@ public class JobExecutor implements ApplicationRunner {
 
     @Resource
     private JobDataFilterService jobDataFilterService;
+
+    @Resource
+    private IDataFieldService dataFieldService;
 
     /**
      * 线程池 阻塞队列
@@ -324,6 +330,20 @@ public class JobExecutor implements ApplicationRunner {
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
         taskInfo.setFilteredDataList(CollUtil.toList());
+
+        List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
+        // 获取配置映射的数据字段的类型
+        if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
+            // 映射 字段编号：字段类型
+            Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+            Map<String, String> mappingFieldType = MapUtil.newHashMap();
+            task.getFieldMapping().forEach((k, v) -> {
+                mappingFieldType.put(k, fieldTypeMap.get(k));
+            });
+
+            // 映射字段的类型
+            taskInfo.setMappingFieldType(mappingFieldType);
+        }
 
         return taskInfo;
     }

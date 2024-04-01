@@ -28,4 +28,9 @@ public class DataFieldVO {
      * 是否标识，0-不是、1-是
      */
     private Integer isId;
+
+    /**
+     * 字段类型
+     */
+    private String fieldType;
 }
