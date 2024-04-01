@@ -7,7 +7,7 @@
     <groupId>lien</groupId>
     <artifactId>mydata-boot</artifactId>
     <packaging>jar</packaging>
-    <version>0.7.5</version>
+    <version>0.7.6</version>
 
     <properties>
         <blade.tool.version>3.7.1</blade.tool.version>
