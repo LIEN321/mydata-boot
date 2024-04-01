@@ -3,14 +3,11 @@ package org.springblade.common.util;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.EnumUtil;
-import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -20,12 +17,6 @@ import java.util.Map;
  * @since 2022/7/9
  */
 public class MdUtil {
-
-    // 用户自定义变量 ${} 的正则表达式
-    private static final String USER_VAR_PATTERN = "\\$\\{([^}]*)\\}";
-
-    // 系统内置变量 {$} 的正则表达式
-    private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
 
     /**
      * 校验 数据操作类型 是否有效
@@ -131,71 +122,7 @@ public class MdUtil {
         return map;
     }
 
-    /**
-     * 从字符串中 解析所有用户自定义表达式中的变量名
-     *
-     * @param string 字符串
-     * @return 变量名列表
-     */
-    public static List<String> parseUserVarNames(String string) {
-        return parseVarNames(string, USER_VAR_PATTERN);
-    }
-
-    /**
-     * 从字符串中 解析所有系统内置变量表达式中的变量名
-     *
-     * @param string 字符串
-     * @return 变量名列表
-     */
-    public static List<String> parseSysVarNames(String string) {
-        return parseVarNames(string, SYS_VAR_PATTERN);
-    }
-
-    /**
-     * 从字符串中 解析指定表达式中的变量名
-     *
-     * @param string  字符串
-     * @param pattern 表达式
-     * @return 变量名列表
-     */
-    public static List<String> parseVarNames(String string, String pattern) {
-        if (StrUtil.isEmpty(string)) {
-            return CollUtil.newArrayList();
-        }
-
-        List<String> varNames = ReUtil.findAll(pattern, string, 0);
-        if (CollUtil.isNotEmpty(varNames)) {
-            ListIterator<String> iterator = varNames.listIterator();
-            while (iterator.hasNext()) {
-                String varName = iterator.next();
-                varName = getKey(varName);
-                iterator.set(varName);
-            }
-        }
-        return varNames;
-    }
-
-    /**
-     * 从多个字符串中 解析所有${}表达式中的变量名
-     *
-     * @param strings 字符串集合
-     * @return 变量名列表
-     */
-    public static List<String> parseUserVarNames(Collection<?> strings) {
-        List<String> list = CollUtil.newArrayList();
-        if (CollUtil.isNotEmpty(strings)) {
-            for (Object string : strings) {
-                list.addAll(parseUserVarNames(string.toString()));
-            }
-        }
-        return list;
-    }
-
     public static String getBizDbCode(String tenantId, Long projectId, Long envId) {
         return tenantId + ":" + projectId + ":" + envId;
-    }
-
-    private static String getKey(String g) {
-        return g.substring(2, g.length() - 1);
     }
 }

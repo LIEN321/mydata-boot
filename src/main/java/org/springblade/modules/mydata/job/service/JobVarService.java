@@ -3,10 +3,11 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import org.apache.commons.text.StringSubstitutor;
-import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
 import org.springblade.modules.mydata.manage.entity.Env;
@@ -16,7 +17,9 @@ import org.springblade.modules.mydata.manage.service.IEnvVarService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +38,12 @@ public class JobVarService {
 
     @Resource
     private IEnvService envService;
+
+    // 用户自定义变量 ${} 的正则表达式
+    private static final String USER_VAR_PATTERN = "\\$\\{([^}]*)\\}";
+
+    // 系统内置变量 {$} 的正则表达式
+    private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
 
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
@@ -87,11 +96,17 @@ public class JobVarService {
 
         if (CollUtil.isNotEmpty(reqHeaders)) {
             //varNames.addAll(MdUtil.parseVarNames(reqHeaders.keySet()));
-            userVarNames.addAll(MdUtil.parseUserVarNames(reqHeaders.values()));
+            // 替换header中的系统内置变量
+            replaceSysVarValues(reqHeaders);
+            // 提取用户自定义变量名
+            userVarNames.addAll(parseUserVarNames(reqHeaders.values()));
         }
         if (CollUtil.isNotEmpty(reqParams)) {
             //varNames.addAll(MdUtil.parseVarNames(reqParams.keySet()));
-            userVarNames.addAll(MdUtil.parseUserVarNames(reqParams.values()));
+            // 替换param中的系统内置变量
+            replaceSysVarValues(reqParams);
+            // 提取用户自定义变量名
+            userVarNames.addAll(parseUserVarNames(reqParams.values()));
         }
         // 若没有变量名，则结束解析
         if (CollUtil.isEmpty(userVarNames)) {
@@ -112,7 +127,7 @@ public class JobVarService {
                 EnvVar envVar = EnvVarCache.getEnvVar(env.getTenantId(), envId, varName);
                 if (envVar != null) {
                     // 替换环境变量值中的系统内置变量
-                    envVar.setVarValue(parseSysVars(envVar.getVarValue()));
+                    envVar.setVarValue(replaceSysVarValue(envVar.getVarValue()));
                     // 环境变量存入返回结果列表
                     envVars.add(envVar);
                 }
@@ -126,10 +141,10 @@ public class JobVarService {
 
         // 替换 header和param 中的变量
         if (CollUtil.isNotEmpty(reqHeaders)) {
-            taskInfo.setReqHeaders(replaceVarValues(reqHeaders, varMap));
+            taskInfo.setReqHeaders(replaceUserVarValues(reqHeaders, varMap));
         }
         if (CollUtil.isNotEmpty(reqParams)) {
-            taskInfo.setReqParams(replaceVarValues(reqParams, varMap));
+            taskInfo.setReqParams(replaceUserVarValues(reqParams, varMap));
         }
     }
 
@@ -140,17 +155,55 @@ public class JobVarService {
      * @param varMap    变量名-变量值
      * @return 替换后的数据
      */
-    private <V> Map<String, V> replaceVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
+    private <V> Map<String, V> replaceUserVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
         Map<String, V> resultMap = MapUtil.newHashMap();
         StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
         sourceMap.forEach((k, v) -> {
-            // 先替换系统内置变量
-            String string = parseSysVars(v.toString());
-            // 再替换用户自定义变量
-            resultMap.put(k, (V) stringSubstitutor.replace(string));
+            // 替换用户自定义变量
+            resultMap.put(k, (V) stringSubstitutor.replace(v));
         });
 
         return resultMap;
+    }
+
+    /**
+     * 从多个字符串中 解析所有${}表达式中的变量名
+     *
+     * @param strings 字符串集合
+     * @return 变量名列表
+     */
+    private List<String> parseUserVarNames(Collection<?> strings) {
+        List<String> list = CollUtil.newArrayList();
+        if (CollUtil.isNotEmpty(strings)) {
+            for (Object string : strings) {
+                list.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 从字符串中 解析指定表达式中的变量名
+     *
+     * @param string  字符串
+     * @param pattern 表达式
+     * @return 变量名列表
+     */
+    public static List<String> parseVarNames(String string, String pattern) {
+        if (StrUtil.isEmpty(string)) {
+            return CollUtil.newArrayList();
+        }
+
+        List<String> varNames = ReUtil.findAll(pattern, string, 0);
+        if (CollUtil.isNotEmpty(varNames)) {
+            ListIterator<String> iterator = varNames.listIterator();
+            while (iterator.hasNext()) {
+                String varName = iterator.next();
+                varName = getKey(varName);
+                iterator.set(varName);
+            }
+        }
+        return varNames;
     }
 
     /**
@@ -159,9 +212,9 @@ public class JobVarService {
      * @param string 被解析的字符串
      * @return 替换后的字符串
      */
-    private String parseSysVars(String string) {
+    private String replaceSysVarValue(String string) {
         // 解析系统内置变量
-        List<String> sysVarNames = MdUtil.parseSysVarNames(string);
+        List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN);
         if (CollUtil.isEmpty(sysVarNames)) {
             return string;
         }
@@ -173,6 +226,10 @@ public class JobVarService {
                     long timestamp = DateUtil.current();
                     replaceMap.put("timestamp", String.valueOf(timestamp));
                     break;
+                case "timestamp_second":
+                    long second = DateUtil.currentSeconds();
+                    replaceMap.put("timestamp_second", String.valueOf(second));
+                    break;
             }
         }
 
@@ -180,5 +237,20 @@ public class JobVarService {
         stringSubstitutor.setVariablePrefix("{$");
         stringSubstitutor.setVariableSuffix("}");
         return stringSubstitutor.replace(string);
+    }
+
+    private <V> void replaceSysVarValues(Map<String, V> map) {
+        if (MapUtil.isEmpty(map)) {
+            return;
+        }
+
+        map.forEach((k, v) -> {
+            // 替换用户自定义变量
+            map.put(k, (V) replaceSysVarValue(v.toString()));
+        });
+    }
+
+    private static String getKey(String g) {
+        return g.substring(2, g.length() - 1);
     }
 }
