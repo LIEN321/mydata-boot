@@ -30,3 +30,8 @@ blade:
     remote-path: /usr/share/nginx/html
     remote-path-iis: D://iis/html
     log-mode: true
+
+#mydata配置
+mydata:
+  secure:
+    encrypt-db: false
