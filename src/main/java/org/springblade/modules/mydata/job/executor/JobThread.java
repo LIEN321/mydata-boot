@@ -65,7 +65,7 @@ public class JobThread implements Runnable {
             switch (opType) {
                 case MdConstant.DATA_PRODUCER:
                     // 分批模式 记录上一次数据，用于对比两次数据，若重复 则结束，避免死循环
-                    List<Map> lastProduceData = null;
+                    String lastJson = null;
                     do {
                         // 若启用分批，则将分批参数加入请求参数中
                         if (taskInfo.isBatch()) {
@@ -76,6 +76,14 @@ public class JobThread implements Runnable {
 
                         // 调用api 获取json
                         String json = ApiUtil.read(taskInfo);
+                        // 对比上一次数据
+                        if (lastJson != null) {
+                            if (lastJson.equals(json)) {
+                                // TODO 邮件通知用户检查任务
+                                throw new RuntimeException("分批获取数据异常，最后两次获取的数据相同！");
+                            }
+                        }
+                        lastJson = json;
 
                         // 将json按字段映射 解析为业务数据
                         jobDataService.parseData(taskInfo, json);
@@ -83,17 +91,13 @@ public class JobThread implements Runnable {
                         if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
                             break;
                         }
-                        // 对比上一次数据
-                        if (lastProduceData != null) {
-                            if (CollUtil.isEqualList(lastProduceData, taskInfo.getProduceDataList())) {
-                                // TODO 邮件通知用户检查任务
-                                throw new RuntimeException("分批获取数据异常，最后两次获取的数据相同！");
-                            }
-                        }
-                        lastProduceData = taskInfo.getProduceDataList();
 
                         // 根据条件过滤数据
                         jobDataFilterService.doFilter(taskInfo);
+                        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
+                            taskInfo.appendLog("过滤后的没有业务数据，跳过后续处理");
+                            break;
+                        }
 
                         // 保存业务数据
                         jobDataService.saveTaskData(taskInfo);
