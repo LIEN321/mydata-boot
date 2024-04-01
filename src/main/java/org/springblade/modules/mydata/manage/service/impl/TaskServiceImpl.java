@@ -101,8 +101,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 //        Task check = getById(taskDTO.getId());
 //        Assert.isFalse(check != null && MdConstant.TASK_STATUS_RUNNING == check.getTaskStatus(), "提交失败：任务处于运行状态，不可编辑！");
 
+        Long dataId = taskDTO.getDataId();
         // 查询data
-        Data data = ManageCache.getData(taskDTO.getDataId());
+        Data data = ManageCache.getData(dataId);
 //        Assert.notNull(data, "提交失败：所选数据项 不存在！");
 
         // 查询data的主键字段
@@ -131,7 +132,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             Assert.notNull(refEnv, "提交失败：外部环境 不存在！");
         }
 
-        Task task = BeanUtil.copyProperties(taskDTO, Task.class, "fieldVarMapping");
+        Task task = BeanUtil.copyProperties(taskDTO, Task.class);
         // 复制data的编号
         if (data != null) {
             task.setDataCode(data.getDataCode());
@@ -158,9 +159,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             mergeApiAndEnv(task, api, env);
         }
 
-        // fieldVarMapping参水转为k-v格式
-//        task.setFieldVarMapping(MdUtil.parseToKvMap(taskDTO.getFieldVarMapping()));
-        task.setFieldVarMapping(taskDTO.getFieldVarMapping());
 
         if (task.getId() == null) {
             task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
