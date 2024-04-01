@@ -27,4 +27,8 @@ public class TaskLogWrapper extends BaseEntityWrapper<TaskLog, TaskLogVO> {
         return taskLogVO;
     }
 
+    public TaskLogVO detailVO(TaskLog taskLog) {
+        return BeanUtil.copy(taskLog, TaskLogVO.class);
+    }
+
 }
