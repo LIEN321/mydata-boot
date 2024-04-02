@@ -82,7 +82,12 @@ public class JobDataService {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
-                datacenterData.put(standardCode, getValue(mappingFieldType, standardCode, jsonObject.get(apiCode)));
+                String targetType = mappingFieldType.get(standardCode);
+                try {
+                    datacenterData.put(standardCode, getValue(jsonObject.get(apiCode), targetType));
+                } catch (Exception e) {
+                    taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
+                }
             });
 
             apiResponseDataList.add(datacenterData);
@@ -202,27 +207,23 @@ public class JobDataService {
     /**
      * 根据字段类型配置，将接口数据 转为指定类型
      *
-     * @param mappingFieldType 映射字段类型
-     * @param fieldCode        映射字段
-     * @param apiValue         接口数据
+     * @param apiValue   接口数据
+     * @param targetType 转换目标类型
      * @return 转换后的数据
      */
-    private Object getValue(Map<String, String> mappingFieldType, String fieldCode, Object apiValue) {
+    private Object getValue(Object apiValue, String targetType) {
         Object value = apiValue;
-        if (CollUtil.isNotEmpty(mappingFieldType)) {
-            String fieldType = mappingFieldType.get(fieldCode);
-            if (StrUtil.isNotEmpty(fieldType)) {
-                switch (fieldType) {
-                    case "int":
-                        value = NumberUtil.parseInt(StrUtil.toString(apiValue));
-                        break;
-                    case "string":
-                        value = StrUtil.toString(apiValue);
-                        break;
-                    case "date":
-                        value = DateUtil.parse(StrUtil.toString(apiValue));
-                        break;
-                }
+        if (StrUtil.isNotEmpty(targetType)) {
+            switch (targetType) {
+                case "int":
+                    value = NumberUtil.parseInt(StrUtil.toString(apiValue));
+                    break;
+                case "string":
+                    value = StrUtil.toString(apiValue);
+                    break;
+                case "date":
+                    value = DateUtil.parse(StrUtil.toString(apiValue));
+                    break;
             }
         }
 
