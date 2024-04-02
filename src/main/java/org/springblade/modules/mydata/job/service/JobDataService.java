@@ -75,17 +75,21 @@ public class JobDataService {
 
         // 根据映射 解析出json中的数据 并存入数据
         jsonArray.forEach(obj -> {
-            JSONObject jsonObject = (JSONObject) obj;
-            Map<String, Object> datacenterData = MapUtil.newHashMap();
-            fieldMapping.forEach((standardCode, apiCode) -> {
-                // 若字段映射中 未设置api参数名，则跳过处理；
-                if (StrUtil.isEmpty(apiCode)) {
-                    return;
-                }
-                datacenterData.put(standardCode, getValue(mappingFieldType, standardCode, jsonObject.get(apiCode)));
-            });
+            try {
+                JSONObject jsonObject = (JSONObject) obj;
+                Map<String, Object> datacenterData = MapUtil.newHashMap();
+                fieldMapping.forEach((standardCode, apiCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiCode)) {
+                        return;
+                    }
+                    datacenterData.put(standardCode, getValue(mappingFieldType, standardCode, jsonObject.get(apiCode)));
+                });
 
-            apiResponseDataList.add(datacenterData);
+                apiResponseDataList.add(datacenterData);
+            } catch (Exception e) {
+                taskInfo.appendLog("解析出业务数据出错，数据：{}，错误：{}", obj, e.getMessage());
+            }
         });
 
         taskInfo.setProduceDataList(apiResponseDataList);
