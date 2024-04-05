@@ -23,16 +23,16 @@ public class JobDataFilterService {
     /**
      * 将数据库中的过滤条件 转为封装类结构
      */
-    public List<BizDataFilter> parseBizDataFilter(List<Map<String, String>> dataFilterList) {
+    public List<BizDataFilter> parseBizDataFilter(List<Map<String, Object>> dataFilterList) {
         if (CollUtil.isEmpty(dataFilterList)) {
             return null;
         }
 
         List<BizDataFilter> bizDataFilters = CollUtil.newArrayList();
-        for (Map<String, String> map : dataFilterList) {
+        for (Map<String, Object> map : dataFilterList) {
             BizDataFilter bizDataFilter = new BizDataFilter();
-            bizDataFilter.setKey(map.get(MdConstant.DATA_KEY));
-            bizDataFilter.setOp(map.get(MdConstant.DATA_OP));
+            bizDataFilter.setKey(map.get(MdConstant.DATA_KEY).toString());
+            bizDataFilter.setOp(map.get(MdConstant.DATA_OP).toString());
             bizDataFilter.setValue(map.get(MdConstant.DATA_VALUE));
             bizDataFilters.add(bizDataFilter);
         }

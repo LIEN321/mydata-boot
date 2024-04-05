@@ -80,7 +80,7 @@ public class Task extends TenantEntity {
      * 字段映射
      */
     @TableField(typeHandler = FastjsonTypeHandler.class, updateStrategy = FieldStrategy.IGNORED)
-    private Map<String, String> fieldMapping;
+    private LinkedHashMap<String, String> fieldMapping;
 
     /**
      * 运行状态：0-停止，1-运行，2-异常
@@ -125,7 +125,7 @@ public class Task extends TenantEntity {
      * 数据的过滤条件
      */
     @TableField(typeHandler = FastjsonTypeHandler.class)
-    private List<Map<String, String>> dataFilter;
+    private List<Map<String, Object>> dataFilter;
 
     /**
      * 最后执行时间
@@ -186,4 +186,14 @@ public class Task extends TenantEntity {
      * 分批数量
      */
     private Integer batchSize;
+
+    /**
+     * 消费数据模式，默认1，1-API、2-发邮件
+     */
+    private Integer consumeMode;
+
+    /**
+     * 消费数据模式的收件人邮件
+     */
+    private String consumeEmail;
 }

@@ -10,6 +10,7 @@ import org.springblade.modules.mydata.data.BizDataFilter;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +103,7 @@ public class TaskInfo implements Serializable {
     /**
      * 字段映射配置
      */
-    private Map<String, String> fieldMapping;
+    private LinkedHashMap<String, String> fieldMapping;
 
     /**
      * 所属租户
@@ -220,6 +221,16 @@ public class TaskInfo implements Serializable {
      * 配置映射的数据字段的类型
      */
     private Map<String, String> mappingFieldType;
+
+    /**
+     * 消费数据模式，默认1，1-API、2-发邮件
+     */
+    private Integer consumeMode;
+
+    /**
+     * 消费数据模式的收件人邮件
+     */
+    private String consumeEmail;
 
     /**
      * 追加日志

@@ -2,16 +2,19 @@ package org.springblade.modules.mydata.job.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.StrPool;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
+import org.apache.poi.ss.util.SheetUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.data.BizDataDAO;
@@ -19,7 +22,9 @@ import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,7 +89,7 @@ public class JobDataService {
                 }
                 String targetType = mappingFieldType.get(standardCode);
                 try {
-                    datacenterData.put(standardCode, getValue(jsonObject.get(apiCode), targetType));
+                    datacenterData.put(standardCode, MdUtil.convertDataType(jsonObject.get(apiCode), targetType));
                 } catch (Exception e) {
                     taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
                 }
@@ -204,29 +209,37 @@ public class JobDataService {
         task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList, dataUpdateList);
     }
 
-    /**
-     * 根据字段类型配置，将接口数据 转为指定类型
-     *
-     * @param apiValue   接口数据
-     * @param targetType 转换目标类型
-     * @return 转换后的数据
-     */
-    private Object getValue(Object apiValue, String targetType) {
-        Object value = apiValue;
-        if (StrUtil.isNotEmpty(targetType)) {
-            switch (targetType) {
-                case "int":
-                    value = NumberUtil.parseInt(StrUtil.toString(apiValue));
-                    break;
-                case "string":
-                    value = StrUtil.toString(apiValue);
-                    break;
-                case "date":
-                    value = DateUtil.parse(StrUtil.toString(apiValue));
-                    break;
-            }
-        }
+    public File exportExcel(TaskInfo taskInfo) {
+        List<Map> consumeDataList = taskInfo.getConsumeDataList();
+        // 获取任务的数据映射，key为字段编号，value为字段名称
+        LinkedHashMap<String, String> mFieldMapping = taskInfo.getFieldMapping();
+        Assert.notEmpty(mFieldMapping, "任务未选择导出字段");
 
-        return value;
+        // 遍历业务数据，根据映射 转换为excel导出的数据
+        List<Map<String, Object>> excelDataList = CollUtil.newArrayList();
+        consumeDataList.forEach(data -> {
+            Map<String, Object> row = MapUtil.newHashMap();
+            mFieldMapping.forEach((k, v) -> {
+                row.put(k, data.get(k));
+            });
+            excelDataList.add(row);
+        });
+
+        // 字段+数据 构建excel
+        File excelFile = FileUtil.createTempFile(MdConstant.TEMP_DIR, ".xls", true);
+        ExcelWriter excelWriter = ExcelUtil.getWriter();
+        // 使用字段名称生成Excel首行标题
+        mFieldMapping.forEach(excelWriter::addHeaderAlias);
+        // 写入Excel数据
+        excelWriter.write(excelDataList);
+        excelWriter.autoSizeColumnAll();
+        int columnCount = excelWriter.getColumnCount();
+        for (int i = 0; i < columnCount; i++) {
+            excelWriter.setColumnWidth(i, (int) Math.round(SheetUtil.getColumnWidth(excelWriter.getSheet(), i, false)) + 5);
+        }
+        excelWriter.flush(excelFile);
+        excelWriter.close();
+
+        return excelFile;
     }
 }

@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
+import org.springblade.common.util.MdUtil;
 import org.springblade.core.log.exception.ServiceException;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.job.executor.JobExecutor;
@@ -108,8 +109,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
         // 查询data的主键字段
         List<DataField> idFields = null;
+        List<DataField> dataFields = null;
         if (data != null) {
-            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
+//            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
+            dataFields = dataFieldService.findByData(taskDTO.getDataId());
+            idFields = dataFields.stream().filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId())).collect(Collectors.toList());
         }
 //        Assert.notEmpty(idFields, "提交失败：所选数据项 缺少唯一标识字段！");
 
@@ -141,6 +145,27 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (idFields != null) {
             List<String> idFieldCodes = idFields.stream().map(DataField::getFieldCode).collect(Collectors.toList());
             task.setIdFieldCode(CollUtil.join(idFieldCodes, StrPool.COMMA));
+
+            // 转换过滤条件的值类型
+            List<Map<String, Object>> dataFilters = task.getDataFilter();
+            if (CollUtil.isNotEmpty(dataFilters)) {
+                // 获取任务配置映射的字段类型
+                Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> mappingFieldType = MapUtil.newHashMap();
+                task.getFieldMapping().forEach((k, v) -> {
+                    mappingFieldType.put(k, fieldTypeMap.get(k));
+                });
+
+                for (Map<String, Object> filter : dataFilters) {
+                    // 过滤条件的字段编号
+                    String code = filter.get(MdConstant.DATA_KEY).toString();
+                    // 过滤条件的原值
+                    Object value = filter.get(MdConstant.DATA_VALUE);
+                    // 转换值类型
+                    Object convertValue = MdUtil.convertDataType(value, mappingFieldType.get(code));
+                    filter.put(MdConstant.DATA_VALUE, convertValue);
+                }
+            }
         }
         // 复制api的操作类型
         task.setOpType(api.getOpType());
@@ -159,7 +184,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             mergeApiAndEnv(task, api, env);
         }
 
-
+        // 新建任务的初始状态为“停止”
         if (task.getId() == null) {
             task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
         }

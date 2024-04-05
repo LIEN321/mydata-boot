@@ -222,4 +222,14 @@ public interface MdConstant {
      * 定时任务 默认执行次数
      */
     int TASK_JOB_DEFAULT_TIMES = Integer.MAX_VALUE;
+
+    /**
+     * 消费模式，调用API
+     */
+    int TASK_CONSUME_MODE_API = 1;
+
+    /**
+     * 消费模式，发送邮件
+     */
+    int TASK_CONSUME_MODE_EMAIL = 2;
 }

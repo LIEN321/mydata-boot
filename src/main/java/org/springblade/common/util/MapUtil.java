@@ -10,7 +10,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2022/8/11
  */
-public class MapUtil {
+public class MapUtil extends cn.hutool.core.map.MapUtil {
     /**
      * 合并map
      *

@@ -1,8 +1,10 @@
 package org.springblade.common.util;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.EnumUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 
@@ -124,5 +126,34 @@ public class MdUtil {
 
     public static String getBizDbCode(String tenantId, Long projectId, Long envId) {
         return tenantId + ":" + projectId + ":" + envId;
+    }
+
+    /**
+     * 根据字段类型配置，将接口数据 转为指定类型
+     *
+     * @param value      接口数据
+     * @param targetType 转换目标类型
+     * @return 转换后的数据
+     */
+    public static Object convertDataType(Object value, String targetType) {
+        Object convertValue = value;
+        if (StrUtil.isNotEmpty(targetType)) {
+            switch (targetType) {
+                case "int":
+                    convertValue = NumberUtil.parseInt(StrUtil.toString(value));
+                    break;
+                case "string":
+                    convertValue = StrUtil.toString(value);
+                    break;
+                case "date":
+                    convertValue = DateUtil.parse(StrUtil.toString(value));
+                    break;
+                case "number":
+                    convertValue = NumberUtil.parseNumber(StrUtil.toString(value));
+                    break;
+            }
+        }
+
+        return convertValue;
     }
 }

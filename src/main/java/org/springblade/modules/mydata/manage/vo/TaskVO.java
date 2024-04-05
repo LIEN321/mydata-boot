@@ -123,7 +123,7 @@ public class TaskVO {
     /**
      * 数据的过滤条件
      */
-    private List<Map<String, String>> dataFilter;
+    private List<Map<String, Object>> dataFilter;
 
     /**
      * 最后执行时间

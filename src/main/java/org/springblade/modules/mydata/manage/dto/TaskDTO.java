@@ -72,7 +72,7 @@ public class TaskDTO implements Serializable {
     /**
      * 数据的过滤条件
      */
-    private List<Map<String, String>> dataFilter;
+    private List<Map<String, Object>> dataFilter;
 
     /**
      * 接口字段与变量名的映射

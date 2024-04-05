@@ -329,7 +329,12 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
+        // 初始空的过滤数据
         taskInfo.setFilteredDataList(CollUtil.toList());
+        // 消费模式
+        taskInfo.setConsumeMode(task.getConsumeMode());
+        // 消费推送邮箱
+        taskInfo.setConsumeEmail(task.getConsumeEmail());
 
         if (task.getDataId() != null) {
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());

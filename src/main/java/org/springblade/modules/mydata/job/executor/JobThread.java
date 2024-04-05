@@ -1,6 +1,9 @@
 package org.springblade.modules.mydata.job.executor;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +17,11 @@ import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.job.service.JobBatchService;
 import org.springblade.modules.mydata.job.service.JobDataFilterService;
 import org.springblade.modules.mydata.job.service.JobDataService;
+import org.springblade.modules.mydata.job.service.JobEmailService;
 import org.springblade.modules.mydata.job.service.JobVarService;
 import org.springblade.modules.mydata.job.util.ApiUtil;
 
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +54,7 @@ public class JobThread implements Runnable {
         JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
         JobDataFilterService jobDataFilterService = SpringUtil.getBean(JobDataFilterService.class);
         JobBatchService jobBatchService = SpringUtil.getBean(JobBatchService.class);
+        JobEmailService jobEmailService = SpringUtil.getBean(JobEmailService.class);
 
         taskInfo.setLastRunTime(new Date());
 
@@ -63,6 +69,7 @@ public class JobThread implements Runnable {
             jobVarService.parseVar(taskInfo);
             // 根据操作类型 执行读或写
             switch (opType) {
+                // 提供数据
                 case MdConstant.DATA_PRODUCER:
                     // 分批模式 记录上一次数据，用于对比两次数据，若重复 则结束，避免死循环
                     String lastJson = null;
@@ -115,6 +122,7 @@ public class JobThread implements Runnable {
                     } while (taskInfo.isBatch());
 
                     break;
+                // 消费数据
                 case MdConstant.DATA_CONSUMER:
                     String dataCode = taskInfo.getDataCode();
                     if (StrUtil.isEmpty(dataCode)) {
@@ -140,18 +148,27 @@ public class JobThread implements Runnable {
                             break;
                         }
                         taskInfo.setConsumeDataList(dataList);
-                        // 根据字段映射转换为api参数
-                        jobDataService.convertData(taskInfo);
-                        // 调用api传输数据
-                        ApiUtil.write(taskInfo);
+
+                        // 消费模式是调用API
+                        if (MdConstant.TASK_CONSUME_MODE_API == taskInfo.getConsumeMode()) {
+                            // 根据字段映射转换为api参数
+                            jobDataService.convertData(taskInfo);
+                            // 调用api传输数据
+                            ApiUtil.write(taskInfo);
+                        }
+                        // 消费模式是发送邮件
+                        else if (MdConstant.TASK_CONSUME_MODE_EMAIL == taskInfo.getConsumeMode()) {
+                            File excelFile = jobDataService.exportExcel(taskInfo);
+                            excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
+                            jobEmailService.sendMail(taskInfo, excelFile);
+                        }
 
                         round++;
                         // 若启用分批，则等待间隔
                         if (taskInfo.isBatch()) {
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
-                    }
-                    while (taskInfo.isBatch());
+                    } while (taskInfo.isBatch());
                     break;
                 default:
                     throw new RuntimeException("不支持的任务类型：" + opType);
