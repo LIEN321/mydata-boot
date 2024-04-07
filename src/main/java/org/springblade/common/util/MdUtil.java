@@ -5,6 +5,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 
@@ -137,7 +138,7 @@ public class MdUtil {
      */
     public static Object convertDataType(Object value, String targetType) {
         Object convertValue = value;
-        if (StrUtil.isNotEmpty(targetType)) {
+        if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
             switch (targetType) {
                 case "int":
                     convertValue = NumberUtil.parseInt(StrUtil.toString(value));
