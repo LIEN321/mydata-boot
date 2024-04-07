@@ -81,7 +81,7 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
             List<Env> envs = envService.listByProject(data.getProjectId());
             List<Long> envIdList = envs.stream().map(Env::getId).collect(Collectors.toList());
             // 删除业务数据
-            bizDataService.dropBizData(id, envIdList);
+            bizDataService.deleteByEnvs(id, envIdList);
         });
         // 删除数据项
         deleteLogic(ids);

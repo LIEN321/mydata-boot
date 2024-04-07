@@ -47,5 +47,14 @@ public interface IBizDataService {
      * @param envIdList 环境id列表
      * @return 操作结果，true-成功，false-失败
      */
-    boolean dropBizData(Long dataId, List<Long> envIdList);
+    boolean deleteByEnvs(Long dataId, List<Long> envIdList);
+
+    /**
+     * 删除指定环境的业务数据
+     *
+     * @param dataId 数据项id
+     * @param envId  环境id
+     * @return 操作结果，true-成功，false-失败
+     */
+    boolean deleteByEnv(Long dataId, Long envId);
 }

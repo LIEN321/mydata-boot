@@ -71,13 +71,21 @@ public class BizDataServiceImpl implements IBizDataService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean dropBizData(Long dataId, List<Long> envIdList) {
-        Data data = ManageCache.getData(dataId);
+    public boolean deleteByEnvs(Long dataId, List<Long> envIdList) {
         if (CollUtil.isNotEmpty(envIdList)) {
+            Data data = ManageCache.getData(dataId);
             envIdList.forEach(envId -> {
                 bizDataDAO.drop(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode());
             });
         }
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean deleteByEnv(Long dataId, Long envId) {
+        Assert.notNull(dataId, "参数无效，dataId={}", dataId);
+        Assert.notNull(envId, "参数无效，envId={}", envId);
+        return deleteByEnvs(dataId, CollUtil.toList(envId));
     }
 }
