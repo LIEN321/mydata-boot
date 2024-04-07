@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springblade.common.constant.MdConstant;
 
 import java.io.Serializable;
 import java.util.List;
@@ -110,4 +111,22 @@ public class TaskDTO implements Serializable {
      * 分批数量
      */
     private Integer batchSize;
+
+    /**
+     * 消费数据模式，默认1，1-API、2-发邮件
+     */
+    private Integer consumeMode;
+
+    /**
+     * 消费数据模式的收件人邮件
+     */
+    private String consumeEmail;
+
+    /**
+     * 操作类型
+     *
+     * @see MdConstant#DATA_PRODUCER
+     * @see MdConstant#DATA_CONSUMER
+     */
+    private Integer opType;
 }

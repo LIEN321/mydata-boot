@@ -2,6 +2,7 @@ package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
@@ -17,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.util.SheetUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
 import org.springblade.common.util.MdUtil;
@@ -47,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,8 +125,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(project, "提交失败：项目 不存在！");
 
         // 查询api
-        Api api = ManageCache.getApi(taskDTO.getApiId());
-        Assert.notNull(api, "提交失败：所选API 不存在！");
+        Api api = null;
+        if (taskDTO.getConsumeMode() == null || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+            api = ManageCache.getApi(taskDTO.getApiId());
+            Assert.notNull(api, "提交失败：所选API 不存在！");
+        }
 
         // 查询环境
         Env env = ManageCache.getEnv(taskDTO.getEnvId());
@@ -162,26 +168,33 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                     // 过滤条件的原值
                     Object value = filter.get(MdConstant.DATA_VALUE);
                     // 转换值类型
-                    Object convertValue = MdUtil.convertDataType(value, mappingFieldType.get(code));
-                    filter.put(MdConstant.DATA_VALUE, convertValue);
+                    String targetType = mappingFieldType.get(code);
+                    try {
+                        Object convertValue = MdUtil.convertDataType(value, targetType);
+                        filter.put(MdConstant.DATA_VALUE, convertValue);
+                    } catch (Exception e) {
+                        throw new RuntimeException(StrUtil.format("过滤条件保存失败，条件 {} 的值 {} 转为目标类型 {} 时出错：{}", code, value, targetType, e.getMessage()));
+                    }
                 }
             }
         }
-        // 复制api的操作类型
-        task.setOpType(api.getOpType());
-        // 复制api的请求方法
-        task.setApiMethod(api.getApiMethod());
-        // 复制api的数据类型
-        task.setDataType(api.getDataType());
-        // 复制api的所属应用
-        task.setAppId(api.getAppId());
+        if (api != null) {
+            // 复制api的操作类型
+            task.setOpType(api.getOpType());
+            // 复制api的请求方法
+            task.setApiMethod(api.getApiMethod());
+            // 复制api的数据类型
+            task.setDataType(api.getDataType());
+            // 复制api的所属应用
+            task.setAppId(api.getAppId());
 
-        // 从env和api中 汇总header、param，优先级api > env
-        if (refEnv != null) {
-            mergeApiAndEnv(task, api, refEnv);
-            task.setRefOpType(task.getOpType() == MdConstant.DATA_PRODUCER ? MdConstant.DATA_CONSUMER : MdConstant.DATA_PRODUCER);
-        } else {
-            mergeApiAndEnv(task, api, env);
+            // 从env和api中 汇总header、param，优先级api > env
+            if (refEnv != null) {
+                mergeApiAndEnv(task, api, refEnv);
+                task.setRefOpType(task.getOpType() == MdConstant.DATA_PRODUCER ? MdConstant.DATA_CONSUMER : MdConstant.DATA_PRODUCER);
+            } else {
+                mergeApiAndEnv(task, api, env);
+            }
         }
 
         // 新建任务的初始状态为“停止”
@@ -191,17 +204,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
         // 保存或更新task
         return saveOrUpdate(task);
-
-        // v0.6.0 取消自动重启，改为用户先停止 再修改 启动；
-//        boolean result = saveOrUpdate(task);
-//        if (result) {
-//            // 若任务已启动，则自动重启
-//            task = getById(task.getId());
-//            if (task != null && task.getTaskStatus() != null && task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING) {
-//                restartTask(task.getId());
-//            }
-//        }
-//        return result;
     }
 
     @Override
@@ -501,11 +503,17 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         }
         // 字段+数据 构建excel
         File excelFile = FileUtil.createTempFile(MdConstant.TEMP_DIR, ".xls", true);
+        excelFile = FileUtil.rename(excelFile, task.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
         ExcelWriter excelWriter = ExcelUtil.getWriter();
         dataFields.forEach(dataField -> {
             excelWriter.addHeaderAlias(dataField.getFieldCode(), dataField.getFieldName());
         });
         excelWriter.write(filteredDataList);
+        excelWriter.autoSizeColumnAll();
+        int columnCount = excelWriter.getColumnCount();
+        for (int i = 0; i < columnCount; i++) {
+            excelWriter.setColumnWidth(i, (int) Math.round(SheetUtil.getColumnWidth(excelWriter.getSheet(), i, false)) + 5);
+        }
         excelWriter.flush(excelFile);
         excelWriter.close();
 
@@ -564,8 +572,10 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(taskDTO.getProjectId(), "提交失败：所属项目无效！");
         // 关联环境 不能为空
         Assert.notNull(taskDTO.getEnvId(), "提交失败：环境无效！");
-        // 关联API 不能为空
-        Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
+        if (MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+            // 关联API 不能为空
+            Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
+        }
         // 关联数据项 不能为空 v0.6.0 去掉验证
 //        Assert.notNull(taskDTO.getDataId(), "提交失败：数据项无效！");
         // 不是订阅任务，则任务周期必填

@@ -193,4 +193,14 @@ public class TaskVO {
      * 分批数量
      */
     private Integer batchSize;
+
+    /**
+     * 消费数据模式，默认1，1-API、2-发邮件
+     */
+    private Integer consumeMode;
+
+    /**
+     * 消费数据模式的收件人邮件
+     */
+    private String consumeEmail;
 }

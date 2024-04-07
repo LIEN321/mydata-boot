@@ -226,10 +226,10 @@ public interface MdConstant {
     /**
      * 消费模式，调用API
      */
-    int TASK_CONSUME_MODE_API = 1;
+    Integer TASK_CONSUME_MODE_API = 1;
 
     /**
      * 消费模式，发送邮件
      */
-    int TASK_CONSUME_MODE_EMAIL = 2;
+    Integer TASK_CONSUME_MODE_EMAIL = 2;
 }
