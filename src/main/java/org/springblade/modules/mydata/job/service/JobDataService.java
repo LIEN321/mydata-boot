@@ -99,8 +99,8 @@ public class JobDataService {
         });
 
         taskInfo.setProduceDataList(apiResponseDataList);
-        taskInfo.appendLog("解析前json数据：{}", jsonString);
-        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
+//        taskInfo.appendLog("解析前json数据：{}", jsonString);
+//        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
     }
 
     /**
@@ -206,7 +206,7 @@ public class JobDataService {
         // v0.7.0 取消，该字段由于数据按环境区分存储而失效
         // dataService.updateDataCount(task.getTenantId(), task.getDataId());
 
-        task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList, dataUpdateList);
+        task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList.size(), dataUpdateList.size());
     }
 
     public File exportExcel(TaskInfo taskInfo) {

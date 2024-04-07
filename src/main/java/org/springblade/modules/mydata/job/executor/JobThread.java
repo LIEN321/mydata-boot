@@ -144,7 +144,9 @@ public class JobThread implements Runnable {
                             skip = (long) round * taskInfo.getBatchSize();
                         }
                         // 根据过滤条件 查询数据
+                        taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
                         List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
+                        taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
                         if (CollUtil.isEmpty(dataList)) {
                             break;
                         }
