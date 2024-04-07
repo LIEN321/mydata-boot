@@ -1,5 +1,6 @@
 package org.springblade.modules.mydata.data;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -28,4 +29,9 @@ public class BizDataFilter implements Serializable {
      * 条件值
      */
     private Object value;
+
+    @Override
+    public String toString() {
+        return StrUtil.format("{} {} {}", key, op, value);
+    }
 }
