@@ -164,14 +164,20 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
                 for (Map<String, Object> filter : dataFilters) {
                     // 过滤条件的字段编号
-                    String code = filter.get(MdConstant.DATA_KEY).toString();
+                    String code = filter.get(MdConstant.PARAM_KEY).toString();
                     // 过滤条件的原值
-                    Object value = filter.get(MdConstant.DATA_VALUE);
+                    Object value = filter.get(MdConstant.PARAM_VALUE);
+                    // 条件类型
+                    Object type = filter.get(MdConstant.PARAM_TYPE);
+                    // 不是值类型 则不做类型转换
+                    if (!MdConstant.TASK_FILTER_TYPE_VALUE.equals(type)) {
+                        continue;
+                    }
                     // 转换值类型
                     String targetType = mappingFieldType.get(code);
                     try {
                         Object convertValue = MdUtil.convertDataType(value, targetType);
-                        filter.put(MdConstant.DATA_VALUE, convertValue);
+                        filter.put(MdConstant.PARAM_VALUE, convertValue);
                     } catch (Exception e) {
                         throw new RuntimeException(StrUtil.format("过滤条件保存失败，条件 {} 的值 {} 转为目标类型 {} 时出错：{}", code, value, targetType, e.getMessage()));
                     }

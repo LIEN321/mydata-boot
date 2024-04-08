@@ -307,15 +307,17 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setIsSubscribed(task.getIsSubscribed());
 
         // header
-        taskInfo.setReqHeaders(task.getReqHeaders());
-        taskInfo.setOriginReqHeaders(task.getReqHeaders());
+        Map<String, String> taskHeaders = task.getReqHeaders();
+        if (CollUtil.isNotEmpty(taskHeaders)) {
+            taskInfo.setReqHeaders(ObjectUtil.clone(taskHeaders));
+            taskInfo.setOriginReqHeaders(taskHeaders);
+        }
         // param
-        Map<String, String> taskParams = task.getReqParams();
+        Map<String, Object> taskParams = MapUtil.newHashMap();
+        taskParams.putAll(task.getReqParams());
         if (CollUtil.isNotEmpty(taskParams)) {
-            Map<String, Object> jobParams = MapUtil.newHashMap();
-            jobParams.putAll(taskParams);
-            taskInfo.setReqParams(jobParams);
-            taskInfo.setOriginReqParams(jobParams);
+            taskInfo.setReqParams(ObjectUtil.clone(taskParams));
+            taskInfo.setOriginReqParams(taskParams);
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
