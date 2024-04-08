@@ -369,11 +369,13 @@ public class JobExecutor implements ApplicationRunner {
         Assert.notEmpty(taskInfo.getTaskPeriod());
 
         Date date = taskInfo.getStartTime();
+        String period = taskInfo.getTaskPeriod();
         if (taskInfo.getFailCount() > 0) {
-            date = taskInfo.getNextRunTime();
+//            date = taskInfo.getNextRunTime();
+            period = MdConstant.TASK_FAILED_PERIOD;
         }
 
-        CronExpression cronExpression = new CronExpression(taskInfo.getTaskPeriod());
+        CronExpression cronExpression = new CronExpression(period);
         Date nextRunTime = cronExpression.getNextValidTimeAfter(date);
         taskInfo.setNextRunTime(nextRunTime);
     }
