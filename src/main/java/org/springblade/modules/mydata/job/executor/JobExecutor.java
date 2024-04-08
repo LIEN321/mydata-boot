@@ -313,11 +313,12 @@ public class JobExecutor implements ApplicationRunner {
             taskInfo.setOriginReqHeaders(taskHeaders);
         }
         // param
-        Map<String, Object> taskParams = MapUtil.newHashMap();
-        taskParams.putAll(task.getReqParams());
+        Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
-            taskInfo.setReqParams(ObjectUtil.clone(taskParams));
-            taskInfo.setOriginReqParams(taskParams);
+            Map<String, Object> jobParams = MapUtil.newHashMap();
+            jobParams.putAll(task.getReqParams());
+            taskInfo.setReqParams(ObjectUtil.clone(jobParams));
+            taskInfo.setOriginReqParams(jobParams);
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
