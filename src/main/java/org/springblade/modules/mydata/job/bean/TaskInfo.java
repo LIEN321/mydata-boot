@@ -233,6 +233,11 @@ public class TaskInfo implements Serializable {
     private String consumeEmail;
 
     /**
+     * 跳过特殊情况
+     */
+    private Integer skipError;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

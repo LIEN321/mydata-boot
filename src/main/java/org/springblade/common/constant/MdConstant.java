@@ -232,4 +232,9 @@ public interface MdConstant {
      * 消费模式，发送邮件
      */
     Integer TASK_CONSUME_MODE_EMAIL = 2;
+
+    /**
+     * 跳过接口返回两次相同数据的错误
+     */
+    Integer TASK_SKIP_SAME_DATA_ERROR = 1;
 }

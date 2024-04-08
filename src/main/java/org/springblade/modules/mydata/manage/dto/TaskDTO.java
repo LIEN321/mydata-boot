@@ -129,4 +129,9 @@ public class TaskDTO implements Serializable {
      * @see MdConstant#DATA_CONSUMER
      */
     private Integer opType;
+
+    /**
+     * 跳过特殊情况
+     */
+    private Integer skipError;
 }

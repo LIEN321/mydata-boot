@@ -203,4 +203,9 @@ public class TaskVO {
      * 消费数据模式的收件人邮件
      */
     private String consumeEmail;
+
+    /**
+     * 跳过特殊情况
+     */
+    private Integer skipError;
 }

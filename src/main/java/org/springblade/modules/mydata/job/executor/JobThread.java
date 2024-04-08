@@ -87,7 +87,11 @@ public class JobThread implements Runnable {
                         // 对比上一次数据
                         if (lastJsonHash != -1L) {
                             if (lastJsonHash == HashUtil.mixHash(json)) {
-                                // TODO 邮件通知用户检查任务
+                                // 若跳过两次数据相同报错，则任务结束，否则抛异常
+                                if (MdConstant.TASK_SKIP_SAME_DATA_ERROR.equals(taskInfo.getSkipError())) {
+                                    taskInfo.appendLog("跳过两次数据相同问题，正常结束");
+                                    break;
+                                }
                                 throw new RuntimeException("分批获取数据异常，最后两次获取的数据相同！");
                             }
                         }

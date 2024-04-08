@@ -196,4 +196,11 @@ public class Task extends TenantEntity {
      * 消费数据模式的收件人邮件
      */
     private String consumeEmail;
+
+    /**
+     * 跳过特殊情况
+     * 0-不跳过
+     * 1-跳过相同数据异常
+     */
+    private Integer skipError;
 }

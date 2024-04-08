@@ -335,6 +335,8 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setConsumeMode(task.getConsumeMode());
         // 消费推送邮箱
         taskInfo.setConsumeEmail(task.getConsumeEmail());
+        // 跳过特殊情况
+        taskInfo.setSkipError(task.getSkipError());
 
         if (task.getDataId() != null) {
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
