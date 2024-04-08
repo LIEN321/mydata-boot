@@ -321,7 +321,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
 
         // 数据过滤条件
-        taskInfo.setDataFilters(jobDataFilterService.parseBizDataFilter(task.getDataFilter()));
+        taskInfo.setDataFilters(jobDataFilterService.convertBizDataFilter(task.getDataFilter()));
 
         // 分批参数
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());

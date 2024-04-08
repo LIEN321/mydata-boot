@@ -6,6 +6,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.HashUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
@@ -27,7 +28,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 执行任务的线程
@@ -133,41 +133,48 @@ public class JobThread implements Runnable {
                     if (StrUtil.isEmpty(dataCode)) {
                         break;
                     }
-                    List<BizDataFilter> filters = taskInfo.getDataFilters();
-                    if (CollUtil.isNotEmpty(filters)) {
-                        // 解析过滤条件值中的 自定义字符串
-                        parseFilterValue(filters);
-                        // 排除值为null的条件
-                        filters = filters.stream().filter(filter -> filter.getValue() != null).collect(Collectors.toList());
-                    }
+                    // 过滤条件
+                    List<BizDataFilter> filters = jobDataFilterService.parseFilterValue(taskInfo);
+                    // 分批次数
                     int round = 0;
+                    // 查询跳过数量
                     Long skip = null;
+                    // 查询最大数量
                     Integer limit = taskInfo.isBatch() ? taskInfo.getBatchSize() : null;
                     do {
+                        // 若启用分批，则计算跳过数量
                         if (taskInfo.isBatch()) {
                             skip = (long) round * taskInfo.getBatchSize();
                         }
                         // 根据过滤条件 查询数据
                         taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
+
+                        // 查询业务数据
                         List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
-                        taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
+//                        taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
+                        taskInfo.appendLog("查询业务数据的数量是 {}", dataList.size());
+
+                        // 没有业务数据，则跳过后续处理
                         if (CollUtil.isEmpty(dataList)) {
                             break;
                         }
+
+                        // 将业务数据存入任务对象，以便后续处理
                         taskInfo.setConsumeDataList(dataList);
 
                         // 消费模式是调用API
-                        if (MdConstant.TASK_CONSUME_MODE_API == taskInfo.getConsumeMode()) {
+                        if (MdConstant.TASK_CONSUME_MODE_API.equals(taskInfo.getConsumeMode())) {
                             // 根据字段映射转换为api参数
                             jobDataService.convertData(taskInfo);
                             // 调用api传输数据
                             ApiUtil.write(taskInfo);
                         }
                         // 消费模式是发送邮件
-                        else if (MdConstant.TASK_CONSUME_MODE_EMAIL == taskInfo.getConsumeMode()) {
+                        else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {
                             File excelFile = jobDataService.exportExcel(taskInfo);
                             excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
                             jobEmailService.sendMail(taskInfo, excelFile);
+                            taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
                         }
 
                         round++;
@@ -185,11 +192,11 @@ public class JobThread implements Runnable {
             isJobSuccess = true;
         } catch (Exception e) {
             taskInfo.appendLog("任务执行失败，异常：{}", e.getMessage());
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         } finally {
             // 恢复原生header和param，恢复变量表达式，下次可获取最新变量值
-            taskInfo.setReqHeaders(taskInfo.getOriginReqHeaders());
-            taskInfo.setReqParams(taskInfo.getOriginReqParams());
+            taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
+            taskInfo.setReqParams(ObjectUtil.clone(taskInfo.getOriginReqParams()));
         }
 
         // 标记任务失败次数是否到达上限
@@ -243,22 +250,5 @@ public class JobThread implements Runnable {
                 jobExecutor.executeSubscribedTask(taskInfo);
             }
         }
-    }
-
-    /**
-     * 解析过滤条件中的 自定义字符串
-     */
-    private void parseFilterValue(List<BizDataFilter> filters) {
-        if (CollUtil.isEmpty(filters)) {
-            return;
-        }
-
-        filters.forEach(filter -> {
-            Object value = filter.getValue();
-            // 任务的最后成功时间，若没有成功过 则复用任务开始时间
-            if (MdConstant.DATA_VALUE_TASK_LAST_SUCCESS_TIME.equals(value)) {
-                filter.setValue(taskInfo.getLastSuccessTime());
-            }
-        });
     }
 }

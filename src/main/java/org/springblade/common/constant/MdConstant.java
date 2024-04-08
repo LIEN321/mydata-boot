@@ -97,19 +97,24 @@ public interface MdConstant {
     String DATA_NOT_EMPTY = "ne";
 
     /**
-     * 数据过滤参数名：条件名
+     * 参数名：条件名
      */
-    String DATA_KEY = "k";
+    String PARAM_KEY = "k";
 
     /**
-     * 数据过滤参数名，条件操作
+     * 参数名：条件操作
      */
-    String DATA_OP = "op";
+    String PARAM_OP = "op";
 
     /**
-     * 数据过滤参数名，条件值
+     * 参数名：条件值
      */
-    String DATA_VALUE = "v";
+    String PARAM_VALUE = "v";
+
+    /**
+     * 参数名：条件类型
+     */
+    String PARAM_TYPE = "t";
 
     /**
      * 分批参数名，递增区间
@@ -211,7 +216,7 @@ public interface MdConstant {
     /**
      * 每个任务最多失败次数
      */
-    int TASK_MAX_FAIL_COUNT = 3;
+    int TASK_MAX_FAIL_COUNT = 5;
 
     /**
      * 是订阅任务
@@ -237,4 +242,16 @@ public interface MdConstant {
      * 跳过接口返回两次相同数据的错误
      */
     Integer TASK_SKIP_SAME_DATA_ERROR = 1;
+
+    /**
+     * 任务过滤条件值类型 - 值类型
+     */
+    Integer TASK_FILTER_TYPE_VALUE = 1;
+
+    /**
+     * 任务过滤条件值类型 - 字段名
+     */
+    Integer TASK_FILTER_TYPE_FIELD = 2;
+
+    String TASK_FAILED_PERIOD = "0 0/1 * * * ?";
 }
