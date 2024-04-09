@@ -178,9 +178,8 @@ public class JobExecutor implements ApplicationRunner {
                 calculateNextRunTime(taskInfo);
 
                 // 存入缓存
-                jobCache.cacheJob(taskInfo);
-
                 taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
+                jobCache.cacheJob(taskInfo);
                 return;
             } catch (RuntimeException e) {
                 i++;
@@ -188,7 +187,6 @@ public class JobExecutor implements ApplicationRunner {
             }
         }
 
-//        fail(taskInfo);
         taskInfo.setFailed(true);
         completeJob(taskInfo);
     }
