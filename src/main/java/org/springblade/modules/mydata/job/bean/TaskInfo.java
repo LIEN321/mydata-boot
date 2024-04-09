@@ -53,7 +53,7 @@ public class TaskInfo implements Serializable {
     private Integer opType;
 
     /**
-     * 待执行次数，-1 无限次（默认），0 结束，正整数 待执行数
+     * 待执行次数，默认Integer.MAX_VALUE，0 结束，正整数 待执行数
      */
     private int times = MdConstant.TASK_JOB_DEFAULT_TIMES;
 
@@ -79,14 +79,10 @@ public class TaskInfo implements Serializable {
      */
     private Map<String, String> reqHeaders;
 
-    private Map<String, String> originReqHeaders;
-
     /**
      * 接口请求参数
      */
     private Map<String, Object> reqParams;
-
-    private Map<String, Object> originReqParams;
 
     /**
      * 接口字段与变量名的映射

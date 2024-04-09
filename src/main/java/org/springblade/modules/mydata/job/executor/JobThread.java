@@ -37,26 +37,35 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class JobThread implements Runnable {
+    private final JobDataService jobDataService = SpringUtil.getBean(JobDataService.class);
+
+    private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
+
+    private final JobExecutor jobExecutor = SpringUtil.getBean(JobExecutor.class);
+
+    private final JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
+
+    private final JobDataFilterService jobDataFilterService = SpringUtil.getBean(JobDataFilterService.class);
+
+    private final JobBatchService jobBatchService = SpringUtil.getBean(JobBatchService.class);
+
+    private final JobEmailService jobEmailService = SpringUtil.getBean(JobEmailService.class);
+
 
     private final TaskInfo taskInfo;
 
+    private final TaskInfo taskInfoBak;
 
     public JobThread(TaskInfo taskInfo) {
         this.taskInfo = taskInfo;
+        this.taskInfoBak = ObjectUtil.clone(taskInfo);
     }
 
     @Override
     public void run() {
         taskInfo.appendLog("任务开始执行");
 
-        JobDataService jobDataService = SpringUtil.getBean(JobDataService.class);
-        BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
-        JobExecutor jobExecutor = SpringUtil.getBean(JobExecutor.class);
-        JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
-        JobDataFilterService jobDataFilterService = SpringUtil.getBean(JobDataFilterService.class);
-        JobBatchService jobBatchService = SpringUtil.getBean(JobBatchService.class);
-        JobEmailService jobEmailService = SpringUtil.getBean(JobEmailService.class);
-
+        // 设置任务最新运行时间
         taskInfo.setLastRunTime(new Date());
 
         // 标记本次执行是否成功
@@ -187,16 +196,19 @@ public class JobThread implements Runnable {
                 default:
                     throw new RuntimeException("不支持的任务类型：" + opType);
             }
-
             // 任务执行成功
             isJobSuccess = true;
         } catch (Exception e) {
             taskInfo.appendLog("任务执行失败，异常：{}", e.getMessage());
             log.error(e.getMessage(), e);
         } finally {
-            // 恢复原生header和param，恢复变量表达式，下次可获取最新变量值
-            taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
-            taskInfo.setReqParams(ObjectUtil.clone(taskInfo.getOriginReqParams()));
+            // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
+            taskInfo.setReqHeaders(taskInfoBak.getReqHeaders());
+            taskInfo.setReqParams(taskInfoBak.getReqParams());
+            taskInfo.setBatchParams(taskInfoBak.getBatchParams());
+            taskInfo.setProduceDataList(null);
+            taskInfo.setConsumeDataList(null);
+            taskInfo.setFilteredDataList(CollUtil.toList());
         }
 
         // 标记任务失败次数是否到达上限
