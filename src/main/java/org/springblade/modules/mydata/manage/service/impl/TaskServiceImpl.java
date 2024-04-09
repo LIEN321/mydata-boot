@@ -2,14 +2,10 @@ package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.poi.excel.ExcelUtil;
-import cn.hutool.poi.excel.ExcelWriter;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
+import org.springblade.common.util.MdUtil;
 import org.springblade.core.log.exception.ServiceException;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.job.executor.JobExecutor;
@@ -31,20 +28,17 @@ import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.Project;
 import org.springblade.modules.mydata.manage.entity.Task;
-import org.springblade.modules.mydata.manage.mail.MailSender;
 import org.springblade.modules.mydata.manage.mapper.TaskMapper;
 import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.service.ITaskLogService;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 import org.springblade.modules.mydata.manage.wrapper.TaskWrapper;
-import org.springblade.modules.system.entity.UserInfo;
 import org.springblade.modules.system.service.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -108,8 +102,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
         // 查询data的主键字段
         List<DataField> idFields = null;
+        List<DataField> dataFields = null;
         if (data != null) {
-            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
+//            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
+            dataFields = dataFieldService.findByData(taskDTO.getDataId());
+            idFields = dataFields.stream().filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId())).collect(Collectors.toList());
         }
 //        Assert.notEmpty(idFields, "提交失败：所选数据项 缺少唯一标识字段！");
 
@@ -118,8 +115,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(project, "提交失败：项目 不存在！");
 
         // 查询api
-        Api api = ManageCache.getApi(taskDTO.getApiId());
-        Assert.notNull(api, "提交失败：所选API 不存在！");
+        Api api = null;
+        if (taskDTO.getConsumeMode() == null || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+            api = ManageCache.getApi(taskDTO.getApiId());
+            Assert.notNull(api, "提交失败：所选API 不存在！");
+        }
 
         // 查询环境
         Env env = ManageCache.getEnv(taskDTO.getEnvId());
@@ -141,42 +141,65 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (idFields != null) {
             List<String> idFieldCodes = idFields.stream().map(DataField::getFieldCode).collect(Collectors.toList());
             task.setIdFieldCode(CollUtil.join(idFieldCodes, StrPool.COMMA));
+
+            // 转换过滤条件的值类型
+            List<Map<String, Object>> dataFilters = task.getDataFilter();
+            if (CollUtil.isNotEmpty(dataFilters)) {
+                // 获取任务配置映射的字段类型
+                Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> mappingFieldType = MapUtil.newHashMap();
+                task.getFieldMapping().forEach((k, v) -> {
+                    mappingFieldType.put(k, fieldTypeMap.get(k));
+                });
+
+                for (Map<String, Object> filter : dataFilters) {
+                    // 过滤条件的字段编号
+                    String code = filter.get(MdConstant.PARAM_KEY).toString();
+                    // 过滤条件的原值
+                    Object value = filter.get(MdConstant.PARAM_VALUE);
+                    // 条件类型
+                    Object type = filter.get(MdConstant.PARAM_TYPE);
+                    // 不是值类型 则不做类型转换
+                    if (!MdConstant.TASK_FILTER_TYPE_VALUE.equals(type)) {
+                        continue;
+                    }
+                    // 转换值类型
+                    String targetType = mappingFieldType.get(code);
+                    try {
+                        Object convertValue = MdUtil.convertDataType(value, targetType);
+                        filter.put(MdConstant.PARAM_VALUE, convertValue);
+                    } catch (Exception e) {
+                        throw new RuntimeException(StrUtil.format("过滤条件保存失败，条件 {} 的值 {} 转为目标类型 {} 时出错：{}", code, value, targetType, e.getMessage()));
+                    }
+                }
+            }
         }
-        // 复制api的操作类型
-        task.setOpType(api.getOpType());
-        // 复制api的请求方法
-        task.setApiMethod(api.getApiMethod());
-        // 复制api的数据类型
-        task.setDataType(api.getDataType());
-        // 复制api的所属应用
-        task.setAppId(api.getAppId());
+        if (api != null) {
+            // 复制api的操作类型
+            task.setOpType(api.getOpType());
+            // 复制api的请求方法
+            task.setApiMethod(api.getApiMethod());
+            // 复制api的数据类型
+            task.setDataType(api.getDataType());
+            // 复制api的所属应用
+            task.setAppId(api.getAppId());
 
-        // 从env和api中 汇总header、param，优先级api > env
-        if (refEnv != null) {
-            mergeApiAndEnv(task, api, refEnv);
-            task.setRefOpType(task.getOpType() == MdConstant.DATA_PRODUCER ? MdConstant.DATA_CONSUMER : MdConstant.DATA_PRODUCER);
-        } else {
-            mergeApiAndEnv(task, api, env);
+            // 从env和api中 汇总header、param，优先级api > env
+            if (refEnv != null) {
+                mergeApiAndEnv(task, api, refEnv);
+                task.setRefOpType(task.getOpType() == MdConstant.DATA_PRODUCER ? MdConstant.DATA_CONSUMER : MdConstant.DATA_PRODUCER);
+            } else {
+                mergeApiAndEnv(task, api, env);
+            }
         }
 
-
+        // 新建任务的初始状态为“停止”
         if (task.getId() == null) {
             task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
         }
 
         // 保存或更新task
         return saveOrUpdate(task);
-
-        // v0.6.0 取消自动重启，改为用户先停止 再修改 启动；
-//        boolean result = saveOrUpdate(task);
-//        if (result) {
-//            // 若任务已启动，则自动重启
-//            task = getById(task.getId());
-//            if (task != null && task.getTaskStatus() != null && task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING) {
-//                restartTask(task.getId());
-//            }
-//        }
-//        return result;
     }
 
     @Override
@@ -309,34 +332,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean failTask(Long id) {
-        Assert.notNull(id);
-
-        // 更新任务为失败状态
-        Task task = getById(id);
-        task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
-        boolean result = updateById(task);
-
-        // 发送失败邮件给任务创建人
-        try {
-            if (result) {
-                // 查询创建人的邮件
-                UserInfo userInfo = userService.userInfo(task.getCreateUser());
-                String emailAddress = userInfo.getUser().getEmail();
-                if (StrUtil.isNotBlank(emailAddress)) {
-                    String messageId = MailSender.sendMail(emailAddress, StrUtil.format("mydata通知 定时任务【{}】异常停止", task.getTaskName()), StrUtil.format("定时任务【{}】异常停止，时间：{}，异常信息请详见任务日志。", task.getTaskName(), DateUtil.now()));
-                    log.info("email messageId = {}", messageId);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public boolean delete(Long id) {
         Task task = ManageCache.getTask(id);
         if (task == null) {
@@ -455,45 +450,12 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     }
 
     @Override
-    public boolean finishTask(Task task, List<Map> filteredDataList) {
+    public void finishTask(Task task) {
         Task updateTask = getById(task.getId());
         updateTask.setLastRunTime(task.getLastRunTime());
         updateTask.setLastSuccessTime(task.getLastSuccessTime());
-        boolean result = updateById(updateTask);
-        if (!result) {
-            return result;
-        }
-
-        // 若没有被过滤的无效数据，则结束
-        if (CollUtil.isEmpty(filteredDataList)) {
-            return result;
-        }
-
-        // 查询数据项字段
-        List<DataField> dataFields = dataFieldService.findByData(updateTask.getDataId());
-        if (CollUtil.isEmpty(dataFields)) {
-            return result;
-        }
-        // 字段+数据 构建excel
-        File excelFile = FileUtil.createTempFile(MdConstant.TEMP_DIR, ".xls", true);
-        ExcelWriter excelWriter = ExcelUtil.getWriter();
-        dataFields.forEach(dataField -> {
-            excelWriter.addHeaderAlias(dataField.getFieldCode(), dataField.getFieldName());
-        });
-        excelWriter.write(filteredDataList);
-        excelWriter.flush(excelFile);
-        excelWriter.close();
-
-        // 发送邮件给任务创建人
-        // 查询创建人的邮件
-        UserInfo userInfo = userService.userInfo(updateTask.getCreateUser());
-        String emailAddress = userInfo.getUser().getEmail();
-        if (StrUtil.isNotBlank(emailAddress)) {
-            String messageId = MailSender.sendMail(emailAddress, StrUtil.format("mydata通知：任务【{}】 存在被过滤的无效数据", updateTask.getTaskName()), StrUtil.format("时间：{}，任务【{}】因部分数据不符合过滤条件被拦截，请查看附件。", DateUtil.now(), updateTask.getTaskName()), excelFile);
-            log.info("email messageId = {}", messageId);
-        }
-
-        return result;
+        updateTask.setTaskStatus(task.getTaskStatus());
+        updateById(updateTask);
     }
 
     @Override
@@ -539,8 +501,10 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(taskDTO.getProjectId(), "提交失败：所属项目无效！");
         // 关联环境 不能为空
         Assert.notNull(taskDTO.getEnvId(), "提交失败：环境无效！");
-        // 关联API 不能为空
-        Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
+        if (MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+            // 关联API 不能为空
+            Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
+        }
         // 关联数据项 不能为空 v0.6.0 去掉验证
 //        Assert.notNull(taskDTO.getDataId(), "提交失败：数据项无效！");
         // 不是订阅任务，则任务周期必填

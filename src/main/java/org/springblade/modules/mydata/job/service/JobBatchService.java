@@ -32,9 +32,9 @@ public class JobBatchService {
         List<TaskBatchParam> batchParamList = CollUtil.newArrayList();
         for (Map<String, String> map : taskBatchParams) {
             TaskBatchParam taskBatchParam = new TaskBatchParam();
-            taskBatchParam.setKey(map.get(MdConstant.DATA_KEY));
-            taskBatchParam.setOp(map.get(MdConstant.DATA_OP));
-            taskBatchParam.setValue(Integer.valueOf(map.get(MdConstant.DATA_VALUE)));
+            taskBatchParam.setKey(map.get(MdConstant.PARAM_KEY));
+            taskBatchParam.setOp(map.get(MdConstant.PARAM_OP));
+            taskBatchParam.setValue(Integer.valueOf(map.get(MdConstant.PARAM_VALUE)));
             taskBatchParam.setStep(Integer.valueOf(map.get(MdConstant.BATCH_INC_STEP)));
             batchParamList.add(taskBatchParam);
         }

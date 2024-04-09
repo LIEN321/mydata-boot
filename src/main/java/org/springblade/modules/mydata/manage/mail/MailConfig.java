@@ -42,4 +42,9 @@ public class MailConfig {
      */
     @Value("${mail.pass}")
     private String pass;
+
+    static {
+        // 修复163邮箱的附件名为“ATT00001.bin”
+        System.getProperties().setProperty("mail.mime.splitlongparameters", "false");
+    }
 }

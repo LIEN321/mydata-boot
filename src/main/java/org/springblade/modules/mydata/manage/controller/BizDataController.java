@@ -51,4 +51,8 @@ public class BizDataController {
         return R.data(bizDataService.bizDataPage(Condition.getPage(query), bizDataDTO));
     }
 
+    @GetMapping("/delete_by_env")
+    public R deleteByEnv(BizDataDTO bizDataDTO) {
+        return R.status(bizDataService.deleteByEnv(bizDataDTO.getDataId(), bizDataDTO.getEnvId()));
+    }
 }

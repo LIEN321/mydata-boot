@@ -23,17 +23,18 @@ public class JobDataFilterService {
     /**
      * 将数据库中的过滤条件 转为封装类结构
      */
-    public List<BizDataFilter> parseBizDataFilter(List<Map<String, String>> dataFilterList) {
+    public List<BizDataFilter> convertBizDataFilter(List<Map<String, Object>> dataFilterList) {
         if (CollUtil.isEmpty(dataFilterList)) {
             return null;
         }
 
         List<BizDataFilter> bizDataFilters = CollUtil.newArrayList();
-        for (Map<String, String> map : dataFilterList) {
+        for (Map<String, Object> map : dataFilterList) {
             BizDataFilter bizDataFilter = new BizDataFilter();
-            bizDataFilter.setKey(map.get(MdConstant.DATA_KEY));
-            bizDataFilter.setOp(map.get(MdConstant.DATA_OP));
-            bizDataFilter.setValue(map.get(MdConstant.DATA_VALUE));
+            bizDataFilter.setKey(map.get(MdConstant.PARAM_KEY).toString());
+            bizDataFilter.setOp(map.get(MdConstant.PARAM_OP).toString());
+            bizDataFilter.setValue(map.get(MdConstant.PARAM_VALUE));
+            bizDataFilter.setType(map.get(MdConstant.PARAM_TYPE));
             bizDataFilters.add(bizDataFilter);
         }
 
@@ -43,13 +44,13 @@ public class JobDataFilterService {
     /**
      * 通过 task里的dataFitler 对datas进行过滤
      *
-     * @param task
+     * @param taskInfo
      */
-    public void doFilter(TaskInfo task) {
-        Assert.notNull(task);
+    public void doFilter(TaskInfo taskInfo) {
+        Assert.notNull(taskInfo);
 
-        List<Map> dataList = task.getProduceDataList();
-        List<BizDataFilter> dataFilters = task.getDataFilters();
+        List<Map> dataList = taskInfo.getProduceDataList();
+        List<BizDataFilter> dataFilters = taskInfo.getDataFilters();
 
         if (CollUtil.isEmpty(dataList) || CollUtil.isEmpty(dataFilters)) {
             return;
@@ -132,11 +133,35 @@ public class JobDataFilterService {
             }
         });
 
-        task.setProduceDataList(validDataList);
-        task.getFilteredDataList().addAll(filteredDataList);
+        taskInfo.setProduceDataList(validDataList);
+        taskInfo.getFilteredDataList().addAll(filteredDataList);
+    }
 
-        task.appendLog("过滤前的业务数据：{}", dataList);
-        task.appendLog("过滤条件：{}", dataFilters);
-        task.appendLog("过滤后的业务数据：{}", validDataList);
+    /**
+     * 解析过滤条件中的 自定义字符串
+     */
+    public List<BizDataFilter> parseFilterValue(TaskInfo taskInfo) {
+        List<BizDataFilter> filters = taskInfo.getDataFilters();
+        if (CollUtil.isEmpty(filters)) {
+            return filters;
+        }
+
+        filters.forEach(filter -> {
+            Object value = filter.getValue();
+            // 任务的最后成功时间，若没有成功过 则复用任务开始时间
+            if (MdConstant.DATA_VALUE_TASK_LAST_SUCCESS_TIME.equals(value)) {
+                filter.setValue(taskInfo.getLastSuccessTime());
+            }
+        });
+
+        return filters;
+    }
+
+    public void sendNoticeEmail(TaskInfo taskInfo) {
+        List<Map> filteredDataList = taskInfo.getFilteredDataList();
+        // 若没有被过滤的无效数据，则结束
+        if (CollUtil.isEmpty(filteredDataList)) {
+            return;
+        }
     }
 }

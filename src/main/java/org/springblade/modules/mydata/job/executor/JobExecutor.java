@@ -160,11 +160,12 @@ public class JobExecutor implements ApplicationRunner {
      * @param taskInfo job
      */
     public void cacheJob(TaskInfo taskInfo) {
+        // 清空任务时间信息
+        taskInfo.setStartTime(null);
+        taskInfo.setNextRunTime(null);
+        taskInfo.setLastRunTime(null);
+        taskInfo.setLastSuccessTime(null);
         taskInfo.setEndTime(null);
-        // 清空已有数据
-        taskInfo.setConsumeDataList(null);
-        taskInfo.setProduceDataList(null);
-        taskInfo.setFilteredDataList(CollUtil.toList());
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
         int i = 0;
@@ -177,9 +178,8 @@ public class JobExecutor implements ApplicationRunner {
                 calculateNextRunTime(taskInfo);
 
                 // 存入缓存
-                jobCache.cacheJob(taskInfo);
-
                 taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
+                jobCache.cacheJob(taskInfo);
                 return;
             } catch (RuntimeException e) {
                 i++;
@@ -187,8 +187,8 @@ public class JobExecutor implements ApplicationRunner {
             }
         }
 
-        taskInfo.setExecuteResult(MdConstant.TASK_RESULT_FAILED);
-        fail(taskInfo);
+        taskInfo.setFailed(true);
+        completeJob(taskInfo);
     }
 
     /**
@@ -219,21 +219,6 @@ public class JobExecutor implements ApplicationRunner {
         });
     }
 
-    /**
-     * 继续执行任务
-     */
-    public void continueJob(TaskInfo taskInfo) {
-        // 执行任务
-        cacheJob(taskInfo);
-    }
-
-    public void fail(TaskInfo taskInfo) {
-        // 更新任务状态
-        taskService.failTask(taskInfo.getId());
-        // 删除任务缓存
-        jobCache.removeTask(taskInfo.getId());
-    }
-
     public void notify(String taskId) {
         TaskInfo taskInfo = jobCache.getTask(taskId);
         if (taskInfo == null) {
@@ -251,10 +236,35 @@ public class JobExecutor implements ApplicationRunner {
         task.setId(taskInfo.getId());
         task.setLastRunTime(taskInfo.getLastRunTime());
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
-        taskService.finishTask(task, taskInfo.getFilteredDataList());
+
+        if (taskInfo.isFailed()) {
+            // 更新任务状态为异常
+            task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
+            // 删除任务缓存
+            jobCache.removeTask(taskInfo.getId());
+        }
+
+        taskService.finishTask(task);
 
         // 保存日志
         taskLogService.save(getTaskLog(taskInfo));
+
+        // 若当前任务是 订阅任务，则不再执行
+        if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+            return;
+        }
+
+        // 减少可执行次数
+        int times = taskInfo.getTimes();
+        // 判断可执行次数
+        if (--times > 0) {
+            taskInfo.setTimes(times);
+            // 继续执行任务
+            cacheJob(taskInfo);
+        }
+
+        // 执行订阅任务
+        executeSubscribedTask(taskInfo);
     }
 
     /**
@@ -308,20 +318,18 @@ public class JobExecutor implements ApplicationRunner {
 
         // header
         taskInfo.setReqHeaders(task.getReqHeaders());
-        taskInfo.setOriginReqHeaders(task.getReqHeaders());
         // param
         Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
             Map<String, Object> jobParams = MapUtil.newHashMap();
-            jobParams.putAll(taskParams);
-            taskInfo.setReqParams(jobParams);
-            taskInfo.setOriginReqParams(jobParams);
+            jobParams.putAll(task.getReqParams());
+            taskInfo.setReqParams(ObjectUtil.clone(jobParams));
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
 
         // 数据过滤条件
-        taskInfo.setDataFilters(jobDataFilterService.parseBizDataFilter(task.getDataFilter()));
+        taskInfo.setDataFilters(jobDataFilterService.convertBizDataFilter(task.getDataFilter()));
 
         // 分批参数
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());
@@ -329,7 +337,14 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
+        // 初始空的过滤数据
         taskInfo.setFilteredDataList(CollUtil.toList());
+        // 消费模式
+        taskInfo.setConsumeMode(task.getConsumeMode());
+        // 消费推送邮箱
+        taskInfo.setConsumeEmail(task.getConsumeEmail());
+        // 跳过特殊情况
+        taskInfo.setSkipError(task.getSkipError());
 
         if (task.getDataId() != null) {
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
@@ -346,6 +361,10 @@ public class JobExecutor implements ApplicationRunner {
                 taskInfo.setMappingFieldType(mappingFieldType);
             }
         }
+        taskInfo.setProduceDataList(CollUtil.toList());
+        taskInfo.setConsumeDataList(CollUtil.toList());
+        taskInfo.setFilteredDataList(CollUtil.toList());
+        taskInfo.setCreateUser(task.getCreateUser());
 
         return taskInfo;
     }
@@ -360,11 +379,13 @@ public class JobExecutor implements ApplicationRunner {
         Assert.notEmpty(taskInfo.getTaskPeriod());
 
         Date date = taskInfo.getStartTime();
+        String period = taskInfo.getTaskPeriod();
         if (taskInfo.getFailCount() > 0) {
-            date = taskInfo.getNextRunTime();
+//            date = taskInfo.getNextRunTime();
+            period = MdConstant.TASK_FAILED_PERIOD;
         }
 
-        CronExpression cronExpression = new CronExpression(taskInfo.getTaskPeriod());
+        CronExpression cronExpression = new CronExpression(period);
         Date nextRunTime = cronExpression.getNextValidTimeAfter(date);
         taskInfo.setNextRunTime(nextRunTime);
     }

@@ -81,7 +81,7 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
             List<Env> envs = envService.listByProject(data.getProjectId());
             List<Long> envIdList = envs.stream().map(Env::getId).collect(Collectors.toList());
             // 删除业务数据
-            bizDataService.dropBizData(id, envIdList);
+            bizDataService.deleteByEnvs(id, envIdList);
         });
         // 删除数据项
         deleteLogic(ids);
@@ -166,8 +166,9 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
      * @param code 编号
      * @return 数据项
      */
-    private Data findByCode(String code) {
+    private Data findByCode(Long projectId, String code) {
         LambdaQueryWrapper<Data> queryWrapper = Wrappers.<Data>lambdaQuery()
+                .eq(Data::getProjectId, projectId)
                 .eq(Data::getDataCode, code);
         return getOne(queryWrapper);
     }
@@ -177,6 +178,7 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
         Long id = dataDTO.getId();
         String dataCode = dataDTO.getDataCode();
         String dataName = dataDTO.getDataName();
+        Long projectId = dataDTO.getProjectId();
 
         // 新增数据项 校验编号，更新操作 不支持修改编号
         if (id == null) {
@@ -186,7 +188,7 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
             Assert.isTrue(dataCode.length() <= MdConstant.MAX_CODE_LENGTH, "提交失败：编号 不能超过{}位！", MdConstant.MAX_CODE_LENGTH);
 
             // 校验code是否唯一
-            Data check = findByCode(dataCode);
+            Data check = findByCode(projectId, dataCode);
             Assert.isNull(check, "提交失败：编号 {} 已存在！", dataCode);
         }
 

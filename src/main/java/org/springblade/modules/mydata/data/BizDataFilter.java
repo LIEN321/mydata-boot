@@ -1,6 +1,8 @@
 package org.springblade.modules.mydata.data;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
+import org.springblade.common.constant.MdConstant;
 
 import java.io.Serializable;
 
@@ -28,4 +30,17 @@ public class BizDataFilter implements Serializable {
      * 条件值
      */
     private Object value;
+
+    /**
+     * 条件类型
+     *
+     * @see MdConstant#TASK_FILTER_TYPE_VALUE
+     * @see MdConstant#TASK_FILTER_TYPE_FIELD
+     */
+    private Object type;
+
+    @Override
+    public String toString() {
+        return StrUtil.format("{} {} {}", key, op, value);
+    }
 }

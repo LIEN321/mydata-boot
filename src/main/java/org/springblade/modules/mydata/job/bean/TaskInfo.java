@@ -10,6 +10,7 @@ import org.springblade.modules.mydata.data.BizDataFilter;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class TaskInfo implements Serializable {
     private Integer opType;
 
     /**
-     * 待执行次数，-1 无限次（默认），0 结束，正整数 待执行数
+     * 待执行次数，默认Integer.MAX_VALUE，0 结束，正整数 待执行数
      */
     private int times = MdConstant.TASK_JOB_DEFAULT_TIMES;
 
@@ -78,14 +79,10 @@ public class TaskInfo implements Serializable {
      */
     private Map<String, String> reqHeaders;
 
-    private Map<String, String> originReqHeaders;
-
     /**
      * 接口请求参数
      */
     private Map<String, Object> reqParams;
-
-    private Map<String, Object> originReqParams;
 
     /**
      * 接口字段与变量名的映射
@@ -102,7 +99,7 @@ public class TaskInfo implements Serializable {
     /**
      * 字段映射配置
      */
-    private Map<String, String> fieldMapping;
+    private LinkedHashMap<String, String> fieldMapping;
 
     /**
      * 所属租户
@@ -220,6 +217,46 @@ public class TaskInfo implements Serializable {
      * 配置映射的数据字段的类型
      */
     private Map<String, String> mappingFieldType;
+
+    /**
+     * 消费数据模式，默认1，1-API、2-发邮件
+     */
+    private Integer consumeMode;
+
+    /**
+     * 消费数据模式的收件人邮件
+     */
+    private String consumeEmail;
+
+    /**
+     * 跳过特殊情况
+     */
+    private Integer skipError;
+
+    /**
+     * 任务是否失败
+     */
+    private boolean isFailed = false;
+
+    /**
+     * 任务创建者id
+     */
+    private Long createUser;
+
+    /**
+     * 新增数据总量
+     */
+    private int insertCount;
+
+    /**
+     * 更新数据总理
+     */
+    private int updateCount;
+
+    /**
+     * 消费数据总量
+     */
+    private int consumeCount;
 
     /**
      * 追加日志

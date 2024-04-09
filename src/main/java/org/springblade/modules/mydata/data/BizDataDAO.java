@@ -2,8 +2,10 @@ package org.springblade.modules.mydata.data;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 import org.springblade.common.constant.MdConstant;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -105,43 +107,72 @@ public class BizDataDAO {
             List<Criteria> criteriaList = CollUtil.newArrayList();
             for (BizDataFilter bizDataFilter : bizDataFilters) {
                 // 条件key
-                String key = bizDataFilter.getKey();
+                final String key = bizDataFilter.getKey();
                 // 条件操作
-                String op = bizDataFilter.getOp();
+                final String op = bizDataFilter.getOp();
                 // 条件值
-                Object value = bizDataFilter.getValue();
+                final Object value = bizDataFilter.getValue();
+                // 条件值类型
+                Object type = bizDataFilter.getType();
 
-                // 根据条件操作类型 调用mongodb对应的查询方法
-                Criteria criteria = Criteria.where(key);
-                switch (op) {
-                    case MdConstant.DATA_OP_EQ:
-                        criteria.is(value);
-                        break;
-                    case MdConstant.DATA_OP_NE:
-                        criteria.ne(value);
-                        break;
-                    case MdConstant.DATA_OP_GT:
-                        criteria.gt(value);
-                        break;
-                    case MdConstant.DATA_OP_GTE:
-                        criteria.gte(value);
-                        break;
-                    case MdConstant.DATA_OP_LT:
-                        criteria.lt(value);
-                        break;
-                    case MdConstant.DATA_OP_LTE:
-                        criteria.lte(value);
-                        break;
-                    case MdConstant.DATA_NOT_EMPTY:
-                        criteria.ne("");
-                        criteriaList.add(Criteria.where(key).ne(null));
-                        break;
-                    case MdConstant.DATA_NOT_NULL:
-                        criteria.ne(null).exists(true);
-                        break;
+                Criteria criteria;
+                if (MdConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
+                    criteria = new Criteria() {
+                        @NotNull
+                        @Override
+                        public Document getCriteriaObject() {
+                            String executeOp;
+                            switch (op) {
+                                case MdConstant.DATA_OP_EQ:
+                                    executeOp = "==";
+                                    break;
+                                case MdConstant.DATA_OP_NE:
+                                case MdConstant.DATA_OP_GT:
+                                case MdConstant.DATA_OP_GTE:
+                                case MdConstant.DATA_OP_LT:
+                                case MdConstant.DATA_OP_LTE:
+                                    executeOp = op;
+                                    break;
 
-                    default:
-                        throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
+                                default:
+                                    throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
+                            }
+                            return new Document("$where", StrUtil.format("this.{} {} this.{}", key, op, value));
+                        }
+                    };
+                } else {
+                    // 根据条件操作类型 调用mongodb对应的查询方法
+                    criteria = Criteria.where(key);
+                    switch (op) {
+                        case MdConstant.DATA_OP_EQ:
+                            criteria.is(value);
+                            break;
+                        case MdConstant.DATA_OP_NE:
+                            criteria.ne(value);
+                            break;
+                        case MdConstant.DATA_OP_GT:
+                            criteria.gt(value);
+                            break;
+                        case MdConstant.DATA_OP_GTE:
+                            criteria.gte(value);
+                            break;
+                        case MdConstant.DATA_OP_LT:
+                            criteria.lt(value);
+                            break;
+                        case MdConstant.DATA_OP_LTE:
+                            criteria.lte(value);
+                            break;
+                        case MdConstant.DATA_NOT_EMPTY:
+                            criteria.ne("");
+                            criteriaList.add(Criteria.where(key).ne(null));
+                            break;
+                        case MdConstant.DATA_NOT_NULL:
+                            criteria.ne(null).exists(true);
+                            break;
+
+                        default:
+                            throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
+                    }
                 }
                 // 存入mongodb的查询条件集合
                 criteriaList.add(criteria);
