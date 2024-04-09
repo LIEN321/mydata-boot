@@ -207,6 +207,8 @@ public class JobDataService {
         // dataService.updateDataCount(task.getTenantId(), task.getDataId());
 
         task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList.size(), dataUpdateList.size());
+        task.setInsertCount(task.getInsertCount() + dataInsertList.size());
+        task.setUpdateCount(task.getUpdateCount() + dataUpdateList.size());
     }
 
     /**

@@ -154,6 +154,7 @@ public class JobThread implements Runnable {
                         taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
                     }
 
+                    taskInfo.appendLog("获取数据结束，共计新增{}、更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
                     break;
                 // 消费数据
                 case MdConstant.DATA_CONSUMER:
@@ -193,6 +194,8 @@ public class JobThread implements Runnable {
 
                         // 将业务数据存入任务对象，以便后续处理
                         taskInfo.setConsumeDataList(dataList);
+                        // 累加消费数据总量
+                        taskInfo.setConsumeCount(taskInfo.getConsumeCount() + dataList.size());
 
                         // 消费模式是调用API
                         if (MdConstant.TASK_CONSUME_MODE_API.equals(taskInfo.getConsumeMode())) {
@@ -218,6 +221,8 @@ public class JobThread implements Runnable {
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
                     } while (taskInfo.isBatch());
+
+                    taskInfo.appendLog("消费数据结束，共计{}", taskInfo.getConsumeCount());
                     break;
                 default:
                     throw new RuntimeException("不支持的任务类型：" + opType);
@@ -259,6 +264,8 @@ public class JobThread implements Runnable {
             taskInfo.setProduceDataList(CollUtil.toList());
             taskInfo.setConsumeDataList(CollUtil.toList());
             taskInfo.setFilteredDataList(CollUtil.toList());
+            taskInfo.setInsertCount(0);
+            taskInfo.setUpdateCount(0);
         }
 
         // 设置任务结束时间

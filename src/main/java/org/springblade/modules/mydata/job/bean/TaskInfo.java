@@ -244,6 +244,21 @@ public class TaskInfo implements Serializable {
     private Long createUser;
 
     /**
+     * 新增数据总量
+     */
+    private int insertCount;
+
+    /**
+     * 更新数据总理
+     */
+    private int updateCount;
+
+    /**
+     * 消费数据总量
+     */
+    private int consumeCount;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {
