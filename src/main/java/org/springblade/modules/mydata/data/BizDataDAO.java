@@ -2,6 +2,7 @@ package org.springblade.modules.mydata.data;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
@@ -106,11 +107,11 @@ public class BizDataDAO {
             List<Criteria> criteriaList = CollUtil.newArrayList();
             for (BizDataFilter bizDataFilter : bizDataFilters) {
                 // 条件key
-                String key = bizDataFilter.getKey();
+                final String key = bizDataFilter.getKey();
                 // 条件操作
-                String op = bizDataFilter.getOp();
+                final String op = bizDataFilter.getOp();
                 // 条件值
-                Object value = bizDataFilter.getValue();
+                final Object value = bizDataFilter.getValue();
                 // 条件值类型
                 Object type = bizDataFilter.getType();
 
@@ -136,7 +137,7 @@ public class BizDataDAO {
                                 default:
                                     throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
                             }
-                            return new Document("$where", "this.trade_quantity " + executeOp + " this.woo_quantity");
+                            return new Document("$where", StrUtil.format("this.{} {} this.{}", key, op, value));
                         }
                     };
                 } else {
