@@ -245,13 +245,12 @@ public class JobThread implements Runnable {
                 // 任务失败，中止运行
                 taskInfo.setFailed(true);
                 taskInfo.appendLog("任务失败达到{}次，将终止且不再执行", failCount);
+
+                // 发送任务失败通知邮件
+                jobEmailService.sendFailedNotice(taskInfo);
             }
             taskInfo.appendLog("任务失败原因：{}", e.getMessage());
             log.error(e.getMessage(), e);
-
-            // 发送任务失败通知邮件
-            jobEmailService.sendFailedNotice(taskInfo);
-
         } finally {
             // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
             taskInfo.setReqHeaders(taskInfoBak.getReqHeaders());
