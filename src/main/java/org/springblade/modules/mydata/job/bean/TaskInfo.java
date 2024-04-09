@@ -234,6 +234,16 @@ public class TaskInfo implements Serializable {
     private Integer skipError;
 
     /**
+     * 任务是否失败
+     */
+    private boolean isFailed = false;
+
+    /**
+     * 任务创建者id
+     */
+    private Long createUser;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

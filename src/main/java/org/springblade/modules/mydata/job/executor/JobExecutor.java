@@ -160,11 +160,12 @@ public class JobExecutor implements ApplicationRunner {
      * @param taskInfo job
      */
     public void cacheJob(TaskInfo taskInfo) {
+        // 清空任务时间信息
+        taskInfo.setStartTime(null);
+        taskInfo.setNextRunTime(null);
+        taskInfo.setLastRunTime(null);
+        taskInfo.setLastSuccessTime(null);
         taskInfo.setEndTime(null);
-        // 清空已有数据
-        taskInfo.setConsumeDataList(null);
-        taskInfo.setProduceDataList(null);
-        taskInfo.setFilteredDataList(CollUtil.toList());
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
         int i = 0;
@@ -187,8 +188,9 @@ public class JobExecutor implements ApplicationRunner {
             }
         }
 
-        taskInfo.setExecuteResult(MdConstant.TASK_RESULT_FAILED);
-        fail(taskInfo);
+//        fail(taskInfo);
+        taskInfo.setFailed(true);
+        completeJob(taskInfo);
     }
 
     /**
@@ -219,21 +221,6 @@ public class JobExecutor implements ApplicationRunner {
         });
     }
 
-    /**
-     * 继续执行任务
-     */
-    public void continueJob(TaskInfo taskInfo) {
-        // 执行任务
-        cacheJob(taskInfo);
-    }
-
-    public void fail(TaskInfo taskInfo) {
-        // 更新任务状态
-        taskService.failTask(taskInfo.getId());
-        // 删除任务缓存
-        jobCache.removeTask(taskInfo.getId());
-    }
-
     public void notify(String taskId) {
         TaskInfo taskInfo = jobCache.getTask(taskId);
         if (taskInfo == null) {
@@ -251,10 +238,35 @@ public class JobExecutor implements ApplicationRunner {
         task.setId(taskInfo.getId());
         task.setLastRunTime(taskInfo.getLastRunTime());
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
-        taskService.finishTask(task, taskInfo.getFilteredDataList());
+
+        if (taskInfo.isFailed()) {
+            // 更新任务状态为异常
+            task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
+            // 删除任务缓存
+            jobCache.removeTask(taskInfo.getId());
+        }
+
+        taskService.finishTask(task);
 
         // 保存日志
         taskLogService.save(getTaskLog(taskInfo));
+
+        // 若当前任务是 订阅任务，则不再执行
+        if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+            return;
+        }
+
+        // 减少可执行次数
+        int times = taskInfo.getTimes();
+        // 判断可执行次数
+        if (--times > 0) {
+            taskInfo.setTimes(times);
+            // 继续执行任务
+            cacheJob(taskInfo);
+        }
+
+        // 执行订阅任务
+        executeSubscribedTask(taskInfo);
     }
 
     /**
@@ -351,6 +363,10 @@ public class JobExecutor implements ApplicationRunner {
                 taskInfo.setMappingFieldType(mappingFieldType);
             }
         }
+        taskInfo.setProduceDataList(CollUtil.toList());
+        taskInfo.setConsumeDataList(CollUtil.toList());
+        taskInfo.setFilteredDataList(CollUtil.toList());
+        taskInfo.setCreateUser(task.getCreateUser());
 
         return taskInfo;
     }

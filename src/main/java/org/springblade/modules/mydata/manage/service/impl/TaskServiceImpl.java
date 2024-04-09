@@ -2,15 +2,10 @@ package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DatePattern;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.poi.excel.ExcelUtil;
-import cn.hutool.poi.excel.ExcelWriter;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,7 +13,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.util.SheetUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
 import org.springblade.common.util.MdUtil;
@@ -34,22 +28,18 @@ import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.Project;
 import org.springblade.modules.mydata.manage.entity.Task;
-import org.springblade.modules.mydata.manage.mail.MailSender;
 import org.springblade.modules.mydata.manage.mapper.TaskMapper;
 import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.service.ITaskLogService;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 import org.springblade.modules.mydata.manage.wrapper.TaskWrapper;
-import org.springblade.modules.system.entity.UserInfo;
 import org.springblade.modules.system.service.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -342,34 +332,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean failTask(Long id) {
-        Assert.notNull(id);
-
-        // 更新任务为失败状态
-        Task task = getById(id);
-        task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
-        boolean result = updateById(task);
-
-        // 发送失败邮件给任务创建人
-        try {
-            if (result) {
-                // 查询创建人的邮件
-                UserInfo userInfo = userService.userInfo(task.getCreateUser());
-                String emailAddress = userInfo.getUser().getEmail();
-                if (StrUtil.isNotBlank(emailAddress)) {
-                    String messageId = MailSender.sendMail(emailAddress, StrUtil.format("mydata通知 定时任务【{}】异常停止", task.getTaskName()), StrUtil.format("定时任务【{}】异常停止，时间：{}，异常信息请详见任务日志。", task.getTaskName(), DateUtil.now()));
-                    log.info("email messageId = {}", messageId);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public boolean delete(Long id) {
         Task task = ManageCache.getTask(id);
         if (task == null) {
@@ -488,51 +450,12 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     }
 
     @Override
-    public boolean finishTask(Task task, List<Map> filteredDataList) {
+    public void finishTask(Task task) {
         Task updateTask = getById(task.getId());
         updateTask.setLastRunTime(task.getLastRunTime());
         updateTask.setLastSuccessTime(task.getLastSuccessTime());
-        boolean result = updateById(updateTask);
-        if (!result) {
-            return result;
-        }
-
-        // 若没有被过滤的无效数据，则结束
-        if (CollUtil.isEmpty(filteredDataList)) {
-            return result;
-        }
-
-        // 查询数据项字段
-        List<DataField> dataFields = dataFieldService.findByData(updateTask.getDataId());
-        if (CollUtil.isEmpty(dataFields)) {
-            return result;
-        }
-        // 字段+数据 构建excel
-        File excelFile = FileUtil.createTempFile(MdConstant.TEMP_DIR, ".xls", true);
-        excelFile = FileUtil.rename(excelFile, task.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
-        ExcelWriter excelWriter = ExcelUtil.getWriter();
-        dataFields.forEach(dataField -> {
-            excelWriter.addHeaderAlias(dataField.getFieldCode(), dataField.getFieldName());
-        });
-        excelWriter.write(filteredDataList);
-        excelWriter.autoSizeColumnAll();
-        int columnCount = excelWriter.getColumnCount();
-        for (int i = 0; i < columnCount; i++) {
-            excelWriter.setColumnWidth(i, (int) Math.round(SheetUtil.getColumnWidth(excelWriter.getSheet(), i, false)) + 5);
-        }
-        excelWriter.flush(excelFile);
-        excelWriter.close();
-
-        // 发送邮件给任务创建人
-        // 查询创建人的邮件
-        UserInfo userInfo = userService.userInfo(updateTask.getCreateUser());
-        String emailAddress = userInfo.getUser().getEmail();
-        if (StrUtil.isNotBlank(emailAddress)) {
-            String messageId = MailSender.sendMail(emailAddress, StrUtil.format("mydata通知：任务【{}】 存在被过滤的无效数据", updateTask.getTaskName()), StrUtil.format("时间：{}，任务【{}】因部分数据不符合过滤条件被拦截，请查看附件。", DateUtil.now(), updateTask.getTaskName()), excelFile);
-            log.info("email messageId = {}", messageId);
-        }
-
-        return result;
+        updateTask.setTaskStatus(task.getTaskStatus());
+        updateById(updateTask);
     }
 
     @Override

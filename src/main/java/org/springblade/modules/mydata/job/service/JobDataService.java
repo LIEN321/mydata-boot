@@ -209,15 +209,41 @@ public class JobDataService {
         task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList.size(), dataUpdateList.size());
     }
 
-    public File exportExcel(TaskInfo taskInfo) {
+    /**
+     * 导出消费数据的excel文件
+     *
+     * @param taskInfo 任务
+     * @return excel文件
+     */
+    public File exportConsumeDataExcel(TaskInfo taskInfo) {
         List<Map> consumeDataList = taskInfo.getConsumeDataList();
-        // 获取任务的数据映射，key为字段编号，value为字段名称
-        LinkedHashMap<String, String> mFieldMapping = taskInfo.getFieldMapping();
+        return exportExcel(consumeDataList, taskInfo.getFieldMapping());
+    }
+
+    /**
+     * 导出过滤数据的excel文件
+     *
+     * @param taskInfo 任务
+     * @return excel文件
+     */
+    public File exportFilteredDataExcel(TaskInfo taskInfo) {
+        List<Map> consumeDataList = taskInfo.getFilteredDataList();
+        return exportExcel(consumeDataList, taskInfo.getFieldMapping());
+    }
+
+    /**
+     * 将指定数据按任务的字段映射 导出excel文件
+     *
+     * @param datas         要导出的数据
+     * @param mFieldMapping 任务的数据映射，key为字段编号，value为字段名称
+     * @return excel文件
+     */
+    private File exportExcel(List<Map> datas, LinkedHashMap<String, String> mFieldMapping) {
         Assert.notEmpty(mFieldMapping, "任务未选择导出字段");
 
         // 遍历业务数据，根据映射 转换为excel导出的数据
         List<Map<String, Object>> excelDataList = CollUtil.newArrayList();
-        consumeDataList.forEach(data -> {
+        datas.forEach(data -> {
             Map<String, Object> row = MapUtil.newHashMap();
             mFieldMapping.forEach((k, v) -> {
                 row.put(k, data.get(k));

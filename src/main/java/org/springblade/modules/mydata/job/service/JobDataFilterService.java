@@ -135,13 +135,6 @@ public class JobDataFilterService {
 
         taskInfo.setProduceDataList(validDataList);
         taskInfo.getFilteredDataList().addAll(filteredDataList);
-
-//        taskInfo.appendLog("过滤前的业务数据：{}", dataList);
-        taskInfo.appendLog("过滤前的数据量：{}", dataList.size());
-        taskInfo.appendLog("过滤条件：{}", dataFilters);
-        taskInfo.appendLog("被过滤数据：{}", filteredDataList);
-//        taskInfo.appendLog("过滤后的业务数据：{}", validDataList);
-        taskInfo.appendLog("过滤后的数据量：{}", validDataList.size());
     }
 
     /**
@@ -162,5 +155,13 @@ public class JobDataFilterService {
         });
 
         return filters;
+    }
+
+    public void sendNoticeEmail(TaskInfo taskInfo) {
+        List<Map> filteredDataList = taskInfo.getFilteredDataList();
+        // 若没有被过滤的无效数据，则结束
+        if (CollUtil.isEmpty(filteredDataList)) {
+            return;
+        }
     }
 }

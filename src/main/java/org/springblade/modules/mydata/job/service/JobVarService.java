@@ -113,8 +113,6 @@ public class JobVarService {
             return;
         }
 
-        taskInfo.appendLog("任务接口中 解析出自定义环境变量名：{}", userVarNames);
-
         // 根据变量名 获取环境变量值
         Long envId = taskInfo.getEnvId();
         List<EnvVar> envVars = CollUtil.newArrayList();
@@ -137,7 +135,7 @@ public class JobVarService {
         // 将环境变量转化为key:value格式
         Map<String, String> varMap = envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
 
-        taskInfo.appendLog("环境变量值：{}", varMap);
+        taskInfo.appendLog("解析出用户变量：{}", varMap);
 
         // 替换 header和param 中的变量
         if (CollUtil.isNotEmpty(reqHeaders)) {
