@@ -74,7 +74,6 @@ public class JobThread implements Runnable {
             // 解析并替换api中的环境变量
             taskInfo.appendLog("解析变量开始");
             jobVarService.parseVar(taskInfo);
-            taskInfo.appendLog("解析变量结束");
             // 根据操作类型 执行读或写
             switch (opType) {
                 // 提供数据
@@ -112,7 +111,6 @@ public class JobThread implements Runnable {
                         lastJsonHash = HashUtil.mixHash(json);
 
                         // 将json按字段映射 解析为业务数据
-                        taskInfo.appendLog("解析业务数据开始");
                         jobDataService.parseData(taskInfo, json);
                         taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
                         // 若没有返回数据，则结束处理
