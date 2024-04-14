@@ -211,4 +211,12 @@ public interface ITaskService extends BaseService<Task> {
      * @return 操作结果，true-成功，false-失败
      */
     boolean copyTask(Long taskId, Long targetEnvId);
+
+    /**
+     * 根据地址查询 唯一的任务
+     *
+     * @param apiUrl 地址
+     * @return 任务
+     */
+    Task findByApiUrl(String apiUrl);
 }

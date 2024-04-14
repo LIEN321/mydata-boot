@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -90,15 +91,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 校验参数
         check(taskDTO);
 
-        // v0.6.0取消状态验证，调整为：运行状态可以提交修改，但需要手动重启任务
-        // 查询任务状态，若是运行状态 则不能提交
-//        Task check = getById(taskDTO.getId());
-//        Assert.isFalse(check != null && MdConstant.TASK_STATUS_RUNNING == check.getTaskStatus(), "提交失败：任务处于运行状态，不可编辑！");
-
-        Long dataId = taskDTO.getDataId();
         // 查询data
+        Long dataId = taskDTO.getDataId();
         Data data = ManageCache.getData(dataId);
-//        Assert.notNull(data, "提交失败：所选数据项 不存在！");
 
         // 查询data的主键字段
         List<DataField> idFields = null;
@@ -116,7 +111,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
         // 查询api
         Api api = null;
-        if (taskDTO.getConsumeMode() == null || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+        if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskDTO.getProduceMode()) || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
             api = ManageCache.getApi(taskDTO.getApiId());
             Assert.notNull(api, "提交失败：所选API 不存在！");
         }
@@ -196,6 +191,23 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 新建任务的初始状态为“停止”
         if (task.getId() == null) {
             task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
+
+            // 如果是推送数据，则生成随机地址
+            if (MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
+                do {
+                    // 生成随机地址
+                    String randomUrl = RandomUtil.randomString(16);
+                    // 校验随机地址 是否全局唯一，若不是则再次生成
+                    Task check = findByApiUrl(randomUrl);
+                    if (check != null) {
+                        continue;
+                    }
+
+                    // 设置随机地址
+                    task.setApiUrl(randomUrl);
+                    break;
+                } while (true);
+            }
         }
 
         // 保存或更新task
@@ -484,6 +496,12 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         return submit(targetTask);
     }
 
+    @Override
+    public Task findByApiUrl(String apiUrl) {
+        LambdaQueryWrapper<Task> queryTaskWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getApiUrl, apiUrl);
+        return getOne(queryTaskWrapper);
+    }
+
     private void check(TaskDTO taskDTO) {
         // 校验参数
         Assert.notNull(taskDTO);
@@ -501,14 +519,18 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(taskDTO.getProjectId(), "提交失败：所属项目无效！");
         // 关联环境 不能为空
         Assert.notNull(taskDTO.getEnvId(), "提交失败：环境无效！");
-        if (MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+
+        // 提供数据模式是调用API 或 消费数据调用API模式
+        if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskDTO.getProduceMode())
+                || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
             // 关联API 不能为空
             Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
         }
         // 关联数据项 不能为空 v0.6.0 去掉验证
 //        Assert.notNull(taskDTO.getDataId(), "提交失败：数据项无效！");
-        // 不是订阅任务，则任务周期必填
-        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskDTO.getIsSubscribed())) {
+        // 不是订阅、推送数据 的任务，则任务周期必填
+        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskDTO.getIsSubscribed())
+                && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(taskDTO.getProduceMode())) {
             Assert.notBlank(taskDTO.getTaskPeriod(), "提交失败：任务周期 不能为空！");
         }
 

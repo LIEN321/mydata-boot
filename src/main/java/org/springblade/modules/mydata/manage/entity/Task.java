@@ -188,6 +188,14 @@ public class Task extends TenantEntity {
     private Integer batchSize;
 
     /**
+     * 提供数据模式，默认1，1-API、2-接收推送
+     *
+     * @see MdConstant#TASK_PRODUCE_MODE_API
+     * @see MdConstant#TASK_PRODUCE_MODE_PUSH
+     */
+    private Integer produceMode;
+
+    /**
      * 消费数据模式，默认1，1-API、2-发邮件
      */
     private Integer consumeMode;

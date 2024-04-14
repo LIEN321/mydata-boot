@@ -219,6 +219,11 @@ public class TaskInfo implements Serializable {
     private Map<String, String> mappingFieldType;
 
     /**
+     * 提供数据模式，默认1，1-API、2-接收推送
+     */
+    private Integer produceMode;
+
+    /**
      * 消费数据模式，默认1，1-API、2-发邮件
      */
     private Integer consumeMode;
@@ -257,6 +262,11 @@ public class TaskInfo implements Serializable {
      * 消费数据总量
      */
     private int consumeCount;
+
+    /**
+     * 接收到的数据
+     */
+    private String acceptedData;
 
     /**
      * 追加日志

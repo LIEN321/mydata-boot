@@ -94,9 +94,21 @@ public class JobThread implements Runnable {
                             }
                         }
 
-                        // 调用api 获取json
-                        taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
-                        String json = ApiUtil.read(taskInfo);
+                        String json = null;
+                        if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskInfo.getProduceMode())) {
+                            // 调用api 获取json
+                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                            json = ApiUtil.read(taskInfo);
+                        } else if (MdConstant.TASK_PRODUCE_MODE_PUSH.equals(taskInfo.getProduceMode())) {
+                            // 使用接收的数据
+                            json = taskInfo.getAcceptedData();
+                        }
+
+                        // 校验获取的数据是否有效
+                        if (StrUtil.isNullOrUndefined(json)) {
+                            throw new RuntimeException("未获取有效数据，任务结束！");
+                        }
+
                         // 对比上一次数据
                         if (lastJsonHash != -1L) {
                             if (lastJsonHash == HashUtil.mixHash(json)) {

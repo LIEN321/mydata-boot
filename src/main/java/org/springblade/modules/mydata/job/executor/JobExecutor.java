@@ -140,6 +140,19 @@ public class JobExecutor implements ApplicationRunner {
         executeJob(taskInfo);
     }
 
+    public void acceptData(Task task, String acceptedData) {
+        if (task == null) {
+            return;
+        }
+        TaskInfo taskInfo = this.build(task);
+        taskInfo.setTimes(1);
+        taskInfo.setStartTime(new Date());
+        taskInfo.setAcceptedData(acceptedData);
+
+        taskInfo.appendLog("接收推送数据，执行一次");
+        executeJob(taskInfo);
+    }
+
     /**
      * 停止指定任务
      *
@@ -345,6 +358,8 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setConsumeEmail(task.getConsumeEmail());
         // 跳过特殊情况
         taskInfo.setSkipError(task.getSkipError());
+        // 提供模式
+        taskInfo.setProduceMode(task.getProduceMode());
 
         if (task.getDataId() != null) {
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
