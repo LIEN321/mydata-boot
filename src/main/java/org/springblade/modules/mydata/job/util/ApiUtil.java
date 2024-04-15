@@ -6,6 +6,7 @@ import cn.hutool.http.Method;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.HttpUtils;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
@@ -45,16 +46,19 @@ public class ApiUtil {
 
         String apiFieldPrefix = task.getApiFieldPrefix();
         JSON json;
-        if (StrUtil.isNotBlank(apiFieldPrefix)) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putByPath(apiFieldPrefix, consumeDataList);
-            json = jsonObject;
-        } else if (task.getBatchSize() == 1) {
+
+        if (consumeDataList.size() == 1 && MdConstant.TASK_SINGLE_MODE_OBJECT.equals(task.getSingleMode())) {
             json = new JSONObject(consumeDataList.get(0));
         } else {
             JSONArray jsonArray = new JSONArray();
             jsonArray.addAll(consumeDataList);
             json = jsonArray;
+        }
+
+        if (StrUtil.isNotBlank(apiFieldPrefix)) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putByPath(apiFieldPrefix, json);
+            json = jsonObject;
         }
 
         HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());

@@ -83,7 +83,11 @@ public class Task extends TenantEntity {
     private LinkedHashMap<String, String> fieldMapping;
 
     /**
-     * 运行状态：0-停止，1-运行，2-异常
+     * 运行状态
+     *
+     * @see MdConstant#TASK_STATUS_RUNNING  运行
+     * @see MdConstant#TASK_STATUS_FAILED   异常
+     * @see MdConstant#TASK_STATUS_STOPPED  停止
      */
     private Integer taskStatus;
 
@@ -196,7 +200,26 @@ public class Task extends TenantEntity {
     private Integer produceMode;
 
     /**
+     * 提供数据的 认证方式
+     *
+     * @see MdConstant#TASK_AUTH_TYPE_NONE
+     * @see MdConstant#TASK_AUTH_TYPE_API_KEY
+     * @see MdConstant#TASK_AUTH_TYPE_BASIC
+     * @see MdConstant#TASK_AUTH_TYPE_HMAC
+     */
+    private Integer authType;
+
+    /**
+     * 提供数据的 认证参数
+     */
+    @TableField(typeHandler = FastjsonTypeHandler.class)
+    private Map<String, String> authParams;
+
+    /**
      * 消费数据模式，默认1，1-API、2-发邮件
+     *
+     * @see MdConstant#TASK_CONSUME_MODE_API
+     * @see MdConstant#TASK_CONSUME_MODE_EMAIL
      */
     private Integer consumeMode;
 
@@ -211,4 +234,14 @@ public class Task extends TenantEntity {
      * 1-跳过相同数据异常
      */
     private Integer skipError;
+
+    /**
+     * 单条记录消费模式，1-对象、2-集合
+     */
+    private Integer singleMode;
+
+    /**
+     * 订阅任务id
+     */
+    private Long subscribeTaskId;
 }

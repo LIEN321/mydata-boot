@@ -6,7 +6,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.HashUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
@@ -54,16 +54,20 @@ public class JobThread implements Runnable {
 
     private final TaskInfo taskInfo;
 
-    private final TaskInfo taskInfoBak;
-
     public JobThread(TaskInfo taskInfo) {
         this.taskInfo = taskInfo;
-        this.taskInfoBak = ObjectUtil.clone(taskInfo);
     }
 
     @Override
     public void run() {
         taskInfo.appendLog("任务开始执行");
+
+        // 不是订阅任务 生成新的任务批次号，订阅任务已设置了前置任务的相同批次号
+        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+            taskInfo.setDataBatchId(RandomUtil.randomString(16));
+        }
+        taskInfo.appendLog("任务批次号 {}", taskInfo.getDataBatchId());
+
         // 设置任务最新运行时间
         taskInfo.setLastRunTime(new Date());
 
@@ -166,7 +170,7 @@ public class JobThread implements Runnable {
                         taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
                     }
 
-                    taskInfo.appendLog("获取数据结束，共计新增{}、更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
+                    taskInfo.appendLog("获取数据结束，共计新增{} 更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
                     break;
                 // 消费数据
                 case MdConstant.DATA_CONSUMER:
@@ -177,7 +181,20 @@ public class JobThread implements Runnable {
                     }
                     // 过滤条件
                     List<BizDataFilter> filters = jobDataFilterService.parseFilterValue(taskInfo);
-                    taskInfo.appendLog("查询业务数据的条件：{}", filters);
+                    if (filters == null) {
+                        filters = CollUtil.toList();
+                    }
+
+                    // 订阅任务 使用任务批次号 查询数据
+                    if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+                        // 构建数据批次查询条件 _MD_BATCH_ID_ = dataBatchId
+                        BizDataFilter bizDataFilter = new BizDataFilter();
+                        bizDataFilter.setKey(MdConstant.DATA_COLUMN_BATCH_ID);
+                        bizDataFilter.setOp(MdConstant.DATA_OP_EQ);
+                        bizDataFilter.setValue(taskInfo.getDataBatchId());
+                        bizDataFilter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                        filters.add(bizDataFilter);
+                    }
 
                     // 分批次数
                     int round = 0;
@@ -195,7 +212,7 @@ public class JobThread implements Runnable {
                         // 根据过滤条件 查询数据
                         taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
                         List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
-//                        taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
+                        // taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
                         taskInfo.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理
@@ -268,16 +285,6 @@ public class JobThread implements Runnable {
             }
             taskInfo.appendLog("任务失败原因：{}", e.getMessage());
             log.error(e.getMessage(), e);
-        } finally {
-            // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
-            taskInfo.setReqHeaders(taskInfoBak.getReqHeaders());
-            taskInfo.setReqParams(taskInfoBak.getReqParams());
-            taskInfo.setBatchParams(taskInfoBak.getBatchParams());
-            taskInfo.setProduceDataList(CollUtil.toList());
-            taskInfo.setConsumeDataList(CollUtil.toList());
-            taskInfo.setFilteredDataList(CollUtil.toList());
-            taskInfo.setInsertCount(0);
-            taskInfo.setUpdateCount(0);
         }
 
         // 设置任务结束时间

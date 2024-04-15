@@ -80,9 +80,19 @@ public class TaskInfo implements Serializable {
     private Map<String, String> reqHeaders;
 
     /**
+     * 原始的接口请求Header
+     */
+    private Map<String, String> originReqHeaders;
+
+    /**
      * 接口请求参数
      */
     private Map<String, Object> reqParams;
+
+    /**
+     * 原始的接口请求参数
+     */
+    private Map<String, Object> originReqParams;
 
     /**
      * 接口字段与变量名的映射
@@ -209,6 +219,11 @@ public class TaskInfo implements Serializable {
     private List<TaskBatchParam> batchParams;
 
     /**
+     * 原始分批参数
+     */
+    private List<TaskBatchParam> originBatchParams;
+
+    /**
      * 分批数量
      */
     private Integer batchSize;
@@ -267,6 +282,16 @@ public class TaskInfo implements Serializable {
      * 接收到的数据
      */
     private String acceptedData;
+
+    /**
+     * 单条记录消费模式，1-对象、2-集合
+     */
+    private Integer singleMode;
+
+    /**
+     * 数据批次标识
+     */
+    private String dataBatchId;
 
     /**
      * 追加日志

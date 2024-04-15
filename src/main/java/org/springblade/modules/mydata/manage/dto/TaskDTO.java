@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springblade.common.constant.MdConstant;
 
 import java.io.Serializable;
 import java.util.List;
@@ -58,7 +57,7 @@ public class TaskDTO implements Serializable {
     /**
      * 字段层级前缀
      */
-//    private String apiFieldPrefix;
+    //    private String apiFieldPrefix;
 
     /**
      * 字段映射
@@ -118,6 +117,16 @@ public class TaskDTO implements Serializable {
     private Integer produceMode;
 
     /**
+     * 提供数据的 认证方式
+     */
+    private Integer authType;
+
+    /**
+     * 提供数据的 认证参数
+     */
+    private Map<String, String> authParams;
+
+    /**
      * 消费数据模式，默认1，1-API、2-发邮件
      */
     private Integer consumeMode;
@@ -129,9 +138,6 @@ public class TaskDTO implements Serializable {
 
     /**
      * 操作类型
-     *
-     * @see MdConstant#DATA_PRODUCER
-     * @see MdConstant#DATA_CONSUMER
      */
     private Integer opType;
 
@@ -144,4 +150,14 @@ public class TaskDTO implements Serializable {
      * 字段层级前缀
      */
     private String apiFieldPrefix;
+
+    /**
+     * 单条记录消费模式，1-对象、2-集合
+     */
+    private Integer singleMode;
+
+    /**
+     * 订阅任务id
+     */
+    private Long subscribeTaskId;
 }

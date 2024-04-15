@@ -179,8 +179,20 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setLastRunTime(null);
         taskInfo.setLastSuccessTime(null);
         taskInfo.setEndTime(null);
+
+        // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
+        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
+        taskInfo.setReqParams(taskInfo.getOriginReqParams());
+        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
+        taskInfo.setProduceDataList(CollUtil.toList());
+        taskInfo.setConsumeDataList(CollUtil.toList());
+        taskInfo.setFilteredDataList(CollUtil.toList());
+        taskInfo.setInsertCount(0);
+        taskInfo.setUpdateCount(0);
+
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
+
         int i = 0;
         while (i < MdConstant.TASK_MAX_FAIL_COUNT) {
             try {
@@ -196,6 +208,7 @@ public class JobExecutor implements ApplicationRunner {
                 return;
             } catch (RuntimeException e) {
                 i++;
+                taskInfo.appendLog("第{}次缓存任务出错，原因：{}", i, e.getMessage());
                 ThreadUtil.sleep(5000);
             }
         }
@@ -220,13 +233,13 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
         // 查询相同数据的订阅任务
-        List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId());
+        List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId(), taskInfo.getEnvId(), taskInfo.getId());
         subTasks.forEach(task -> {
             TaskInfo subTaskInfo = build(task);
             // 订阅任务现在执行
             subTaskInfo.setStartTime(new Date());
-            // 向订阅任务传入数据
-            subTaskInfo.setConsumeDataList(produceDataList);
+            // 设置数据批次编号
+            subTaskInfo.setDataBatchId(taskInfo.getDataBatchId());
             // 指定订阅任务，调用接口发送数据
             executeJob(subTaskInfo);
         });
@@ -250,22 +263,35 @@ public class JobExecutor implements ApplicationRunner {
         task.setLastRunTime(taskInfo.getLastRunTime());
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
 
+        // 若任务异常
         if (taskInfo.isFailed()) {
             // 更新任务状态为异常
             task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
             // 删除任务缓存
             jobCache.removeTask(taskInfo.getId());
+            // 清空可执行次数
+            taskInfo.setTimes(0);
+        } else {
+            // 任务未异常
+            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+                // 是订阅任务 且未成功，则继续执行
+                if (taskInfo.getFailCount() > 0) {
+                    taskInfo.setTaskPeriod(MdConstant.TASK_FAILED_PERIOD);
+                } else {
+                    // 订阅任务 成功，则结束
+                    taskInfo.setTimes(0);
+                }
+            } else {
+                // 不是订阅任务，则触发订阅任务
+                executeSubscribedTask(taskInfo);
+            }
         }
 
+        // 更新task信息
         taskService.finishTask(task);
 
         // 保存日志
         taskLogService.save(getTaskLog(taskInfo));
-
-        // 若当前任务是 订阅任务，则不再执行
-        if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
-            return;
-        }
 
         // 减少可执行次数
         int times = taskInfo.getTimes();
@@ -275,9 +301,6 @@ public class JobExecutor implements ApplicationRunner {
             // 继续执行任务
             cacheJob(taskInfo);
         }
-
-        // 执行订阅任务
-        executeSubscribedTask(taskInfo);
     }
 
     /**
@@ -310,6 +333,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setApiMethod(task.getApiMethod());
         taskInfo.setApiUrl(task.getApiUrl());
         taskInfo.setProjectId(task.getProjectId());
+        taskInfo.setSingleMode(task.getSingleMode());
 
         // 所属租户
         taskInfo.setTenantId(task.getTenantId());
@@ -330,13 +354,15 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setIsSubscribed(task.getIsSubscribed());
 
         // header
-        taskInfo.setReqHeaders(task.getReqHeaders());
+        taskInfo.setOriginReqHeaders(task.getReqHeaders());
+        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
         // param
         Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
             Map<String, Object> jobParams = MapUtil.newHashMap();
             jobParams.putAll(task.getReqParams());
-            taskInfo.setReqParams(ObjectUtil.clone(jobParams));
+            taskInfo.setOriginReqParams(jobParams);
+            taskInfo.setReqParams(taskInfo.getOriginReqParams());
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
@@ -347,7 +373,8 @@ public class JobExecutor implements ApplicationRunner {
         // 分批参数
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());
         taskInfo.setBatchInterval(task.getBatchInterval());
-        taskInfo.setBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
+        taskInfo.setOriginBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
+        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
         // 初始空的过滤数据
@@ -366,7 +393,8 @@ public class JobExecutor implements ApplicationRunner {
             // 获取配置映射的数据字段的类型
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
                 // 映射 字段编号：字段类型
-                Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> fieldTypeMap = dataFields.stream()
+                                                             .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
                 Map<String, String> mappingFieldType = MapUtil.newHashMap();
                 task.getFieldMapping().forEach((k, v) -> {
                     mappingFieldType.put(k, fieldTypeMap.get(k));
@@ -396,7 +424,7 @@ public class JobExecutor implements ApplicationRunner {
         Date date = taskInfo.getStartTime();
         String period = taskInfo.getTaskPeriod();
         if (taskInfo.getFailCount() > 0) {
-//            date = taskInfo.getNextRunTime();
+            //            date = taskInfo.getNextRunTime();
             period = MdConstant.TASK_FAILED_PERIOD;
         }
 
@@ -412,14 +440,9 @@ public class JobExecutor implements ApplicationRunner {
      */
     private ThreadPoolExecutor getThreadPoolExecutor() {
         if (threadPoolExecutor == null) {
-            threadPoolExecutor = new ThreadPoolExecutor(
-                    jobThreadCount
-                    , Integer.MAX_VALUE
-                    , 60L
-                    , TimeUnit.SECONDS
-                    , bq
-                    , ThreadFactoryBuilder.create().setNamePrefix("data-task").build()
-            );
+            threadPoolExecutor = new ThreadPoolExecutor(jobThreadCount, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, bq, ThreadFactoryBuilder.create()
+                                                                                                                                          .setNamePrefix("data-task")
+                                                                                                                                          .build());
         }
 
         return threadPoolExecutor;

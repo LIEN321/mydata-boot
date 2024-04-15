@@ -106,9 +106,11 @@ public interface ITaskService extends BaseService<Task> {
      * 查询订阅指定数据项的、运行中的任务
      *
      * @param dataId 数据项id
+     * @param envId  环境id
+     * @param taskId 任务id
      * @return 任务列表
      */
-    List<Task> listRunningSubTasks(Long dataId);
+    List<Task> listRunningSubTasks(Long dataId, Long envId, Long taskId);
 
     /**
      * 查询最近成功的任务

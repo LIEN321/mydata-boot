@@ -99,8 +99,8 @@ public class JobDataService {
         });
 
         taskInfo.setProduceDataList(apiResponseDataList);
-//        taskInfo.appendLog("解析前json数据：{}", jsonString);
-//        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
+        //        taskInfo.appendLog("解析前json数据：{}", jsonString);
+        //        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
     }
 
     /**
@@ -137,7 +137,7 @@ public class JobDataService {
 
     public void saveTaskData(TaskInfo task) {
         Assert.notNull(task);
-//        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
+        //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
         if (CollUtil.isEmpty(task.getProduceDataList())) {
             task.appendLog("任务中没有业务数据，跳过保存操作");
             return;
@@ -182,6 +182,7 @@ public class JobDataService {
 
             // 设置业务数据的最后更新时间
             value.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+            value.put(MdConstant.DATA_COLUMN_BATCH_ID, task.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
@@ -206,7 +207,7 @@ public class JobDataService {
         // v0.7.0 取消，该字段由于数据按环境区分存储而失效
         // dataService.updateDataCount(task.getTenantId(), task.getDataId());
 
-        task.appendLog("保存业务数据，新增：{}，更新：{}", dataInsertList.size(), dataUpdateList.size());
+        task.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
         task.setInsertCount(task.getInsertCount() + dataInsertList.size());
         task.setUpdateCount(task.getUpdateCount() + dataUpdateList.size());
     }
