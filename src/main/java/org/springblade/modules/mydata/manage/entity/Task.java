@@ -63,7 +63,7 @@ public class Task extends TenantEntity {
     /**
      * 所属数据
      */
-    @TableField(updateStrategy = FieldStrategy.IGNORED)
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Long dataId;
 
     /**
@@ -79,7 +79,7 @@ public class Task extends TenantEntity {
     /**
      * 字段映射
      */
-    @TableField(typeHandler = FastjsonTypeHandler.class, updateStrategy = FieldStrategy.IGNORED)
+    @TableField(typeHandler = FastjsonTypeHandler.class, updateStrategy = FieldStrategy.ALWAYS)
     private LinkedHashMap<String, String> fieldMapping;
 
     /**
@@ -99,13 +99,13 @@ public class Task extends TenantEntity {
     /**
      * 数据编号
      */
-    @TableField(updateStrategy = FieldStrategy.IGNORED)
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String dataCode;
 
     /**
      * 数据主键字段编号
      */
-    @TableField(updateStrategy = FieldStrategy.IGNORED)
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String idFieldCode;
 
     /**
