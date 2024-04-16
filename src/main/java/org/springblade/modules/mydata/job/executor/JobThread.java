@@ -22,6 +22,9 @@ import org.springblade.modules.mydata.job.service.JobDataService;
 import org.springblade.modules.mydata.job.service.JobEmailService;
 import org.springblade.modules.mydata.job.service.JobVarService;
 import org.springblade.modules.mydata.job.util.ApiUtil;
+import org.springblade.modules.system.entity.UserInfo;
+import org.springblade.modules.system.service.IUserService;
+import org.springblade.modules.system.service.impl.UserServiceImpl;
 
 import java.io.File;
 import java.util.Date;
@@ -51,6 +54,7 @@ public class JobThread implements Runnable {
 
     private final JobEmailService jobEmailService = SpringUtil.getBean(JobEmailService.class);
 
+    private final IUserService userService = SpringUtil.getBean(UserServiceImpl.class);
 
     private final TaskInfo taskInfo;
 
@@ -166,8 +170,10 @@ public class JobThread implements Runnable {
                     if (CollUtil.isNotEmpty(taskInfo.getFilteredDataList())) {
                         File excelFile = jobDataService.exportFilteredDataExcel(taskInfo);
                         excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
-                        jobEmailService.sendFilteredData(taskInfo, excelFile);
-                        taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
+                        UserInfo userInfo = userService.userInfo(taskInfo.getCreateUser());
+                        String emailAddress = userInfo.getUser().getEmail();
+                        jobEmailService.sendFilteredData(taskInfo, excelFile, emailAddress);
+                        taskInfo.appendLog("向邮箱{}发送过滤数据", emailAddress);
                     }
 
                     taskInfo.appendLog("获取数据结束，共计新增{} 更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
@@ -238,7 +244,7 @@ public class JobThread implements Runnable {
                         else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {
                             File excelFile = jobDataService.exportConsumeDataExcel(taskInfo);
                             excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
-                            jobEmailService.sendConsumeData(taskInfo, excelFile);
+                            jobEmailService.sendConsumeData(taskInfo, excelFile, taskInfo.getConsumeEmail());
                             taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
                         }
 
@@ -280,8 +286,10 @@ public class JobThread implements Runnable {
                 taskInfo.setFailed(true);
                 taskInfo.appendLog("任务失败达到{}次，将终止且不再执行", failCount);
 
-                // 发送任务失败通知邮件
-                jobEmailService.sendFailedNotice(taskInfo);
+                // 发送任务失败通知邮件 给任务创建人
+                UserInfo userInfo = userService.userInfo(taskInfo.getCreateUser());
+                String emailAddress = userInfo.getUser().getEmail();
+                jobEmailService.sendFailedNotice(taskInfo, emailAddress);
             }
             taskInfo.appendLog("任务失败原因：{}", e.getMessage());
             log.error(e.getMessage(), e);
