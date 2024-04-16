@@ -387,8 +387,6 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
-        // 初始空的过滤数据
-        taskInfo.setFilteredDataList(CollUtil.toList());
         // 消费模式
         taskInfo.setConsumeMode(task.getConsumeMode());
         // 消费推送邮箱
@@ -404,14 +402,14 @@ public class JobExecutor implements ApplicationRunner {
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
                 // 映射 字段编号：字段类型
                 Map<String, String> fieldTypeMap = dataFields.stream()
-                                                             .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                Map<String, String> mappingFieldType = MapUtil.newHashMap();
+                        .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> fieldTypeMapping = MapUtil.newHashMap();
                 task.getFieldMapping().forEach((k, v) -> {
-                    mappingFieldType.put(k, fieldTypeMap.get(k));
+                    fieldTypeMapping.put(k, fieldTypeMap.get(k));
                 });
 
                 // 映射字段的类型
-                taskInfo.setMappingFieldType(mappingFieldType);
+                taskInfo.setFieldTypeMapping(fieldTypeMapping);
             }
         }
         taskInfo.setProduceDataList(CollUtil.toList());
@@ -451,8 +449,8 @@ public class JobExecutor implements ApplicationRunner {
     private ThreadPoolExecutor getThreadPoolExecutor() {
         if (threadPoolExecutor == null) {
             threadPoolExecutor = new ThreadPoolExecutor(jobThreadCount, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, bq, ThreadFactoryBuilder.create()
-                                                                                                                                          .setNamePrefix("data-task")
-                                                                                                                                          .build());
+                    .setNamePrefix("data-task")
+                    .build());
         }
 
         return threadPoolExecutor;

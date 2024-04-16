@@ -171,7 +171,7 @@ public class TaskInfo implements Serializable {
     /**
      * 执行结果，0-失败，1-成功
      */
-    private int executeResult = MdConstant.TASK_RESULT_FAILED;
+    private Integer executeResult;
 
     /**
      * 任务失败次数
@@ -231,7 +231,7 @@ public class TaskInfo implements Serializable {
     /**
      * 配置映射的数据字段的类型
      */
-    private Map<String, String> mappingFieldType;
+    private Map<String, String> fieldTypeMapping;
 
     /**
      * 提供数据模式，默认1，1-API、2-接收推送
