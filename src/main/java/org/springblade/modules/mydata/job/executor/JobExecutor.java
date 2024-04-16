@@ -192,6 +192,9 @@ public class JobExecutor implements ApplicationRunner {
 
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
+        taskInfo.setTaskLogId(null);
+        // 重置状态
+        taskInfo.setExecuteResult(null);
 
         int i = 0;
         while (i < MdConstant.TASK_MAX_FAIL_COUNT) {
@@ -202,18 +205,20 @@ public class JobExecutor implements ApplicationRunner {
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskInfo);
 
-                // 存入缓存
                 taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
+
+                // 生成日志
+                TaskLog taskLog = getTaskLog(taskInfo);
+                if (taskLogService.saveOrUpdate(taskLog)) {
+                    taskInfo.setTaskLogId(taskLog.getId());
+                }
+
+                // 存入缓存
                 jobCache.cacheJob(taskInfo);
 
                 // 更新任务的下次执行时间
                 taskService.updateNextRunTime(taskInfo.getId(), taskInfo.getNextRunTime());
 
-                // 生成日志
-                TaskLog taskLog = getTaskLog(taskInfo);
-                if (taskLogService.save(taskLog)) {
-                    taskInfo.setTaskLogId(taskLog.getId());
-                }
                 return;
             } catch (RuntimeException e) {
                 i++;
@@ -458,6 +463,7 @@ public class JobExecutor implements ApplicationRunner {
 
     private TaskLog getTaskLog(TaskInfo taskInfo) {
         TaskLog taskLog = new TaskLog();
+        taskLog.setId(taskInfo.getTaskLogId());
         taskLog.setTaskId(taskInfo.getId());
         taskLog.setTaskStartTime(taskInfo.getStartTime());
         taskLog.setTaskEndTime(taskInfo.getEndTime());
