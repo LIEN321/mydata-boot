@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -22,12 +23,7 @@ import org.springblade.modules.mydata.job.executor.JobExecutor;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.TaskDTO;
 import org.springblade.modules.mydata.manage.dto.TaskStatDTO;
-import org.springblade.modules.mydata.manage.entity.Api;
-import org.springblade.modules.mydata.manage.entity.Data;
-import org.springblade.modules.mydata.manage.entity.DataField;
-import org.springblade.modules.mydata.manage.entity.Env;
-import org.springblade.modules.mydata.manage.entity.Project;
-import org.springblade.modules.mydata.manage.entity.Task;
+import org.springblade.modules.mydata.manage.entity.*;
 import org.springblade.modules.mydata.manage.mapper.TaskMapper;
 import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.service.ITaskLogService;
@@ -39,10 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -90,25 +83,21 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 校验参数
         check(taskDTO);
 
-        // v0.6.0取消状态验证，调整为：运行状态可以提交修改，但需要手动重启任务
-        // 查询任务状态，若是运行状态 则不能提交
-//        Task check = getById(taskDTO.getId());
-//        Assert.isFalse(check != null && MdConstant.TASK_STATUS_RUNNING == check.getTaskStatus(), "提交失败：任务处于运行状态，不可编辑！");
-
-        Long dataId = taskDTO.getDataId();
         // 查询data
+        Long dataId = taskDTO.getDataId();
         Data data = ManageCache.getData(dataId);
-//        Assert.notNull(data, "提交失败：所选数据项 不存在！");
 
         // 查询data的主键字段
         List<DataField> idFields = null;
         List<DataField> dataFields = null;
         if (data != null) {
-//            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
+            //            idFields = dataFieldService.findIdFields(taskDTO.getDataId());
             dataFields = dataFieldService.findByData(taskDTO.getDataId());
-            idFields = dataFields.stream().filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId())).collect(Collectors.toList());
+            idFields = dataFields.stream()
+                    .filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId()))
+                    .collect(Collectors.toList());
         }
-//        Assert.notEmpty(idFields, "提交失败：所选数据项 缺少唯一标识字段！");
+        //        Assert.notEmpty(idFields, "提交失败：所选数据项 缺少唯一标识字段！");
 
         // 查询project
         Project project = ManageCache.getProject(taskDTO.getProjectId());
@@ -116,7 +105,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
         // 查询api
         Api api = null;
-        if (taskDTO.getConsumeMode() == null || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+        if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskDTO.getProduceMode()) || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
             api = ManageCache.getApi(taskDTO.getApiId());
             Assert.notNull(api, "提交失败：所选API 不存在！");
         }
@@ -146,10 +135,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             List<Map<String, Object>> dataFilters = task.getDataFilter();
             if (CollUtil.isNotEmpty(dataFilters)) {
                 // 获取任务配置映射的字段类型
-                Map<String, String> fieldTypeMap = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                Map<String, String> mappingFieldType = MapUtil.newHashMap();
+                Map<String, String> fieldTypeMap = dataFields.stream()
+                        .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                Map<String, String> fieldTypeMapping = MapUtil.newHashMap();
                 task.getFieldMapping().forEach((k, v) -> {
-                    mappingFieldType.put(k, fieldTypeMap.get(k));
+                    fieldTypeMapping.put(k, fieldTypeMap.get(k));
                 });
 
                 for (Map<String, Object> filter : dataFilters) {
@@ -164,7 +154,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                         continue;
                     }
                     // 转换值类型
-                    String targetType = mappingFieldType.get(code);
+                    String targetType = fieldTypeMapping.get(code);
                     try {
                         Object convertValue = MdUtil.convertDataType(value, targetType);
                         filter.put(MdConstant.PARAM_VALUE, convertValue);
@@ -190,12 +180,33 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                 task.setRefOpType(task.getOpType() == MdConstant.DATA_PRODUCER ? MdConstant.DATA_CONSUMER : MdConstant.DATA_PRODUCER);
             } else {
                 mergeApiAndEnv(task, api, env);
+                task.setRefOpType(null);
             }
         }
 
         // 新建任务的初始状态为“停止”
         if (task.getId() == null) {
             task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
+
+            // 如果是推送数据，则生成随机地址
+            if (MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
+                task.setTaskPeriod(null);
+                task.setRefEnvId(null);
+                task.setRefOpType(null);
+                do {
+                    // 生成随机地址
+                    String randomUrl = RandomUtil.randomString(16);
+                    // 校验随机地址 是否全局唯一，若不是则再次生成
+                    Task check = findByApiUrl(randomUrl);
+                    if (check != null) {
+                        continue;
+                    }
+
+                    // 设置随机地址
+                    task.setApiUrl(randomUrl);
+                    break;
+                } while (true);
+            }
         }
 
         // 保存或更新task
@@ -226,11 +237,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         task.setTaskStatus(MdConstant.TASK_STATUS_RUNNING);
         boolean result = updateById(task);
 
-        // 非订阅模式的任务 才能启动（fix #707419847）
-        if (result && !MdConstant.TASK_IS_SUBSCRIBED.equals(task.getIsSubscribed())) {
+        // 非订阅模式、非接收推送的任务 启动定时任务
+        if (result && !MdConstant.TASK_IS_SUBSCRIBED.equals(task.getIsSubscribed()) && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
             // 通知任务服务
             try {
-                jobExecutor.startTask(id);
+                jobExecutor.startTask(task);
             } catch (Exception e) {
                 // TODO 优化对job服务访问异常的处理
                 e.printStackTrace();
@@ -251,6 +262,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Task task = getById(id);
         Assert.notNull(task, "停止失败，任务无效！");
         task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
+        task.setNextRunTime(null);
 
         boolean result = updateById(task);
 
@@ -284,35 +296,47 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Override
     public List<Task> listRunningTasks() {
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING).ne(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED);
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .ne(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
+                .ne(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_PUSH);
         return list(queryWrapper);
     }
 
     @Override
     public List<Task> listEnvTaskByData(Long dataId, Long envId) {
-//        Assert.notNull(dataId, "参数dataId无效，dataId = {}", dataId);
-//        Assert.notNull(envId, "参数envId无效，envId = {}", envId);
+        //        Assert.notNull(dataId, "参数dataId无效，dataId = {}", dataId);
+        //        Assert.notNull(envId, "参数envId无效，envId = {}", envId);
         if (ObjectUtil.hasNull(dataId, envId)) {
             return null;
         }
 
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getDataId, dataId).and(qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getDataId, dataId)
+                .and(qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
 
         return list(queryWrapper);
     }
 
     @Override
-    public List<Task> listRunningSubTasks(Long dataId) {
+    public List<Task> listRunningSubTasks(Long dataId, Long envId, Long taskId) {
         Assert.notNull(dataId, "参数dataId无效，dataId = {}", dataId);
 
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING).eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED).eq(Task::getDataId, dataId);
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
+                .eq(Task::getDataId, dataId)
+                .eq(Task::getEnvId, envId)
+                .and(qw -> qw.eq(Task::getSubscribeTaskId, taskId).or().eq(Task::getSubscribeTaskId, 0));
 
         return list(queryWrapper);
     }
 
     @Override
     public List<Task> listSuccessTasks() {
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING).orderByDesc(Task::getLastSuccessTime);
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .orderByDesc(Task::getLastSuccessTime);
 
         IPage<Task> page = new Page<>();
         page.setSize(MdConstant.PAGE_SIZE);
@@ -322,7 +346,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Override
     public List<Task> listFailedTasks() {
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getTaskStatus, MdConstant.TASK_STATUS_FAILED).orderByDesc(Task::getLastSuccessTime);
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_FAILED)
+                .orderByDesc(Task::getLastSuccessTime);
 
         IPage<Task> page = new Page<>();
         page.setSize(MdConstant.PAGE_SIZE);
@@ -333,7 +359,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean delete(Long id) {
-        Task task = ManageCache.getTask(id);
+        Task task = getById(id);
         if (task == null) {
             return true;
         }
@@ -399,7 +425,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             updateBatchById(tasks);
 
             // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream().filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING).collect(Collectors.toList());
+            List<Task> runningTasks = tasks.stream()
+                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(runningTasks)) {
                 // 重启任务的调度
                 try {
@@ -430,7 +458,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             updateBatchById(tasks);
 
             // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream().filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING).collect(Collectors.toList());
+            List<Task> runningTasks = tasks.stream()
+                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(runningTasks)) {
                 // 重启任务的调度
                 try {
@@ -460,14 +490,17 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Override
     public long countByProjectEnv(Long projectId, Long envId) {
-        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getProjectId, projectId).isNotNull(Task::getDataId).and(qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
+        LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(Task::getProjectId, projectId)
+                .isNotNull(Task::getDataId)
+                .and(qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
         return count(queryWrapper);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean copyTask(Long taskId, Long targetEnvId) {
-        Task task = ManageCache.getTask(taskId);
+        Task task = getById(taskId);
         Assert.notNull(task, "复制失败：待复制的任务无效！", taskId);
 
         Env targetEnv = ManageCache.getEnv(targetEnvId);
@@ -480,8 +513,25 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         targetTask.setId(null);
         targetTask.setEnvId(targetEnvId);
         targetTask.setTaskName(targetTask.getTaskName() + " (copy)");
+        // 复制时，清空其他环境信息
+        targetTask.setRefEnvId(null);
 
         return submit(targetTask);
+    }
+
+    @Override
+    public Task findByApiUrl(String apiUrl) {
+        LambdaQueryWrapper<Task> queryTaskWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getApiUrl, apiUrl);
+        return getOne(queryTaskWrapper);
+    }
+
+    @Override
+    public void updateNextRunTime(Long taskId, Date nextRunTime) {
+        Assert.notNull(taskId);
+        Task task = getById(taskId);
+        Assert.notNull(task);
+        task.setNextRunTime(nextRunTime);
+        updateById(task);
     }
 
     private void check(TaskDTO taskDTO) {
@@ -501,14 +551,16 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(taskDTO.getProjectId(), "提交失败：所属项目无效！");
         // 关联环境 不能为空
         Assert.notNull(taskDTO.getEnvId(), "提交失败：环境无效！");
-        if (MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
+
+        // 提供数据模式是调用API 或 消费数据调用API模式
+        if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskDTO.getProduceMode()) || MdConstant.TASK_CONSUME_MODE_API.equals(taskDTO.getConsumeMode())) {
             // 关联API 不能为空
             Assert.notNull(taskDTO.getApiId(), "提交失败：API无效！");
         }
         // 关联数据项 不能为空 v0.6.0 去掉验证
-//        Assert.notNull(taskDTO.getDataId(), "提交失败：数据项无效！");
-        // 不是订阅任务，则任务周期必填
-        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskDTO.getIsSubscribed())) {
+        //        Assert.notNull(taskDTO.getDataId(), "提交失败：数据项无效！");
+        // 不是订阅、推送数据 的任务，则任务周期必填
+        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskDTO.getIsSubscribed()) && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(taskDTO.getProduceMode())) {
             Assert.notBlank(taskDTO.getTaskPeriod(), "提交失败：任务周期 不能为空！");
         }
 
@@ -531,7 +583,10 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     }
 
     private List<Task> list(Long dataId, Long apiId, Long envId) {
-        LambdaQueryWrapper<Task> queryTaskWrapper = Wrappers.<Task>lambdaQuery().eq(ObjectUtil.isNotNull(dataId), Task::getDataId, dataId).eq(ObjectUtil.isNotNull(apiId), Task::getApiId, apiId).and(ObjectUtil.isNotNull(envId), qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
+        LambdaQueryWrapper<Task> queryTaskWrapper = Wrappers.<Task>lambdaQuery()
+                .eq(ObjectUtil.isNotNull(dataId), Task::getDataId, dataId)
+                .eq(ObjectUtil.isNotNull(apiId), Task::getApiId, apiId)
+                .and(ObjectUtil.isNotNull(envId), qw -> qw.eq(Task::getEnvId, envId).or().eq(Task::getRefEnvId, envId));
 
         return list(queryTaskWrapper);
     }

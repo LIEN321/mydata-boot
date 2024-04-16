@@ -10,6 +10,7 @@ import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -106,9 +107,11 @@ public interface ITaskService extends BaseService<Task> {
      * 查询订阅指定数据项的、运行中的任务
      *
      * @param dataId 数据项id
+     * @param envId  环境id
+     * @param taskId 任务id
      * @return 任务列表
      */
-    List<Task> listRunningSubTasks(Long dataId);
+    List<Task> listRunningSubTasks(Long dataId, Long envId, Long taskId);
 
     /**
      * 查询最近成功的任务
@@ -211,4 +214,17 @@ public interface ITaskService extends BaseService<Task> {
      * @return 操作结果，true-成功，false-失败
      */
     boolean copyTask(Long taskId, Long targetEnvId);
+
+    /**
+     * 根据地址查询 唯一的任务
+     *
+     * @param apiUrl 地址
+     * @return 任务
+     */
+    Task findByApiUrl(String apiUrl);
+
+    /**
+     * 更新任务的下次执行时间
+     */
+    void updateNextRunTime(Long taskId, Date nextRunTime);
 }

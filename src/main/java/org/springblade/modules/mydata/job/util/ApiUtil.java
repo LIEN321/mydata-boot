@@ -6,6 +6,7 @@ import cn.hutool.http.Method;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.HttpUtils;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
@@ -37,19 +38,16 @@ public class ApiUtil {
      *
      * @param task 任务
      */
-    public static void write(TaskInfo task) {
+    public static String write(TaskInfo task) {
         List<Map> consumeDataList = task.getConsumeDataList();
         if (CollUtil.isEmpty(consumeDataList)) {
-            return;
+            return "";
         }
 
         String apiFieldPrefix = task.getApiFieldPrefix();
         JSON json;
-        if (StrUtil.isNotBlank(apiFieldPrefix)) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putByPath(apiFieldPrefix, consumeDataList);
-            json = jsonObject;
-        } else if (task.getBatchSize() == 1) {
+
+        if (consumeDataList.size() == 1 && MdConstant.TASK_SINGLE_MODE_OBJECT.equals(task.getSingleMode())) {
             json = new JSONObject(consumeDataList.get(0));
         } else {
             JSONArray jsonArray = new JSONArray();
@@ -57,6 +55,12 @@ public class ApiUtil {
             json = jsonArray;
         }
 
-        HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
+        if (StrUtil.isNotBlank(apiFieldPrefix)) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putByPath(apiFieldPrefix, json);
+            json = jsonObject;
+        }
+
+        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
     }
 }

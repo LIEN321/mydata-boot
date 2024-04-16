@@ -5,6 +5,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import org.springblade.common.constant.MdConstant;
+import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
@@ -56,6 +57,8 @@ public class JobDataFilterService {
             return;
         }
 
+        Map<String, String> fieldTypeMapping = taskInfo.getFieldTypeMapping();
+
         // 过滤后的有效数据
         List<Map> validDataList = ListUtil.toList();
         // 过滤被拦截的无效数据
@@ -77,6 +80,7 @@ public class JobDataFilterService {
 
                 // 当数据中 指定字段的值 无效，则过滤该数据
                 Object dataValue = data.get(key);
+                filterValue = MdUtil.convertDataType(filterValue, fieldTypeMapping.get(key));
 
                 // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
 //                if (!(dataValue instanceof Comparable && filterValue instanceof Comparable)) {

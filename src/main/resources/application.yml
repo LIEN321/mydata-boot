@@ -162,6 +162,7 @@ blade:
       - /mydata-manage/task/submit
   secure:
     skip-url:
+      - /mydata-manage/integration/**
     client:
       - client-id: sword
         path-patterns:

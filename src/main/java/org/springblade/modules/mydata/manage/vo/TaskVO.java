@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ser.std.NullSerializer;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springblade.common.constant.MdConstant;
 
 import java.util.Date;
 import java.util.List;
@@ -166,9 +165,6 @@ public class TaskVO {
 
     /**
      * 跨环境任务的对应操作类型
-     *
-     * @see MdConstant#DATA_PRODUCER
-     * @see MdConstant#DATA_CONSUMER
      */
     @JsonSerialize(nullsUsing = NullSerializer.class)
     private Integer refOpType;
@@ -195,6 +191,21 @@ public class TaskVO {
     private Integer batchSize;
 
     /**
+     * 提供数据模式，默认1，1-API、2-接收推送
+     */
+    private Integer produceMode;
+
+    /**
+     * 提供数据的 认证方式
+     */
+    private Integer authType;
+
+    /**
+     * 提供数据的 认证参数
+     */
+    private Map<String, String> authParams;
+
+    /**
      * 消费数据模式，默认1，1-API、2-发邮件
      */
     private Integer consumeMode;
@@ -208,4 +219,26 @@ public class TaskVO {
      * 跳过特殊情况
      */
     private Integer skipError;
+
+    /**
+     * 单条记录消费模式，1-对象、2-集合
+     */
+    @JsonSerialize(nullsUsing = NullSerializer.class)
+    private Integer singleMode;
+
+    /**
+     * 订阅任务id
+     */
+    @JsonSerialize(using = ToStringSerializer.class, nullsUsing = NullSerializer.class)
+    private Long subscribeTaskId;
+
+    /**
+     * 订阅任务名称
+     */
+    private String subscribeTaskName;
+
+    /**
+     * 下次执行时间
+     */
+    private Date nextRunTime;
 }

@@ -80,9 +80,19 @@ public class TaskInfo implements Serializable {
     private Map<String, String> reqHeaders;
 
     /**
+     * 原始的接口请求Header
+     */
+    private Map<String, String> originReqHeaders;
+
+    /**
      * 接口请求参数
      */
     private Map<String, Object> reqParams;
+
+    /**
+     * 原始的接口请求参数
+     */
+    private Map<String, Object> originReqParams;
 
     /**
      * 接口字段与变量名的映射
@@ -161,7 +171,7 @@ public class TaskInfo implements Serializable {
     /**
      * 执行结果，0-失败，1-成功
      */
-    private int executeResult = MdConstant.TASK_RESULT_FAILED;
+    private Integer executeResult;
 
     /**
      * 任务失败次数
@@ -209,6 +219,11 @@ public class TaskInfo implements Serializable {
     private List<TaskBatchParam> batchParams;
 
     /**
+     * 原始分批参数
+     */
+    private List<TaskBatchParam> originBatchParams;
+
+    /**
      * 分批数量
      */
     private Integer batchSize;
@@ -216,7 +231,12 @@ public class TaskInfo implements Serializable {
     /**
      * 配置映射的数据字段的类型
      */
-    private Map<String, String> mappingFieldType;
+    private Map<String, String> fieldTypeMapping;
+
+    /**
+     * 提供数据模式，默认1，1-API、2-接收推送
+     */
+    private Integer produceMode;
 
     /**
      * 消费数据模式，默认1，1-API、2-发邮件
@@ -257,6 +277,26 @@ public class TaskInfo implements Serializable {
      * 消费数据总量
      */
     private int consumeCount;
+
+    /**
+     * 接收到的数据
+     */
+    private String acceptedData;
+
+    /**
+     * 单条记录消费模式，1-对象、2-集合
+     */
+    private Integer singleMode;
+
+    /**
+     * 数据批次标识
+     */
+    private String dataBatchId;
+
+    /**
+     * 任务日志
+     */
+    private Long taskLogId;
 
     /**
      * 追加日志

@@ -3,6 +3,7 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
@@ -45,6 +46,8 @@ public class JobVarService {
     // 系统内置变量 {$} 的正则表达式
     private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
 
+    private static final String DATA_FIELD_PATTERN = "\\{([^}]*)\\}";
+
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
      *
@@ -52,7 +55,7 @@ public class JobVarService {
      * @param jsonString json数据
      */
     public void saveVarValue(TaskInfo task, String jsonString) {
-        if (task == null) {
+        if (task == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
@@ -74,10 +77,7 @@ public class JobVarService {
             envVar.setTenantId(task.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}"
-                    , envVar.getTenantId()
-                    , envVar.getVarName()
-                    , envVar.getVarValue());
+            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
         });
 
     }
@@ -133,7 +133,8 @@ public class JobVarService {
         }
 
         // 将环境变量转化为key:value格式
-        Map<String, String> varMap = envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
+        Map<String, String> varMap = envVars.stream()
+                .collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
 
         taskInfo.appendLog("解析出用户变量：{}", varMap);
 
@@ -144,6 +145,41 @@ public class JobVarService {
         if (CollUtil.isNotEmpty(reqParams)) {
             taskInfo.setReqParams(replaceUserVarValues(reqParams, varMap));
         }
+    }
+
+    /**
+     * 解析url中的 数据字段变量 并替换数据
+     *
+     * @param taskInfo 任务
+     */
+    public void parseConsumeUrlVar(TaskInfo taskInfo) {
+        // api地址
+        String apiUrl = taskInfo.getApiUrl();
+        // 解析{field}格式的变量名
+        List<String> fieldNames = parseVarNames(apiUrl, DATA_FIELD_PATTERN, "{", "}");
+        // 若解析为空，则结束
+        if (CollUtil.isEmpty(fieldNames)) {
+            return;
+        }
+        // 提取第一条消费数据
+        Map data = taskInfo.getConsumeDataList().get(0);
+        // 替换映射
+        Map<String, String> replaceMap = MapUtil.newHashMap();
+        for (String field : fieldNames) {
+            if (!data.containsKey(field)) {
+                continue;
+            }
+            // 从数据中 取出数据 并存入替换映射
+            String value = ObjectUtil.toString(data.remove(field));
+            replaceMap.put(field, value);
+        }
+
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
+        stringSubstitutor.setVariablePrefix("{");
+        stringSubstitutor.setVariableSuffix("}");
+        // 替换变量值
+        apiUrl = stringSubstitutor.replace(apiUrl);
+        taskInfo.setApiUrl(apiUrl);
     }
 
     /**
@@ -174,7 +210,7 @@ public class JobVarService {
         List<String> list = CollUtil.newArrayList();
         if (CollUtil.isNotEmpty(strings)) {
             for (Object string : strings) {
-                list.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN));
+                list.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN, "${", "}"));
             }
         }
         return list;
@@ -187,7 +223,7 @@ public class JobVarService {
      * @param pattern 表达式
      * @return 变量名列表
      */
-    public static List<String> parseVarNames(String string, String pattern) {
+    public static List<String> parseVarNames(String string, String pattern, String prefix, String suffix) {
         if (StrUtil.isEmpty(string)) {
             return CollUtil.newArrayList();
         }
@@ -197,7 +233,7 @@ public class JobVarService {
             ListIterator<String> iterator = varNames.listIterator();
             while (iterator.hasNext()) {
                 String varName = iterator.next();
-                varName = getKey(varName);
+                varName = getKey(varName, prefix.length(), suffix.length());
                 iterator.set(varName);
             }
         }
@@ -212,7 +248,7 @@ public class JobVarService {
      */
     private String replaceSysVarValue(String string) {
         // 解析系统内置变量
-        List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN);
+        List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN, "{$", "}");
         if (CollUtil.isEmpty(sysVarNames)) {
             return string;
         }
@@ -248,7 +284,7 @@ public class JobVarService {
         });
     }
 
-    private static String getKey(String g) {
-        return g.substring(2, g.length() - 1);
+    private static String getKey(String g, int prefix, int suffix) {
+        return g.substring(prefix, g.length() - suffix);
     }
 }

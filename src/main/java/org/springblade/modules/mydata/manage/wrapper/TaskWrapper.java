@@ -63,6 +63,14 @@ public class TaskWrapper extends BaseEntityWrapper<Task, TaskVO> {
             }
         }
 
+        // 查询订阅的任务
+        if (task.getSubscribeTaskId() != null && task.getSubscribeTaskId() != 0L) {
+            Task subscribeTask = ManageCache.getTask(task.getSubscribeTaskId());
+            if (ObjectUtil.isNotNull(subscribeTask)) {
+                taskVO.setSubscribeTaskName(subscribeTask.getTaskName());
+            }
+        }
+
         return taskVO;
     }
 

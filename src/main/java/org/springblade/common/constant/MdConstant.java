@@ -127,6 +127,11 @@ public interface MdConstant {
     String DATA_COLUMN_UPDATE_TIME = "_MD_UPDATE_TIME_";
 
     /**
+     * 业务数据字段名称：最后更新时间
+     */
+    String DATA_COLUMN_BATCH_ID = "_MD_BATCH_ID_";
+
+    /**
      * 业务数据常量值：任务最后成功时间
      */
     String DATA_VALUE_TASK_LAST_SUCCESS_TIME = "_MD_TASK_LAST_SUCCESS_";
@@ -229,6 +234,16 @@ public interface MdConstant {
     int TASK_JOB_DEFAULT_TIMES = Integer.MAX_VALUE;
 
     /**
+     * 提供数据模式，调用API
+     */
+    Integer TASK_PRODUCE_MODE_API = 1;
+
+    /**
+     * 提供数据模式，接收推送
+     */
+    Integer TASK_PRODUCE_MODE_PUSH = 2;
+
+    /**
      * 消费模式，调用API
      */
     Integer TASK_CONSUME_MODE_API = 1;
@@ -253,5 +268,77 @@ public interface MdConstant {
      */
     Integer TASK_FILTER_TYPE_FIELD = 2;
 
+    /**
+     * 任务失败重试间隔
+     */
     String TASK_FAILED_PERIOD = "0 0/1 * * * ?";
+
+    /**
+     * 单条记录消费模式 - 单个对象对象
+     */
+    Integer TASK_SINGLE_MODE_OBJECT = 1;
+    /**
+     * 单条记录消费模式 - 集合模式
+     */
+    Integer TASK_SINGLE_MODE_COLLECTION = 2;
+
+    /**
+     * 认证类型，无需认证
+     */
+    Integer TASK_AUTH_TYPE_NONE = 0;
+    /**
+     * 认证类型，api key
+     */
+    Integer TASK_AUTH_TYPE_API_KEY = 1;
+
+    /**
+     * api key 的名称
+     */
+    String TASK_AUTH_API_KEY_HEADER = "keyHeader";
+    /**
+     * api key value 的名称
+     */
+    String TASK_AUTH_API_KEY_VALUE = "keyValue";
+
+    /**
+     * 认证类型，basic auth
+     */
+    Integer TASK_AUTH_TYPE_BASIC = 2;
+
+    /**
+     * Basic Auth的username
+     */
+    String TASK_AUTH_BASIC_USERNAME = "username";
+    /**
+     * Basic Auth的password
+     */
+    String TASK_AUTH_BASIC_PASSWORD = "password";
+    /**
+     * Basic Auth的header
+     */
+    String TASK_AUTH_BASIC_HEADER = "Authorization";
+    /**
+     * 认证类型，hmac
+     */
+    Integer TASK_AUTH_TYPE_HMAC = 3;
+
+    /**
+     * HMAC的algorithm
+     */
+    String TASK_AUTH_HMAC_ALGORITHM = "algorithm";
+
+    /**
+     * HMAC的encoding
+     */
+    String TASK_AUTH_HMAC_ENCODING = "encoding";
+
+    /**
+     * HMAC的header
+     */
+    String TASK_AUTH_HMAC_KEY_HEADER = TASK_AUTH_API_KEY_HEADER;
+
+    /**
+     * HMAC的secret
+     */
+    String TASK_AUTH_HMAC_SECRET = "secret";
 }
