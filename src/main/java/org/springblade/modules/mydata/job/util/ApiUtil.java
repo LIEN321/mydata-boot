@@ -38,10 +38,10 @@ public class ApiUtil {
      *
      * @param task 任务
      */
-    public static void write(TaskInfo task) {
+    public static String write(TaskInfo task) {
         List<Map> consumeDataList = task.getConsumeDataList();
         if (CollUtil.isEmpty(consumeDataList)) {
-            return;
+            return "";
         }
 
         String apiFieldPrefix = task.getApiFieldPrefix();
@@ -61,6 +61,6 @@ public class ApiUtil {
             json = jsonObject;
         }
 
-        HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
+        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
     }
 }

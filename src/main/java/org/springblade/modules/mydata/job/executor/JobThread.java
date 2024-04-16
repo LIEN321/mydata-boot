@@ -238,7 +238,9 @@ public class JobThread implements Runnable {
                             jobDataService.convertData(taskInfo);
                             // 调用api传输数据
                             taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
-                            ApiUtil.write(taskInfo);
+                            String json = ApiUtil.write(taskInfo);
+                            // 更新环境变量
+                            jobVarService.saveVarValue(taskInfo, json);
                         }
                         // 消费模式是发送邮件
                         else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {

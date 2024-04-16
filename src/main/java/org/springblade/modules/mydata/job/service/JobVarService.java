@@ -52,7 +52,7 @@ public class JobVarService {
      * @param jsonString json数据
      */
     public void saveVarValue(TaskInfo task, String jsonString) {
-        if (task == null) {
+        if (task == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
@@ -74,10 +74,7 @@ public class JobVarService {
             envVar.setTenantId(task.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}"
-                    , envVar.getTenantId()
-                    , envVar.getVarName()
-                    , envVar.getVarValue());
+            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
         });
 
     }
@@ -133,7 +130,8 @@ public class JobVarService {
         }
 
         // 将环境变量转化为key:value格式
-        Map<String, String> varMap = envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
+        Map<String, String> varMap = envVars.stream()
+                                            .collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
 
         taskInfo.appendLog("解析出用户变量：{}", varMap);
 
