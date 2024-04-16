@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 任务的数据处理类
@@ -46,11 +47,11 @@ public class JobDataService {
      * @param taskInfo   任务
      * @param jsonString json字符串
      */
-    public void parseData(TaskInfo taskInfo, String jsonString) {
+    public void parseProduceData(TaskInfo taskInfo, String jsonString) {
         // 获取任务中的字段映射配置
         Map<String, String> fieldMapping = taskInfo.getFieldMapping();
         // 映射字段的类型
-        Map<String, String> mappingFieldType = taskInfo.getMappingFieldType();
+        Map<String, String> fieldTypeMapping = taskInfo.getFieldTypeMapping();
         if (CollUtil.isEmpty(fieldMapping)) {
             taskInfo.appendLog("任务没有配置字段映射，跳过解析业务数据");
             return;
@@ -87,7 +88,7 @@ public class JobDataService {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
-                String targetType = mappingFieldType.get(standardCode);
+                String targetType = fieldTypeMapping.get(standardCode);
                 try {
                     datacenterData.put(standardCode, MdUtil.convertDataType(jsonObject.get(apiCode), targetType));
                 } catch (Exception e) {
@@ -108,7 +109,7 @@ public class JobDataService {
      *
      * @param taskInfo 任务
      */
-    public void convertData(TaskInfo taskInfo) {
+    public void convertConsumeData(TaskInfo taskInfo) {
         List<Map> consumeDataList = taskInfo.getConsumeDataList();
         // 获取任务的数据映射
         // 映射中，key为数据中心字段名，value为api字段名
@@ -154,12 +155,12 @@ public class JobDataService {
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
-        task.getProduceDataList().forEach(standardDataValue -> {
+        task.getProduceDataList().forEach(produceData -> {
 
             Map<String, Object> idMap = MapUtil.newHashMap();
             // 若数据的 标识字段值 无效，则不存储
             for (String idCode : dataIdCodes) {
-                Object idFieldValue = standardDataValue.get(idCode);
+                Object idFieldValue = produceData.get(idCode);
                 if (ObjectUtil.isNull(idFieldValue)) {
                     return;
                 }
@@ -168,21 +169,39 @@ public class JobDataService {
             }
 
             // 根据唯一标识 查询业务数据
-            Map<String, Object> value = bizDataDAO.findByIds(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), task.getDataCode(), idMap);
+            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), task.getDataCode(), idMap);
 
-            if (value == null) {
+            if (queryData == null) {
                 // 未查到数据，则新增
-                value = standardDataValue;
-                dataInsertList.add(value);
+                queryData = produceData;
+                dataInsertList.add(queryData);
             } else {
-                // 查到数据，则更新
-                value.putAll(standardDataValue);
-                dataUpdateList.add(value);
+                // 查到数据
+                // 检测数据 是否需要变更，若有则更新 否则不更新
+                boolean isSame = true;
+                Set<String> keys = produceData.keySet();
+                for (String key : keys) {
+                    Object produceDataValue = produceData.get(key);
+                    Object queryDataValue = queryData.get(key);
+
+                    // 将保存的数据 按最新配置的类型转换对比
+                    String targetType = task.getFieldTypeMapping().get(key);
+                    queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
+                    if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
+                        isSame = false;
+                        break;
+                    }
+                }
+                if (isSame) {
+                    return;
+                }
+                queryData.putAll(produceData);
+                dataUpdateList.add(queryData);
             }
 
             // 设置业务数据的最后更新时间
-            value.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-            value.put(MdConstant.DATA_COLUMN_BATCH_ID, task.getDataBatchId());
+            queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, task.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
@@ -245,11 +264,11 @@ public class JobDataService {
         Assert.notEmpty(mFieldMapping, "任务未选择导出字段");
 
         // 遍历业务数据，根据映射 转换为excel导出的数据
-        List<Map<String, Object>> excelDataList = CollUtil.newArrayList();
+        List<Map<String, String>> excelDataList = CollUtil.newArrayList();
         datas.forEach(data -> {
-            Map<String, Object> row = MapUtil.newHashMap();
+            Map<String, String> row = MapUtil.newHashMap();
             mFieldMapping.forEach((k, v) -> {
-                row.put(k, data.get(k));
+                row.put(k, ObjectUtil.toString(data.get(k)));
             });
             excelDataList.add(row);
         });

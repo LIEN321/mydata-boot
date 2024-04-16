@@ -131,7 +131,7 @@ public class JobThread implements Runnable {
                         lastJsonHash = HashUtil.mixHash(json);
 
                         // 将json按字段映射 解析为业务数据
-                        jobDataService.parseData(taskInfo, json);
+                        jobDataService.parseProduceData(taskInfo, json);
                         taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
                         // 若没有返回数据，则结束处理
                         if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
@@ -171,9 +171,14 @@ public class JobThread implements Runnable {
                         File excelFile = jobDataService.exportFilteredDataExcel(taskInfo);
                         excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
                         UserInfo userInfo = userService.userInfo(taskInfo.getCreateUser());
-                        String emailAddress = userInfo.getUser().getEmail();
-                        jobEmailService.sendFilteredData(taskInfo, excelFile, emailAddress);
-                        taskInfo.appendLog("向邮箱{}发送过滤数据", emailAddress);
+                        if (userInfo != null) {
+                            String emailAddress = userInfo.getUser().getEmail();
+
+                            if (StrUtil.isNotEmpty(emailAddress)) {
+                                jobEmailService.sendFilteredData(taskInfo, excelFile, emailAddress);
+                                taskInfo.appendLog("向邮箱{}发送过滤数据", emailAddress);
+                            }
+                        }
                     }
 
                     taskInfo.appendLog("获取数据结束，共计新增{} 更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
@@ -235,7 +240,7 @@ public class JobThread implements Runnable {
                         // 消费模式是调用API
                         if (MdConstant.TASK_CONSUME_MODE_API.equals(taskInfo.getConsumeMode())) {
                             // 根据字段映射转换为api参数
-                            jobDataService.convertData(taskInfo);
+                            jobDataService.convertConsumeData(taskInfo);
 
                             // 若消费任务是对象模式，则从字段映射中提取数据 替换url上的变量
                             if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getSingleMode())) {
@@ -253,8 +258,11 @@ public class JobThread implements Runnable {
                         else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {
                             File excelFile = jobDataService.exportConsumeDataExcel(taskInfo);
                             excelFile = FileUtil.rename(excelFile, taskInfo.getTaskName() + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
-                            jobEmailService.sendConsumeData(taskInfo, excelFile, taskInfo.getConsumeEmail());
-                            taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
+
+                            if (StrUtil.isNotEmpty(taskInfo.getConsumeEmail())) {
+                                jobEmailService.sendConsumeData(taskInfo, excelFile, taskInfo.getConsumeEmail());
+                                taskInfo.appendLog("向邮箱{}发送数据", taskInfo.getConsumeEmail());
+                            }
                         }
 
                         // 累加分批计数
