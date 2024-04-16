@@ -209,6 +209,11 @@ public class JobExecutor implements ApplicationRunner {
                 // 更新任务的下次执行时间
                 taskService.updateNextRunTime(taskInfo.getId(), taskInfo.getNextRunTime());
 
+                // 生成日志
+                TaskLog taskLog = getTaskLog(taskInfo);
+                if (taskLogService.save(taskLog)) {
+                    taskInfo.setTaskLogId(taskLog.getId());
+                }
                 return;
             } catch (RuntimeException e) {
                 i++;
@@ -296,7 +301,7 @@ public class JobExecutor implements ApplicationRunner {
         taskService.finishTask(task);
 
         // 保存日志
-        taskLogService.save(getTaskLog(taskInfo));
+        taskLogService.saveOrUpdate(getTaskLog(taskInfo));
 
         // 减少可执行次数
         int times = taskInfo.getTimes();
