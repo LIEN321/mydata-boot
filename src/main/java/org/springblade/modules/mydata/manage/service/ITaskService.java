@@ -10,6 +10,7 @@ import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -221,4 +222,9 @@ public interface ITaskService extends BaseService<Task> {
      * @return 任务
      */
     Task findByApiUrl(String apiUrl);
+
+    /**
+     * 更新任务的下次执行时间
+     */
+    void updateNextRunTime(Long taskId, Date nextRunTime);
 }

@@ -270,6 +270,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Task task = getById(id);
         Assert.notNull(task, "停止失败，任务无效！");
         task.setTaskStatus(MdConstant.TASK_STATUS_STOPPED);
+        task.setNextRunTime(null);
 
         boolean result = updateById(task);
 
@@ -536,6 +537,15 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     public Task findByApiUrl(String apiUrl) {
         LambdaQueryWrapper<Task> queryTaskWrapper = Wrappers.<Task>lambdaQuery().eq(Task::getApiUrl, apiUrl);
         return getOne(queryTaskWrapper);
+    }
+
+    @Override
+    public void updateNextRunTime(Long taskId, Date nextRunTime) {
+        Assert.notNull(taskId);
+        Task task = getById(taskId);
+        Assert.notNull(task);
+        task.setNextRunTime(nextRunTime);
+        updateById(task);
     }
 
     private void check(TaskDTO taskDTO) {

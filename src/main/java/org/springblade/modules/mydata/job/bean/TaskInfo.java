@@ -294,6 +294,11 @@ public class TaskInfo implements Serializable {
     private String dataBatchId;
 
     /**
+     * 任务日志
+     */
+    private Long taskLogId;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

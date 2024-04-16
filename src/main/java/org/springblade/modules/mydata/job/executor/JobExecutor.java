@@ -205,6 +205,10 @@ public class JobExecutor implements ApplicationRunner {
                 // 存入缓存
                 taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
                 jobCache.cacheJob(taskInfo);
+
+                // 更新任务的下次执行时间
+                taskService.updateNextRunTime(taskInfo.getId(), taskInfo.getNextRunTime());
+
                 return;
             } catch (RuntimeException e) {
                 i++;
@@ -262,6 +266,7 @@ public class JobExecutor implements ApplicationRunner {
         task.setId(taskInfo.getId());
         task.setLastRunTime(taskInfo.getLastRunTime());
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
+        task.setNextRunTime(null);
 
         // 若任务异常
         if (taskInfo.isFailed()) {

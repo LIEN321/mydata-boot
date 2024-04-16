@@ -244,4 +244,10 @@ public class Task extends TenantEntity {
      * 订阅任务id
      */
     private Long subscribeTaskId;
+
+    /**
+     * 下次执行时间
+     */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private Date nextRunTime;
 }

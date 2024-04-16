@@ -236,4 +236,9 @@ public class TaskVO {
      * 订阅任务名称
      */
     private String subscribeTaskName;
+
+    /**
+     * 下次执行时间
+     */
+    private Date nextRunTime;
 }
