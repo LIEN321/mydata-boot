@@ -7,7 +7,6 @@ ALTER TABLE `md_task`
     ADD COLUMN `subscribe_task_id` bigint NULL COMMENT '订阅任务id',
     ADD COLUMN `next_run_time` datetime NULL COMMENT '下次执行时间';
 
-update `md_task`
-set subscribe_task_id = 0
-where is_subscribed = 1
-  and subscribe_task_id is null;
+update md_task set subscribe_task_id = 0 where is_subscribed = 1 and subscribe_task_id is null;
+
+update md_task set produce_mode = 1 where is_deleted = 0 and op_type = 1 and produce_mode is null;
