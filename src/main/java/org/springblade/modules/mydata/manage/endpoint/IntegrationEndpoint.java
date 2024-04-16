@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.core.tool.api.R;
 import org.springblade.modules.mydata.job.executor.JobExecutor;
@@ -13,6 +14,7 @@ import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/4/12
  */
+@Slf4j
 @RestController
 @AllArgsConstructor
 @RequestMapping(MdConstant.API_PREFIX_MANAGE + "/integration")
@@ -39,27 +42,46 @@ public class IntegrationEndpoint {
 
     @PostMapping("/{task_url}")
     public R post(@PathVariable("task_url") String taskUrl, @RequestHeader HttpHeaders httpHeaders, @RequestBody String body) {
+        log.info("integration post");
+        return execute(taskUrl, httpHeaders, body);
+    }
+
+    @PutMapping("/{task_url}")
+    public R put(@PathVariable("task_url") String taskUrl, @RequestHeader HttpHeaders httpHeaders, @RequestBody String body) {
+        log.info("integration put");
+        return execute(taskUrl, httpHeaders, body);
+    }
+
+    private R execute(String taskUrl, HttpHeaders httpHeaders, String body) {
+        log.info("integration url : {}", taskUrl);
+        log.info("integration headers : {}", httpHeaders);
+        log.info("integration body : {}", body);
+
         Assert.notEmpty(taskUrl, "操作失败：地址 {} 无效！", taskUrl);
         Task task = taskService.findByApiUrl(taskUrl);
         Assert.notNull(task, "操作失败：地址 {} 无效！", taskUrl);
         Assert.equals(task.getTaskStatus(), MdConstant.TASK_STATUS_RUNNING, "操作失败：任务未启动 无法执行！");
 
-        Map<String, String> authParams = task.getAuthParams();
-        if (CollUtil.isNotEmpty(authParams)) {
-            Assert.notNull(task, "操作失败：认证参数未配置！");
-        }
-        // 校验认证参数
         Integer authType = task.getAuthType();
-        if (MdConstant.TASK_AUTH_TYPE_API_KEY.equals(authType)) {
-            checkApiKey(authParams, httpHeaders);
-        } else if (MdConstant.TASK_AUTH_TYPE_BASIC.equals(authType)) {
-            checkBasicAuth(authParams, httpHeaders);
-        } else if (MdConstant.TASK_AUTH_TYPE_HMAC.equals(authType)) {
-            // TODO
-        } else if (MdConstant.TASK_AUTH_TYPE_NONE.equals(authType)) {
+        if (MdConstant.TASK_AUTH_TYPE_NONE.equals(authType)) {
             // do nothing
         } else {
-            throw new IllegalArgumentException("操作失败：不支持任务的认证类型!");
+            // 检查认证参数配置是否有效
+            Map<String, String> authParams = task.getAuthParams();
+            if (CollUtil.isNotEmpty(authParams)) {
+                Assert.notNull(task, "操作失败：认证参数未配置！");
+            }
+
+            // 校验认证参数
+            if (MdConstant.TASK_AUTH_TYPE_API_KEY.equals(authType)) {
+                checkApiKey(authParams, httpHeaders);
+            } else if (MdConstant.TASK_AUTH_TYPE_BASIC.equals(authType)) {
+                checkBasicAuth(authParams, httpHeaders);
+            } else if (MdConstant.TASK_AUTH_TYPE_HMAC.equals(authType)) {
+                // TODO
+            } else {
+                throw new IllegalArgumentException("操作失败：不支持任务的认证类型!");
+            }
         }
 
         // 执行任务流程 接收数据
