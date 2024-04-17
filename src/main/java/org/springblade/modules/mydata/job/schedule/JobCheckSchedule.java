@@ -52,7 +52,7 @@ public class JobCheckSchedule {
             }
             // 再检查task的job缓存
             else if (jobCache.getJob(taskId) == null) {
-                jobExecutor.cacheJob(taskInfo);
+                jobExecutor.startTask(task);
                 log.info("修复Job id:{} name:{}", task.getId(), task.getTaskName());
             }
         });
