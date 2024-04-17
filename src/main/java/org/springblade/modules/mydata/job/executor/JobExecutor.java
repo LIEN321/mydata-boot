@@ -227,7 +227,9 @@ public class JobExecutor implements ApplicationRunner {
             }
         }
 
+        taskInfo.setExecuteResult(MdConstant.TASK_RESULT_FAILED);
         taskInfo.setFailed(true);
+        taskInfo.setEndTime(new Date());
         completeJob(taskInfo);
     }
 
