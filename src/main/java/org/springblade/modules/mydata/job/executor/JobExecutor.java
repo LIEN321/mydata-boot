@@ -90,7 +90,7 @@ public class JobExecutor implements ApplicationRunner {
         List<Task> tasks = taskService.listRunningTasks();
         log.info("tasks.size() = " + tasks.size());
         if (CollUtil.isNotEmpty(tasks)) {
-            tasks.forEach(this::startTask);
+            tasks.forEach(task -> {startTask(task,"服务启动");});
         }
     }
 
@@ -99,9 +99,9 @@ public class JobExecutor implements ApplicationRunner {
      *
      * @param id 任务id
      */
-    public void startTask(Long id) {
+    public void startTask(Long id, String starterName) {
         Task task = taskService.getById(id);
-        startTask(task);
+        startTask(task, starterName);
     }
 
     /**
@@ -109,7 +109,7 @@ public class JobExecutor implements ApplicationRunner {
      *
      * @param task 任务对象
      */
-    public void startTask(Task task) {
+    public void startTask(Task task, String starterName) {
         if (task == null) {
             return;
         }
@@ -119,6 +119,7 @@ public class JobExecutor implements ApplicationRunner {
         }
 
         TaskInfo taskInfo = this.build(task);
+        taskInfo.setStarterName(starterName);
         cacheJob(taskInfo);
     }
 
@@ -149,7 +150,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setStartTime(new Date());
         taskInfo.setAcceptedData(acceptedData);
 
-        taskInfo.appendLog("接收推送数据，执行一次");
+        taskInfo.appendLog("接收推送数据：{}", taskInfo.getAcceptedData());
         executeJob(taskInfo);
     }
 
@@ -162,9 +163,9 @@ public class JobExecutor implements ApplicationRunner {
         jobCache.removeTask(id);
     }
 
-    public void restartTask(Long id) {
+    public void restartTask(Long id, String starterName) {
         stopTask(id);
-        startTask(id);
+        startTask(id, starterName);
     }
 
     /**
@@ -205,6 +206,7 @@ public class JobExecutor implements ApplicationRunner {
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskInfo);
 
+                taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
                 taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
 
                 // 生成日志

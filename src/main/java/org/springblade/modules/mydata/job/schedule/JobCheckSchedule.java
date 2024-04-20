@@ -33,7 +33,7 @@ public class JobCheckSchedule {
     @Resource
     private JobExecutor jobExecutor;
 
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/1 * * * ?")
     public void jobCheck() {
         // 查询运行中的任务记录列表
         List<Task> tasks = taskService.listRunningTasks();
@@ -47,12 +47,12 @@ public class JobCheckSchedule {
             // 先检查task缓存
             TaskInfo taskInfo = jobCache.getTask(taskId);
             if (taskInfo == null) {
-                jobExecutor.startTask(task);
+                jobExecutor.startTask(task, "检测任务存活 修复task");
                 log.info("修复Task id:{} name:{}", task.getId(), task.getTaskName());
             }
             // 再检查task的job缓存
             else if (jobCache.getJob(taskId) == null) {
-                jobExecutor.startTask(task);
+                jobExecutor.startTask(task, "检测任务存活 修复job");
                 log.info("修复Job id:{} name:{}", task.getId(), task.getTaskName());
             }
         });

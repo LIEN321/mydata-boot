@@ -56,8 +56,8 @@ public class JobCache {
         long expire = DateUtil.between(taskInfo.getStartTime(), taskInfo.getNextRunTime(), DateUnit.SECOND);
         if (expire <= 0) {
             throw new IllegalArgumentException(StrUtil.format("expire <= 0秒, startTime = {}, nextRunTime = {}"
-                    , DateUtil.format(taskInfo.getStartTime(), DatePattern.NORM_DATETIME_PATTERN)
-                    , DateUtil.format(taskInfo.getNextRunTime(), DatePattern.NORM_DATETIME_PATTERN)));
+                    , DateUtil.format(taskInfo.getStartTime(), DatePattern.NORM_DATETIME_MS_PATTERN)
+                    , DateUtil.format(taskInfo.getNextRunTime(), DatePattern.NORM_DATETIME_MS_PATTERN)));
         }
 
         taskInfo.appendLog("任务存入redis，缓存时长 {} 秒", expire);
