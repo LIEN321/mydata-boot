@@ -241,7 +241,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (result && !MdConstant.TASK_IS_SUBSCRIBED.equals(task.getIsSubscribed()) && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
             // 通知任务服务
             try {
-                jobExecutor.startTask(task);
+                jobExecutor.startTask(task, "任务管理 手动启动");
             } catch (Exception e) {
                 // TODO 优化对job服务访问异常的处理
                 e.printStackTrace();
@@ -431,7 +431,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             if (CollUtil.isNotEmpty(runningTasks)) {
                 // 重启任务的调度
                 try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId()));
+                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改环境参数 重启任务"));
                 } catch (Exception e) {
                     // TODO 优化对job服务访问异常的处理
                     e.printStackTrace();
@@ -464,7 +464,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             if (CollUtil.isNotEmpty(runningTasks)) {
                 // 重启任务的调度
                 try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId()));
+                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改API 重启任务"));
                 } catch (Exception e) {
                     // TODO 优化对job服务访问异常的处理
                     e.printStackTrace();

@@ -26,6 +26,11 @@ public class TaskInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 触发任务执行的名称
+     */
+    private String starterName;
+
     // ----- 任务相关信息 -----
     private Long id;
 
