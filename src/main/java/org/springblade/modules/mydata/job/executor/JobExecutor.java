@@ -182,9 +182,9 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setEndTime(null);
 
         // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
-        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
-        taskInfo.setReqParams(taskInfo.getOriginReqParams());
-        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
+        taskInfo.setReqHeaders(ObjectUtil.cloneByStream(taskInfo.getOriginReqHeaders()));
+        taskInfo.setReqParams(ObjectUtil.cloneByStream(taskInfo.getOriginReqParams()));
+        taskInfo.setBatchParams(ObjectUtil.cloneByStream(taskInfo.getOriginBatchParams()));
         taskInfo.setProduceDataList(CollUtil.toList());
         taskInfo.setConsumeDataList(CollUtil.toList());
         taskInfo.setFilteredDataList(CollUtil.toList());
@@ -374,14 +374,14 @@ public class JobExecutor implements ApplicationRunner {
 
         // header
         taskInfo.setOriginReqHeaders(task.getReqHeaders());
-        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
+//        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
         // param
         Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
             Map<String, Object> jobParams = MapUtil.newHashMap();
             jobParams.putAll(task.getReqParams());
             taskInfo.setOriginReqParams(jobParams);
-            taskInfo.setReqParams(taskInfo.getOriginReqParams());
+//            taskInfo.setReqParams(taskInfo.getOriginReqParams());
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
@@ -393,7 +393,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());
         taskInfo.setBatchInterval(task.getBatchInterval());
         taskInfo.setOriginBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
-        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
+//        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
         // 消费模式

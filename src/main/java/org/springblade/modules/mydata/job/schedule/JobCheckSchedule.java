@@ -33,7 +33,7 @@ public class JobCheckSchedule {
     @Resource
     private JobExecutor jobExecutor;
 
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "50 0/1 * * * ?")
     public void jobCheck() {
         // 查询运行中的任务记录列表
         List<Task> tasks = taskService.listRunningTasks();
