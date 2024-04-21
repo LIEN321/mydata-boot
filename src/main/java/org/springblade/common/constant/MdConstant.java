@@ -224,6 +224,11 @@ public interface MdConstant {
     int TASK_MAX_FAIL_COUNT = 5;
 
     /**
+     * 不是订阅任务
+     */
+    Integer TASK_IS_NOT_SUBSCRIBED = 0;
+
+    /**
      * 是订阅任务
      */
     Integer TASK_IS_SUBSCRIBED = 1;
