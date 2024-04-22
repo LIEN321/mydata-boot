@@ -60,7 +60,6 @@ public class JobCache {
                     , DateUtil.format(taskInfo.getNextRunTime(), "HH:mm:ss.SSS")));
         }
 
-        taskInfo.appendLog("任务存入redis，缓存时长 {} 秒", expire);
         redisUtil.set(CACHE_TASK + taskInfo.getId(), taskInfo);
         redisUtil.set(CACHE_JOB + taskInfo.getId(), taskInfo.getId(), expire);
     }

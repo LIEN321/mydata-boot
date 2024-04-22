@@ -16,11 +16,7 @@ import org.springblade.core.tool.utils.SpringUtil;
 import org.springblade.modules.mydata.data.BizDataDAO;
 import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
-import org.springblade.modules.mydata.job.service.JobBatchService;
-import org.springblade.modules.mydata.job.service.JobDataFilterService;
-import org.springblade.modules.mydata.job.service.JobDataService;
-import org.springblade.modules.mydata.job.service.JobEmailService;
-import org.springblade.modules.mydata.job.service.JobVarService;
+import org.springblade.modules.mydata.job.service.*;
 import org.springblade.modules.mydata.job.util.ApiUtil;
 import org.springblade.modules.system.entity.UserInfo;
 import org.springblade.modules.system.service.IUserService;
@@ -141,8 +137,7 @@ public class JobThread implements Runnable {
 
                         // 根据条件过滤数据
                         if (CollUtil.isNotEmpty(taskInfo.getDataFilters())) {
-                            taskInfo.appendLog("过滤业务数据开始");
-                            taskInfo.appendLog("过滤条件：{}", taskInfo.getDataFilters());
+                            taskInfo.appendLog("过滤业务数据，过滤条件：{}", taskInfo.getDataFilters());
                             jobDataFilterService.doFilter(taskInfo);
                             taskInfo.appendLog("过滤后的剩余数据量：{}", taskInfo.getProduceDataList().size());
                             if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {

@@ -1,6 +1,7 @@
 package org.springblade.modules.mydata.job.executor;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
@@ -90,7 +91,9 @@ public class JobExecutor implements ApplicationRunner {
         List<Task> tasks = taskService.listRunningTasks();
         log.info("tasks.size() = " + tasks.size());
         if (CollUtil.isNotEmpty(tasks)) {
-            tasks.forEach(task -> {startTask(task,"服务启动");});
+            tasks.forEach(task -> {
+                startTask(task, "服务启动");
+            });
         }
     }
 
@@ -197,6 +200,8 @@ public class JobExecutor implements ApplicationRunner {
         // 重置状态
         taskInfo.setExecuteResult(null);
 
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
+
         int i = 0;
         while (i < MdConstant.TASK_MAX_FAIL_COUNT) {
             try {
@@ -206,8 +211,9 @@ public class JobExecutor implements ApplicationRunner {
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskInfo);
 
-                taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
-                taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
+                taskInfo.appendLog("预计执行时间：{}，缓存时长：{}秒"
+                        , DateUtil.formatDateTime(taskInfo.getNextRunTime())
+                        , DateUtil.between(taskInfo.getStartTime(), taskInfo.getNextRunTime(), DateUnit.SECOND));
 
                 // 生成日志
                 TaskLog taskLog = getTaskLog(taskInfo);
