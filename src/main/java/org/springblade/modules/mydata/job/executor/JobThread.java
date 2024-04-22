@@ -76,7 +76,6 @@ public class JobThread implements Runnable {
 
         try {
             // 解析并替换api中的环境变量
-            taskInfo.appendLog("解析变量开始");
             jobVarService.parseVar(taskInfo);
             // 根据操作类型 执行读或写
             switch (opType) {

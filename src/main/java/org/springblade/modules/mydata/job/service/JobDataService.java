@@ -23,11 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 任务的数据处理类
@@ -140,7 +136,6 @@ public class JobDataService {
         Assert.notNull(task);
         //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
         if (CollUtil.isEmpty(task.getProduceDataList())) {
-            task.appendLog("任务中没有业务数据，跳过保存操作");
             return;
         }
 
