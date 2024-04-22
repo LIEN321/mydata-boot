@@ -13,15 +13,12 @@ import org.springblade.core.log.exception.ServiceException;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.DataDTO;
+import org.springblade.modules.mydata.manage.dto.DataFieldDTO;
 import org.springblade.modules.mydata.manage.dto.DataStatDTO;
 import org.springblade.modules.mydata.manage.entity.Data;
 import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.mapper.DataMapper;
-import org.springblade.modules.mydata.manage.service.IBizDataService;
-import org.springblade.modules.mydata.manage.service.IDataFieldService;
-import org.springblade.modules.mydata.manage.service.IDataService;
-import org.springblade.modules.mydata.manage.service.IEnvService;
-import org.springblade.modules.mydata.manage.service.ITaskService;
+import org.springblade.modules.mydata.manage.service.*;
 import org.springblade.modules.mydata.manage.vo.DataVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -149,14 +146,27 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
         Data data = BeanUtil.copyProperties(dataDTO, Data.class);
         boolean result = updateById(data);
         if (!result) {
-            throw new ServiceException("更新失败1！");
+            throw new ServiceException("更新失败，请联系管理员！");
         }
 
         // 更新数据项字段
         result = dataFieldService.saveByStandardData(data.getId(), dataDTO.getDataFields());
         if (!result) {
-            throw new ServiceException("更新失败2！");
+            throw new ServiceException("更新失败，请联系管理员！");
         }
+
+        List<DataFieldDTO> idFields = dataDTO.getDataFields().stream()
+                .filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId()))
+                .collect(Collectors.toList());
+
+        if(CollUtil.isNotEmpty(dataDTO.getDataFields()) && CollUtil.isEmpty(idFields)){
+            throw new IllegalArgumentException("更新失败，请至少选择一个标识！");
+        }
+
+        List<String> idFieldCodes = idFields.stream().map(DataFieldDTO::getFieldCode).collect(Collectors.toList());
+
+        taskService.updateIdFieldCode(data.getId(), idFieldCodes);
+
         return true;
     }
 

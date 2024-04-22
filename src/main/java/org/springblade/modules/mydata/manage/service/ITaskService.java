@@ -184,6 +184,13 @@ public interface ITaskService extends BaseService<Task> {
     boolean updateApiUrlByApi(Api api);
 
     /**
+     * 更新任务的 标识字段，并重启服务
+     * @param dataId 任务id
+     * @param idFieldCodes 标识字段集合
+     */
+    void updateIdFieldCode(Long dataId, List<String> idFieldCodes);
+
+    /**
      * 查询任务的概况统计
      *
      * @return 任务概况统计

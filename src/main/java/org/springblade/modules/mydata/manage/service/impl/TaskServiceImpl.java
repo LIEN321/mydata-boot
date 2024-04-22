@@ -129,7 +129,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 复制标识字段的编号
         if (idFields != null) {
             List<String> idFieldCodes = idFields.stream().map(DataField::getFieldCode).collect(Collectors.toList());
-            task.setIdFieldCode(CollUtil.join(idFieldCodes, StrPool.COMMA));
+            task.setIdFieldCode(convertIdFieldCode(idFieldCodes));
 
             // 转换过滤条件的值类型
             List<Map<String, Object>> dataFilters = task.getDataFilter();
@@ -431,19 +431,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             });
             updateBatchById(tasks);
 
-            // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream()
-                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(runningTasks)) {
-                // 重启任务的调度
-                try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改环境参数 重启任务"));
-                } catch (Exception e) {
-                    // TODO 优化对job服务访问异常的处理
-                    e.printStackTrace();
-                }
-            }
+            // 重启运行的任务
+            restartRunningTasks(tasks);
         }
         return true;
     }
@@ -464,21 +453,38 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             });
             updateBatchById(tasks);
 
-            // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream()
-                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(runningTasks)) {
-                // 重启任务的调度
-                try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改API 重启任务"));
-                } catch (Exception e) {
-                    // TODO 优化对job服务访问异常的处理
-                    e.printStackTrace();
-                }
-            }
+            // 重启运行的任务
+            restartRunningTasks(tasks);
         }
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateIdFieldCode(Long dataId, List<String> idFieldCodes) {
+        String codes = convertIdFieldCode(idFieldCodes);
+
+        // 根据环境查询任务
+        List<Task> tasks = list(dataId, null, null);
+        if (CollUtil.isNotEmpty(tasks)) {
+            List<Task> updateTasks = CollUtil.newArrayList();
+            // 批量更新任务的api地址
+            tasks.forEach(task -> {
+                // 比对新旧id集合，若有变化才更新
+                if (!codes.equals(task.getIdFieldCode())) {
+                    task.setIdFieldCode(codes);
+                    updateTasks.add(task);
+                }
+            });
+
+            if (CollUtil.isNotEmpty(updateTasks)) {
+                // 更新任务
+                updateBatchById(tasks);
+
+                // 重启运行的任务
+                restartRunningTasks(tasks);
+            }
+        }
     }
 
     @Override
@@ -610,5 +616,33 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         LinkedHashMap<String, String> params = (LinkedHashMap<String, String>) MapUtil.union(env.getGlobalParams(), api.getReqParams());
         task.setReqHeaders(headers);
         task.setReqParams(params);
+    }
+
+    private void restartRunningTasks(List<Task> tasks) {
+        // 筛选运行中的任务
+        List<Task> runningTasks = tasks.stream()
+                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(runningTasks)) {
+            // 重启任务的调度
+            try {
+                runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改API 重启任务"));
+            } catch (Exception e) {
+                // TODO 优化对job服务访问异常的处理
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 转换任务的标识字段字符串
+     * @param idFieldCodes 标识字段id集合
+     * @return 标识字段字符串
+     */
+    private String convertIdFieldCode(List<String> idFieldCodes) {
+        if(CollUtil.isEmpty(idFieldCodes)){
+            return "";
+        }
+        return CollUtil.join(idFieldCodes, StrPool.COMMA);
     }
 }
