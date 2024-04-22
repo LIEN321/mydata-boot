@@ -140,14 +140,14 @@ public class JobThread implements Runnable {
                             taskInfo.appendLog("过滤业务数据，过滤条件：{}", taskInfo.getDataFilters());
                             jobDataFilterService.doFilter(taskInfo);
                             taskInfo.appendLog("过滤后的剩余数据量：{}", taskInfo.getProduceDataList().size());
-                            if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
-                                taskInfo.appendLog("过滤后的没有业务数据，跳过后续处理");
-                                break;
-                            }
                         }
 
-                        // 保存业务数据
-                        jobDataService.saveTaskData(taskInfo);
+                        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
+                            taskInfo.appendLog("过滤后的没有业务数据，跳过保存操作");
+                        }else {
+                            // 保存业务数据
+                            jobDataService.saveTaskData(taskInfo);
+                        }
 
                         // 更新环境变量
                         jobVarService.saveVarValue(taskInfo, json);
