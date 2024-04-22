@@ -18,11 +18,7 @@ import org.springblade.modules.mydata.manage.service.IEnvVarService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -136,8 +132,11 @@ public class JobVarService {
         Map<String, String> varMap = envVars.stream()
                 .collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
 
-        taskInfo.appendLog("解析出用户变量：{}", varMap);
+        if (MapUtil.isEmpty(varMap)) {
+            return;
+        }
 
+        taskInfo.appendLog("解析出用户变量：{}", varMap);
         // 替换 header和param 中的变量
         if (CollUtil.isNotEmpty(reqHeaders)) {
             taskInfo.setReqHeaders(replaceUserVarValues(reqHeaders, varMap));
