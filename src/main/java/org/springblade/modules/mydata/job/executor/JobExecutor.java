@@ -121,8 +121,7 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
-        TaskInfo taskInfo = this.build(task);
-        taskInfo.setStarterName(starterName);
+        TaskInfo taskInfo = this.build(task, starterName);
         cacheJob(taskInfo);
     }
 
@@ -136,7 +135,7 @@ public class JobExecutor implements ApplicationRunner {
         if (task == null) {
             return;
         }
-        TaskInfo taskInfo = this.build(task);
+        TaskInfo taskInfo = this.build(task, "手动执行");
         taskInfo.setTimes(1);
         taskInfo.setStartTime(new Date());
 
@@ -148,7 +147,7 @@ public class JobExecutor implements ApplicationRunner {
         if (task == null) {
             return;
         }
-        TaskInfo taskInfo = this.build(task);
+        TaskInfo taskInfo = this.build(task, "接收推送数据");
         taskInfo.setTimes(1);
         taskInfo.setStartTime(new Date());
         taskInfo.setAcceptedData(acceptedData);
@@ -259,7 +258,7 @@ public class JobExecutor implements ApplicationRunner {
         // 查询相同数据的订阅任务
         List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId(), taskInfo.getEnvId(), taskInfo.getId());
         subTasks.forEach(task -> {
-            TaskInfo subTaskInfo = build(task);
+            TaskInfo subTaskInfo = build(task, "执行订阅任务");
             // 订阅任务现在执行
             subTaskInfo.setStartTime(new Date());
             // 设置数据批次编号
@@ -345,9 +344,10 @@ public class JobExecutor implements ApplicationRunner {
      * @param task Task
      * @return TaskJob
      */
-    private TaskInfo build(Task task) {
+    private TaskInfo build(Task task, String starterName) {
         TaskInfo taskInfo = new TaskInfo();
 
+        taskInfo.setStarterName(starterName);
         // 任务基本信息
         taskInfo.setId(task.getId());
         taskInfo.setTaskName(task.getTaskName());
