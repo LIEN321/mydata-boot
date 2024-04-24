@@ -151,14 +151,14 @@ public class JobVarService {
      *
      * @param taskInfo 任务
      */
-    public void parseConsumeUrlVar(TaskInfo taskInfo) {
+    public boolean parseConsumeUrlVar(TaskInfo taskInfo) {
         // api地址
         String apiUrl = taskInfo.getApiUrl();
         // 解析{field}格式的变量名
         List<String> fieldNames = parseVarNames(apiUrl, DATA_FIELD_PATTERN, "{", "}");
         // 若解析为空，则结束
         if (CollUtil.isEmpty(fieldNames)) {
-            return;
+            return false;
         }
         // 提取第一条消费数据
         Map data = taskInfo.getConsumeDataList().get(0);
@@ -179,6 +179,7 @@ public class JobVarService {
         // 替换变量值
         apiUrl = stringSubstitutor.replace(apiUrl);
         taskInfo.setApiUrl(apiUrl);
+        return true;
     }
 
     /**

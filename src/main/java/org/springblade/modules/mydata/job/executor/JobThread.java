@@ -143,7 +143,7 @@ public class JobThread implements Runnable {
 
                         if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
                             taskInfo.appendLog("过滤后的没有业务数据，跳过保存操作");
-                        }else {
+                        } else {
                             // 保存业务数据
                             jobDataService.saveTaskData(taskInfo);
                         }
@@ -239,8 +239,9 @@ public class JobThread implements Runnable {
                             // 若消费任务是对象模式，则从字段映射中提取数据 替换url上的变量
                             if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getSingleMode())) {
                                 // 从url中解析出变量
-                                jobVarService.parseConsumeUrlVar(taskInfo);
-                                taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
+                                if (jobVarService.parseConsumeUrlVar(taskInfo)) {
+                                    taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
+                                }
                             }
                             // 调用api传输数据
                             taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
