@@ -42,4 +42,8 @@ public class DataVO extends Data {
      */
     private List<DataFieldVO> dataFields;
 
+    /**
+     * 所属项目名称
+     */
+    private String projectName;
 }

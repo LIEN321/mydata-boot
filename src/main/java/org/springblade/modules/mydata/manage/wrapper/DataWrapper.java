@@ -2,7 +2,9 @@ package org.springblade.modules.mydata.manage.wrapper;
 
 import org.springblade.core.mp.support.BaseEntityWrapper;
 import org.springblade.core.tool.utils.BeanUtil;
+import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.entity.Data;
+import org.springblade.modules.mydata.manage.entity.Project;
 import org.springblade.modules.mydata.manage.vo.DataVO;
 
 /**
@@ -20,7 +22,10 @@ public class DataWrapper extends BaseEntityWrapper<Data, DataVO> {
     @Override
     public DataVO entityVO(Data data) {
         DataVO dataVO = BeanUtil.copy(data, DataVO.class);
-
+        Project project = ManageCache.getProject(data.getProjectId());
+        if (project != null) {
+            dataVO.setProjectName(project.getProjectName());
+        }
         return dataVO;
     }
 
