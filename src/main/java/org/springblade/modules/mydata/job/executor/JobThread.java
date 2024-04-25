@@ -125,13 +125,17 @@ public class JobThread implements Runnable {
                         }
                         lastJsonHash = HashUtil.mixHash(json);
 
-                        // 将json按字段映射 解析为业务数据
-                        jobDataService.parseProduceData(taskInfo, json);
-                        taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
-                        // 若没有返回数据，则结束处理
-                        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
-                            taskInfo.appendLog("业务数据为空，任务结束");
-                            break;
+                        // 获取任务中的字段映射配置，若没有则跳过数据处理
+                        Map<String, String> fieldMapping = taskInfo.getFieldMapping();
+                        if(MapUtil.isNotEmpty(fieldMapping)) {
+                            // 将json按字段映射 解析为业务数据
+                            jobDataService.parseProduceData(taskInfo, json);
+                            taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
+                            // 若没有返回数据，则结束处理
+                            if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
+                                taskInfo.appendLog("业务数据为空，任务结束");
+                                break;
+                            }
                         }
 
                         // 根据条件过滤数据

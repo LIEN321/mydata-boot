@@ -236,7 +236,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(task, "启动失败，任务无效！");
 
         // 启动任务前，校验数据是否配置标识字段
-        Assert.notEmpty(task.getIdFieldCode(), "启动失败：数据未设置标识字段！");
+        // Assert.notEmpty(task.getIdFieldCode(), "启动失败：数据未设置标识字段！");
 
         task.setTaskStatus(MdConstant.TASK_STATUS_RUNNING);
         boolean result = updateById(task);
