@@ -18,6 +18,8 @@ import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.job.service.*;
 import org.springblade.modules.mydata.job.util.ApiUtil;
+import org.springblade.modules.mydata.manage.service.IBizDataService;
+import org.springblade.modules.mydata.manage.service.impl.BizDataServiceImpl;
 import org.springblade.modules.system.entity.UserInfo;
 import org.springblade.modules.system.service.IUserService;
 import org.springblade.modules.system.service.impl.UserServiceImpl;
@@ -51,6 +53,8 @@ public class JobThread implements Runnable {
     private final JobEmailService jobEmailService = SpringUtil.getBean(JobEmailService.class);
 
     private final IUserService userService = SpringUtil.getBean(UserServiceImpl.class);
+
+    private final IBizDataService bizDataService = SpringUtil.getBean(BizDataServiceImpl.class);
 
     private final TaskInfo taskInfo;
 
@@ -127,7 +131,7 @@ public class JobThread implements Runnable {
 
                         // 获取任务中的字段映射配置，若没有则跳过数据处理
                         Map<String, String> fieldMapping = taskInfo.getFieldMapping();
-                        if(MapUtil.isNotEmpty(fieldMapping)) {
+                        if (MapUtil.isNotEmpty(fieldMapping)) {
                             // 将json按字段映射 解析为业务数据
                             jobDataService.parseProduceData(taskInfo, json);
                             taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
@@ -178,6 +182,9 @@ public class JobThread implements Runnable {
                             }
                         }
                     }
+
+                    // 更新业务数据量，根据项目、环境、数据code 统计数据量
+                    bizDataService.updateDataCount(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId(), taskInfo.getDataId());
 
                     taskInfo.appendLog("获取数据结束，共计新增{} 更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
                     break;

@@ -217,10 +217,6 @@ public class JobDataService {
             });
         }
 
-        // 更新业务数据量
-        // v0.7.0 取消，该字段由于数据按环境区分存储而失效
-        // dataService.updateDataCount(task.getTenantId(), task.getDataId());
-
         task.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
         task.setInsertCount(task.getInsertCount() + dataInsertList.size());
         task.setUpdateCount(task.getUpdateCount() + dataUpdateList.size());

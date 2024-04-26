@@ -86,20 +86,6 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
         return true;
     }
 
-    @Deprecated
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public boolean updateDataCount(String tenantId, Long dataId) {
-        long total = bizDataService.getTotalCount(tenantId, dataId);
-        if (total > 0) {
-            Data data = new Data();
-            data.setId(dataId);
-            data.setDataCount(total);
-            return updateById(data);
-        }
-        return false;
-    }
-
     @Override
     public DataStatDTO getDataStat() {
         return baseMapper.selectDataStat();
@@ -159,7 +145,7 @@ public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implement
                 .filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId()))
                 .collect(Collectors.toList());
 
-        if(CollUtil.isNotEmpty(dataDTO.getDataFields()) && CollUtil.isEmpty(idFields)){
+        if (CollUtil.isNotEmpty(dataDTO.getDataFields()) && CollUtil.isEmpty(idFields)) {
             throw new IllegalArgumentException("更新失败，请至少选择一个标识！");
         }
 

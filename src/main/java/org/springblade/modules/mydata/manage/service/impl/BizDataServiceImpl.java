@@ -2,14 +2,19 @@ package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import org.springblade.common.util.MdUtil;
+import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.data.BizDataDAO;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.BizDataDTO;
+import org.springblade.modules.mydata.manage.entity.BizData;
 import org.springblade.modules.mydata.manage.entity.Data;
+import org.springblade.modules.mydata.manage.mapper.BizDataMapper;
 import org.springblade.modules.mydata.manage.service.IBizDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +23,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标准数据项 服务实现类
+ * 业务数据 服务实现类
  *
  * @author LIEN
  * @since 2022-07-08
  */
 @Service
 @AllArgsConstructor
-public class BizDataServiceImpl implements IBizDataService {
+public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> implements IBizDataService {
 
     private final BizDataDAO bizDataDAO;
 
@@ -61,12 +66,12 @@ public class BizDataServiceImpl implements IBizDataService {
     }
 
     @Override
-    public long getTotalCount(String tenantId, Long dataId) {
+    public long getTotalCount(String tenantId, Long projectId, Long envId, Long dataId) {
         Data data = ManageCache.getData(tenantId, dataId);
         if (data == null) {
             return 0L;
         }
-        return bizDataDAO.total(data.getTenantId(), data.getDataCode());
+        return bizDataDAO.total(MdUtil.getBizDbCode(tenantId, projectId, envId), data.getDataCode());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -87,5 +92,38 @@ public class BizDataServiceImpl implements IBizDataService {
         Assert.notNull(dataId, "参数无效，dataId={}", dataId);
         Assert.notNull(envId, "参数无效，envId={}", envId);
         return deleteByEnvs(dataId, CollUtil.toList(envId));
+    }
+
+    @Deprecated
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateDataCount(String tenantId, Long projectId, Long envId, Long dataId) {
+        long total = getTotalCount(tenantId, projectId, envId, dataId);
+        if (total > 0) {
+            BizData bizData = getOne(projectId, envId, dataId);
+            if (bizData == null) {
+                bizData = new BizData();
+                bizData.setProjectId(projectId);
+                bizData.setEnvId(envId);
+                bizData.setDataId(dataId);
+            }
+            bizData.setDataCount(total);
+            saveOrUpdate(bizData);
+        }
+    }
+
+    @Override
+    public List<BizData> listByData(Long dataId) {
+        LambdaQueryWrapper<BizData> queryWrapper = Wrappers.<BizData>lambdaQuery()
+                .eq(BizData::getDataId, dataId);
+        return list(queryWrapper);
+    }
+
+    private BizData getOne(Long projectId, Long envId, Long dataId) {
+        LambdaQueryWrapper<BizData> queryWrapper = Wrappers.<BizData>lambdaQuery()
+                .eq(BizData::getProjectId, projectId)
+                .eq(BizData::getEnvId, envId)
+                .eq(BizData::getDataId, dataId);
+        return getOne(queryWrapper);
     }
 }
