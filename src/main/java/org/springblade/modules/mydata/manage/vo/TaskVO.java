@@ -241,4 +241,10 @@ public class TaskVO {
      * 下次执行时间
      */
     private Date nextRunTime;
+
+    /**
+     * 所属应用
+     */
+    @JsonSerialize(using = ToStringSerializer.class, nullsUsing = NullSerializer.class)
+    private Long appId;
 }
