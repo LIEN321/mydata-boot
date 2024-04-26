@@ -31,10 +31,7 @@ import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +74,11 @@ public class JobExecutor implements ApplicationRunner {
     private ThreadPoolExecutor threadPoolExecutor;
 
     /**
+     * 正在运行的任务
+     */
+    private final ConcurrentHashMap<Long, TaskInfo> executingJobs = MapUtil.newConcurrentHashMap();
+
+    /**
      * 线程数量
      */
     @Value("${datacenter.job.threadCount:10}")
@@ -92,7 +94,7 @@ public class JobExecutor implements ApplicationRunner {
         log.info("tasks.size() = " + tasks.size());
         if (CollUtil.isNotEmpty(tasks)) {
             tasks.forEach(task -> {
-                startTask(task, "服务启动");
+                startTask(task, "启动服务 自动开始");
             });
         }
     }
@@ -288,11 +290,17 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
+        // 存入正在运行的任务集合中
+        executingJobs.put(taskInfo.getId(), taskInfo);
+
         taskInfo.appendLog("缓存到期");
         executeJob(taskInfo);
     }
 
     public void completeJob(TaskInfo taskInfo) {
+        // 从正在运行集合中移除
+        executingJobs.remove(taskInfo.getId());
+
         // 更新任务的 最后执行时间、最后成功时间
         Task task = new Task();
         task.setId(taskInfo.getId());
@@ -338,6 +346,19 @@ public class JobExecutor implements ApplicationRunner {
             // 继续执行任务
             cacheJob(taskInfo);
         }
+    }
+
+    /**
+     * 检测任务是否正在执行中
+     *
+     * @param taskId 任务id
+     * @return true-执行中，false-不在执行中
+     */
+    public boolean isTaskExecuting(Long taskId) {
+        if (ObjectUtil.isNull(taskId)) {
+            return false;
+        }
+        return executingJobs.containsKey(taskId);
     }
 
     /**
