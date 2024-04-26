@@ -245,7 +245,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (result && !MdConstant.TASK_IS_SUBSCRIBED.equals(task.getIsSubscribed()) && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
             // 通知任务服务
             try {
-                jobExecutor.startTask(task, "任务管理 手动启动");
+                jobExecutor.startTask(task, "任务管理启动");
             } catch (Exception e) {
                 // TODO 优化对job服务访问异常的处理
                 e.printStackTrace();
@@ -334,6 +334,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
                 .eq(Task::getDataId, dataId)
                 .eq(Task::getEnvId, envId)
+                // 订阅当前taskId 或 全部 的任务
                 .and(qw -> qw.eq(Task::getSubscribeTaskId, taskId).or().eq(Task::getSubscribeTaskId, 0));
 
         return list(queryWrapper);
@@ -636,11 +637,12 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     /**
      * 转换任务的标识字段字符串
+     *
      * @param idFieldCodes 标识字段id集合
      * @return 标识字段字符串
      */
     private String convertIdFieldCode(List<String> idFieldCodes) {
-        if(CollUtil.isEmpty(idFieldCodes)){
+        if (CollUtil.isEmpty(idFieldCodes)) {
             return "";
         }
         return CollUtil.join(idFieldCodes, StrPool.COMMA);
