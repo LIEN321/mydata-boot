@@ -138,8 +138,13 @@ public class JobExecutor implements ApplicationRunner {
         TaskInfo taskInfo = this.build(task, "手动执行");
         taskInfo.setTimes(1);
         taskInfo.setStartTime(new Date());
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
+        // 生成日志
+        TaskLog taskLog = getTaskLog(taskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            taskInfo.setTaskLogId(taskLog.getId());
+        }
 
-        taskInfo.appendLog("手动执行一次任务");
         executeJob(taskInfo);
     }
 
@@ -152,7 +157,15 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setStartTime(new Date());
         taskInfo.setAcceptedData(acceptedData);
 
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
         taskInfo.appendLog("接收推送数据：{}", taskInfo.getAcceptedData());
+
+        // 生成日志
+        TaskLog taskLog = getTaskLog(taskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            taskInfo.setTaskLogId(taskLog.getId());
+        }
+
         executeJob(taskInfo);
     }
 
@@ -380,14 +393,14 @@ public class JobExecutor implements ApplicationRunner {
 
         // header
         taskInfo.setOriginReqHeaders(task.getReqHeaders());
-//        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
+        taskInfo.setReqHeaders(ObjectUtil.cloneByStream(taskInfo.getOriginReqHeaders()));
         // param
         Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
             Map<String, Object> jobParams = MapUtil.newHashMap();
             jobParams.putAll(task.getReqParams());
             taskInfo.setOriginReqParams(jobParams);
-//            taskInfo.setReqParams(taskInfo.getOriginReqParams());
+            taskInfo.setReqParams(ObjectUtil.cloneByStream(taskInfo.getOriginReqParams()));
         }
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
@@ -399,7 +412,8 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());
         taskInfo.setBatchInterval(task.getBatchInterval());
         taskInfo.setOriginBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
-//        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
+        taskInfo.setBatchParams(ObjectUtil.cloneByStream(taskInfo.getOriginBatchParams()));
+
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
         // 消费模式
