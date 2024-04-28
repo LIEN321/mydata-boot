@@ -291,7 +291,7 @@ public class TaskInfo implements Serializable {
     /**
      * 单条记录消费模式，1-对象、2-集合
      */
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 数据批次标识

@@ -238,7 +238,7 @@ public class Task extends TenantEntity {
     /**
      * 单条记录消费模式，1-对象、2-集合
      */
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 订阅任务id

@@ -16,3 +16,5 @@ CREATE TABLE `md_biz_data`
     `data_count`  bigint                                 DEFAULT NULL COMMENT '数据量',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='业务数据概况';
+
+ALTER TABLE `md_task` CHANGE COLUMN `single_mode` `data_mode` int (0) NULL DEFAULT NULL COMMENT '单条记录消费模式，1-对象、2-集合';

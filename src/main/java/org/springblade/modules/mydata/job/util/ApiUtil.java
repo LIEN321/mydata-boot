@@ -6,7 +6,6 @@ import cn.hutool.http.Method;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.HttpUtils;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
@@ -36,24 +35,21 @@ public class ApiUtil {
     /**
      * 调用接口，发送标准数据
      *
-     * @param task 任务
+     * @param taskInfo 任务
      */
-    public static String write(TaskInfo task) {
-        List<Map> consumeDataList = task.getConsumeDataList();
-        if (CollUtil.isEmpty(consumeDataList)) {
+    public static String write(TaskInfo taskInfo) {
+        return write(taskInfo, taskInfo.getConsumeDataList());
+    }
+
+    public static String write(TaskInfo taskInfo, List<Map> dataList) {
+        if (CollUtil.isEmpty(dataList)) {
             return "";
         }
 
-        String apiFieldPrefix = task.getApiFieldPrefix();
-        JSON json;
-
-        if (consumeDataList.size() == 1 && MdConstant.TASK_SINGLE_MODE_OBJECT.equals(task.getSingleMode())) {
-            json = new JSONObject(consumeDataList.get(0));
-        } else {
-            JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(consumeDataList);
-            json = jsonArray;
-        }
+        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.addAll(dataList);
+        JSON json = jsonArray;
 
         if (StrUtil.isNotBlank(apiFieldPrefix)) {
             JSONObject jsonObject = new JSONObject();
@@ -61,6 +57,23 @@ public class ApiUtil {
             json = jsonObject;
         }
 
-        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
+        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
+    }
+
+    public static String write(TaskInfo taskInfo, Map data) {
+        if (CollUtil.isEmpty(data)) {
+            return "";
+        }
+
+        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+        JSON json = new JSONObject(data);
+
+        if (StrUtil.isNotBlank(apiFieldPrefix)) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.putByPath(apiFieldPrefix, json);
+            json = jsonObject;
+        }
+
+        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
     }
 }

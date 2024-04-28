@@ -224,7 +224,7 @@ public class TaskVO {
      * 单条记录消费模式，1-对象、2-集合
      */
     @JsonSerialize(nullsUsing = NullSerializer.class)
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 订阅任务id

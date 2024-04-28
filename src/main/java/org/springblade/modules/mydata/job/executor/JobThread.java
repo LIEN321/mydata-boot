@@ -248,17 +248,26 @@ public class JobThread implements Runnable {
                             jobDataService.convertConsumeData(taskInfo);
 
                             // 若消费任务是对象模式，则从字段映射中提取数据 替换url上的变量
-                            if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getSingleMode())) {
-                                // 从url中解析出变量
-                                if (jobVarService.parseConsumeUrlVar(taskInfo)) {
-                                    taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
-                                }
+                            if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getDataMode())) {
+                                // 记录原来的apiUrl地址
+                                String originApiUrl = taskInfo.getApiUrl();
+                                taskInfo.getConsumeDataList().forEach(data -> {
+                                    // 从url中解析出变量 并替换值
+                                    if (jobVarService.parseConsumeUrlVar(taskInfo)) {
+                                        taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
+                                    }
+                                    // 调用api传输数据
+                                    ApiUtil.write(taskInfo, data);
+                                    // 恢复原来的apiUrl
+                                    taskInfo.setApiUrl(originApiUrl);
+                                });
+                            } else {
+                                // 调用api传输数据
+                                taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                                String json = ApiUtil.write(taskInfo);
+                                // 更新环境变量
+                                jobVarService.saveVarValue(taskInfo, json);
                             }
-                            // 调用api传输数据
-                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
-                            String json = ApiUtil.write(taskInfo);
-                            // 更新环境变量
-                            jobVarService.saveVarValue(taskInfo, json);
                         }
                         // 消费模式是发送邮件
                         else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {
