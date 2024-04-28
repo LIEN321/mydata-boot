@@ -79,38 +79,31 @@ public class JobVarService {
     }
 
     /**
-     * 解析任务API header和param中的变量表达式，从任务对应环境中获取变量值 并替换变量；
+     * 从指定map的value中，解析 系统变量、用户环境变量
      *
-     * @param taskInfo 任务
+     * @param map   解析源
+     * @param envId 环境id
      */
-    public void parseVar(TaskInfo taskInfo) {
-        Set<String> userVarNames = CollUtil.newHashSet();
+    public <V> void parseVar(Map<String, V> map, Long envId) {
+        if (CollUtil.isEmpty(map)) {
+            return;
+        }
 
-        // 从API的header和param中 解析变量表达式
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
-        Map<String, Object> reqParams = taskInfo.getReqParams();
-
-        if (CollUtil.isNotEmpty(reqHeaders)) {
-            //varNames.addAll(MdUtil.parseVarNames(reqHeaders.keySet()));
+        //
+        Set<String> userVarNames = null;
+        if (CollUtil.isNotEmpty(map)) {
             // 替换header中的系统内置变量
-            replaceSysVarValues(reqHeaders);
+            replaceSysVarValues(map);
             // 提取用户自定义变量名
-            userVarNames.addAll(parseUserVarNames(reqHeaders.values()));
+            userVarNames = parseUserVarNames(map.values());
         }
-        if (CollUtil.isNotEmpty(reqParams)) {
-            //varNames.addAll(MdUtil.parseVarNames(reqParams.keySet()));
-            // 替换param中的系统内置变量
-            replaceSysVarValues(reqParams);
-            // 提取用户自定义变量名
-            userVarNames.addAll(parseUserVarNames(reqParams.values()));
-        }
-        // 若没有变量名，则结束解析
+
+        // 若没有用户变量名，则结束解析
         if (CollUtil.isEmpty(userVarNames)) {
             return;
         }
 
         // 根据变量名 获取环境变量值
-        Long envId = taskInfo.getEnvId();
         List<EnvVar> envVars = CollUtil.newArrayList();
         Env env = envService.getById(envId);
 
@@ -136,14 +129,22 @@ public class JobVarService {
             return;
         }
 
-        taskInfo.appendLog("解析出用户变量：{}", varMap);
+        replaceUserVarValues(map, varMap);
+    }
+
+    /**
+     * 解析任务API header和param中的变量表达式，从任务对应环境中获取变量值 并替换变量；
+     *
+     * @param taskInfo 任务
+     */
+    public void parseTaskVar(TaskInfo taskInfo) {
+
         // 替换 header和param 中的变量
-        if (CollUtil.isNotEmpty(reqHeaders)) {
-            taskInfo.setReqHeaders(replaceUserVarValues(reqHeaders, varMap));
-        }
-        if (CollUtil.isNotEmpty(reqParams)) {
-            taskInfo.setReqParams(replaceUserVarValues(reqParams, varMap));
-        }
+        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        Map<String, Object> reqParams = taskInfo.getReqParams();
+
+        parseVar(reqHeaders, taskInfo.getEnvId());
+        parseVar(reqParams, taskInfo.getEnvId());
     }
 
     /**
@@ -187,17 +188,13 @@ public class JobVarService {
      *
      * @param sourceMap 替换前的map数据
      * @param varMap    变量名-变量值
-     * @return 替换后的数据
      */
-    private <V> Map<String, V> replaceUserVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
-        Map<String, V> resultMap = MapUtil.newHashMap();
+    private <V> void replaceUserVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
         StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
         sourceMap.forEach((k, v) -> {
             // 替换用户自定义变量
-            resultMap.put(k, (V) stringSubstitutor.replace(v));
+            sourceMap.put(k, (V) stringSubstitutor.replace(v));
         });
-
-        return resultMap;
     }
 
     /**
@@ -206,14 +203,14 @@ public class JobVarService {
      * @param strings 字符串集合
      * @return 变量名列表
      */
-    private List<String> parseUserVarNames(Collection<?> strings) {
-        List<String> list = CollUtil.newArrayList();
+    private Set<String> parseUserVarNames(Collection<?> strings) {
+        Set<String> userVarNames = CollUtil.newHashSet();
         if (CollUtil.isNotEmpty(strings)) {
             for (Object string : strings) {
-                list.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN, "${", "}"));
+                userVarNames.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN, "${", "}"));
             }
         }
-        return list;
+        return userVarNames;
     }
 
     /**

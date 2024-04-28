@@ -1,9 +1,12 @@
 package org.springblade.modules.mydata.manage.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,4 +45,17 @@ public class ApiDebugDTO implements Serializable {
      * 请求体内容类型
      */
     private String contentType;
+
+    /**
+     * 全局header参数
+     */
+    private LinkedHashMap<String, String> globalHeaders;
+
+    /**
+     * 全局变量
+     */
+    private LinkedHashMap<String, Object> globalParams;
+
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long envId;
 }

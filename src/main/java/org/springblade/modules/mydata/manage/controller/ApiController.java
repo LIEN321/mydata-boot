@@ -1,6 +1,5 @@
 package org.springblade.modules.mydata.manage.controller;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -14,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.AllArgsConstructor;
 import org.springblade.common.constant.MdConstant;
+import org.springblade.common.util.MapUtil;
 import org.springblade.common.util.MdUtil;
 import org.springblade.core.boot.ctrl.BladeController;
 import org.springblade.core.mp.support.Condition;
@@ -21,6 +21,7 @@ import org.springblade.core.mp.support.Query;
 import org.springblade.core.secure.utils.SecureUtil;
 import org.springblade.core.tool.api.R;
 import org.springblade.core.tool.utils.Func;
+import org.springblade.modules.mydata.job.service.JobVarService;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.ApiDTO;
 import org.springblade.modules.mydata.manage.dto.ApiDebugDTO;
@@ -32,6 +33,7 @@ import org.springblade.modules.mydata.manage.wrapper.ApiWrapper;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -47,6 +49,8 @@ import java.util.List;
 public class ApiController extends BladeController {
 
     private final IApiService apiService;
+
+    private JobVarService jobVarService;
 
     /**
      * 详情
@@ -153,7 +157,7 @@ public class ApiController extends BladeController {
         LambdaQueryWrapper<Api> queryWrapper = Wrappers.<Api>lambdaQuery()
                 .eq(Api::getTenantId, SecureUtil.getTenantId())
                 .eq(ObjectUtil.isNotNull(opType), Api::getOpType, opType)
-                .eq(ObjectUtil.isNotNull(appId), Api::getAppId,appId);
+                .eq(ObjectUtil.isNotNull(appId), Api::getAppId, appId);
         List<Api> list = apiService.list(queryWrapper);
         return R.data(ApiWrapper.build().listVO(list));
     }
@@ -174,14 +178,14 @@ public class ApiController extends BladeController {
         HttpRequest httpRequest = HttpUtil.createRequest(method, apiDebugDTO.getHttpUri());
         // 设置内容类型
         httpRequest.contentType(apiDebugDTO.getContentType());
-        // 设置请求header
-        if (CollUtil.isNotEmpty(apiDebugDTO.getHttpHeaders())) {
-            httpRequest.headerMap(MdUtil.parseToKvMap(apiDebugDTO.getHttpHeaders()), true);
-        }
-        // 设置请求参数
-        if (CollUtil.isNotEmpty(apiDebugDTO.getHttpParams())) {
-            httpRequest.form(MdUtil.parseToKvMapObj(apiDebugDTO.getHttpParams()));
-        }
+        // 设置请求header，合并环境的全局header
+        LinkedHashMap<String, String> headers = (LinkedHashMap<String, String>) MapUtil.union(apiDebugDTO.getGlobalHeaders(), MdUtil.parseToKvMap(apiDebugDTO.getHttpHeaders()));
+        jobVarService.parseVar(headers, apiDebugDTO.getEnvId());
+        httpRequest.headerMap(headers, true);
+        // 设置请求参数，合并环境的全局param
+        LinkedHashMap<String, Object> params = (LinkedHashMap<String, Object>) MapUtil.union(apiDebugDTO.getGlobalParams(), MdUtil.parseToKvMapObj(apiDebugDTO.getHttpParams()));
+        jobVarService.parseVar(params, apiDebugDTO.getEnvId());
+        httpRequest.form(params);
 
         // 记录开始时间
         long beginTime = System.currentTimeMillis();

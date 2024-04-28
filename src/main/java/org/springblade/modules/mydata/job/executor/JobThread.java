@@ -80,7 +80,7 @@ public class JobThread implements Runnable {
 
         try {
             // 解析并替换api中的环境变量
-            jobVarService.parseVar(taskInfo);
+            jobVarService.parseTaskVar(taskInfo);
             // 根据操作类型 执行读或写
             switch (opType) {
                 // 提供数据
