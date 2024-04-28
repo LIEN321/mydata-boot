@@ -8,6 +8,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.executor.CronExpression;
 import org.springblade.common.constant.MdConstant;
@@ -273,11 +274,16 @@ public class JobExecutor implements ApplicationRunner {
         // 查询相同数据的订阅任务
         List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId(), taskInfo.getEnvId(), taskInfo.getId());
         subTasks.forEach(task -> {
-            TaskInfo subTaskInfo = build(task, "执行订阅任务");
+            TaskInfo subTaskInfo = build(task, StrUtil.format("{} 触发执行当前订阅任务", taskInfo.getTaskName()));
             // 订阅任务现在执行
             subTaskInfo.setStartTime(new Date());
             // 设置数据批次编号
             subTaskInfo.setDataBatchId(taskInfo.getDataBatchId());
+            // 生成日志
+            TaskLog taskLog = getTaskLog(subTaskInfo);
+            if (taskLogService.saveOrUpdate(taskLog)) {
+                taskInfo.setTaskLogId(taskLog.getId());
+            }
             // 指定订阅任务，调用接口发送数据
             executeJob(subTaskInfo);
         });
