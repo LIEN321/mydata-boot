@@ -258,35 +258,55 @@ public class JobExecutor implements ApplicationRunner {
     }
 
     /**
-     * 执行订阅任务
+     * 执行订阅的子任务
      *
-     * @param taskInfo 当前执行的任务
+     * @param parentTaskInfo 当前执行的任务
      */
-    public void executeSubscribedTask(TaskInfo taskInfo) {
+    public void executeSubscribedTask(TaskInfo parentTaskInfo) {
         // 当前任务不是 提供数据，则结束
-        if (MdConstant.DATA_PRODUCER != taskInfo.getOpType()) {
+        if (MdConstant.DATA_PRODUCER != parentTaskInfo.getOpType()) {
             return;
         }
 
-        List<Map> produceDataList = taskInfo.getProduceDataList();
-        if (CollUtil.isEmpty(produceDataList)) {
-            return;
-        }
+        List<Map> produceDataList = parentTaskInfo.getProduceDataList();
+
         // 查询相同数据的订阅任务
-        List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId(), taskInfo.getEnvId(), taskInfo.getId());
+        List<Task> subTasks = taskService.listRunningSubTasks(parentTaskInfo.getDataId(), parentTaskInfo.getEnvId(), parentTaskInfo.getId());
         subTasks.forEach(task -> {
-            TaskInfo subTaskInfo = build(task, StrUtil.format("{} 触发执行当前订阅任务", taskInfo.getTaskName()));
-            // 订阅任务现在执行
-            subTaskInfo.setStartTime(new Date());
-            // 设置数据批次编号
-            subTaskInfo.setDataBatchId(taskInfo.getDataBatchId());
-            // 生成日志
-            TaskLog taskLog = getTaskLog(subTaskInfo);
-            if (taskLogService.saveOrUpdate(taskLog)) {
-                taskInfo.setTaskLogId(taskLog.getId());
+            // 订阅任务 是提供数据
+            if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_PRODUCER)) {
+                // 调用API模式
+                if (ObjectUtil.equal(task.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
+                    // 没有业务数据 则触发子任务
+                    if (CollUtil.isEmpty(produceDataList)) {
+                        TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                        // 执行订阅任务
+                        executeJob(subTaskInfo);
+                    } else {
+                        // 将业务数据作为 消费数据，逐个触发执行子任务
+                        produceDataList.forEach(data -> {
+                            TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                            subTaskInfo.setTaskVar(data);
+                            // 执行订阅任务
+                            executeJob(subTaskInfo);
+                        });
+                    }
+                }
+                // 接收推送
+                else {
+                    acceptData(task, parentTaskInfo.getAcceptedData());
+                }
             }
-            // 指定订阅任务，调用接口发送数据
-            executeJob(subTaskInfo);
+            // 订阅任务 是提供数据
+            else if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_CONSUMER)) {
+                // 没有业务数据 则不执行消费子任务
+                if (CollUtil.isEmpty(produceDataList)) {
+                    return;
+                }
+                TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                // 执行订阅任务
+                executeJob(subTaskInfo);
+            }
         });
     }
 
@@ -305,8 +325,13 @@ public class JobExecutor implements ApplicationRunner {
     }
 
     public void completeJob(TaskInfo taskInfo) {
-        // 从正在运行集合中移除
-        executingJobs.remove(taskInfo.getId());
+        if (executingJobs.containsKey(taskInfo.getId())) {
+            // 从正在运行集合中移除
+            executingJobs.remove(taskInfo.getId());
+        } else {
+            // 任务不继续执行
+            taskInfo.setTimes(0);
+        }
 
         // 更新任务的 最后执行时间、最后成功时间
         Task task = new Task();
@@ -478,6 +503,28 @@ public class JobExecutor implements ApplicationRunner {
     }
 
     /**
+     * 根据任务 构建订阅的子任务job
+     *
+     * @param parentTaskInfo 父任务job
+     * @param subTask        子任务
+     * @return TaskJob 子任务job
+     */
+    private TaskInfo buildSubTaskJob(TaskInfo parentTaskInfo, Task subTask) {
+        // 订阅任务 是消费数据
+        TaskInfo subTaskInfo = build(subTask, StrUtil.format("{} 触发执行当前订阅任务", parentTaskInfo.getTaskName()));
+        // 订阅任务现在执行
+        subTaskInfo.setStartTime(new Date());
+        // 设置数据批次编号
+        subTaskInfo.setDataBatchId(parentTaskInfo.getDataBatchId());
+        // 生成日志
+        TaskLog taskLog = getTaskLog(subTaskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            subTaskInfo.setTaskLogId(taskLog.getId());
+        }
+        return subTaskInfo;
+    }
+
+    /**
      * 根据 任务的上次执行时间 和 设定间隔规则，计算任务的 下次执行时间
      *
      * @param taskInfo 定时任务
@@ -489,7 +536,6 @@ public class JobExecutor implements ApplicationRunner {
         Date date = taskInfo.getStartTime();
         String period = taskInfo.getTaskPeriod();
         if (taskInfo.getFailCount() > 0) {
-            //            date = taskInfo.getNextRunTime();
             period = MdConstant.TASK_FAILED_PERIOD;
         }
 

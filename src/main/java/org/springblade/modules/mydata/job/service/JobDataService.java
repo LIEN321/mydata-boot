@@ -84,9 +84,21 @@ public class JobDataService {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
+
+                // 获取业务数据值
+                Object value = jsonObject.get(apiCode);
+                // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
+                if (value == null && JobVarService.isFieldExp(apiCode)) {
+                    value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar());
+                }
+                // 若接口数据中 没有执行的字段名，则跳过处理
+                if (value == null) {
+                    return;
+                }
+
                 String targetType = fieldTypeMapping.get(standardCode);
                 try {
-                    datacenterData.put(standardCode, MdUtil.convertDataType(jsonObject.get(apiCode), targetType));
+                    datacenterData.put(standardCode, MdUtil.convertDataType(value, targetType));
                 } catch (Exception e) {
                     taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
                 }

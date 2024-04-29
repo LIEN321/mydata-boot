@@ -152,17 +152,42 @@ public class JobVarService {
      *
      * @param taskInfo 任务
      */
-    public void parseConsumeUrlVar(TaskInfo taskInfo) {
-        // api地址
-        String apiUrl = taskInfo.getApiUrl();
-        // 解析{field}格式的变量名
-        List<String> fieldNames = parseVarNames(apiUrl, DATA_FIELD_PATTERN, "{", "}");
-        // 若解析为空，则结束
-        if (CollUtil.isEmpty(fieldNames)) {
+    public static void parseDataFieldVar(TaskInfo taskInfo, Map data) {
+        if (MapUtil.isEmpty(data)) {
             return;
         }
-        // 提取第一条消费数据
-        Map data = taskInfo.getConsumeDataList().get(0);
+        // api地址
+        String apiUrl = taskInfo.getApiUrl();
+        // 替换属性变量值
+        taskInfo.setApiUrl(parseDataFieldVar(apiUrl, data));
+
+        // 解析param中的属性变量名
+        Map<String, Object> reqParams = taskInfo.getReqParams();
+        if (MapUtil.isNotEmpty(reqParams)) {
+            reqParams.forEach((k, v) -> {
+                reqParams.put(k, parseDataFieldVar(StrUtil.toString(v), data));
+            });
+        }
+
+        // 解析header中的属性变量名
+        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        if (MapUtil.isNotEmpty(reqHeaders)) {
+            reqHeaders.forEach((k, v) -> {
+                reqHeaders.put(k, parseDataFieldVar(v, data));
+            });
+        }
+    }
+
+    public static String parseDataFieldVar(String string, Map data) {
+        if (MapUtil.isEmpty(data) || StrUtil.isEmpty(string)) {
+            return string;
+        }
+        // 解析url中的属性变量名 {field}
+        List<String> fieldNames = parseVarNames(string, DATA_FIELD_PATTERN, "{", "}");
+        // 若解析为空，则结束
+        if (CollUtil.isEmpty(fieldNames)) {
+            return string;
+        }
         // 替换映射
         Map<String, String> replaceMap = MapUtil.newHashMap();
         for (String field : fieldNames) {
@@ -170,7 +195,8 @@ public class JobVarService {
                 continue;
             }
             // 从数据中 取出数据 并存入替换映射
-            String value = ObjectUtil.toString(data.remove(field));
+//            String value = ObjectUtil.toString(data.remove(field));
+            String value = ObjectUtil.toString(data.get(field));
             replaceMap.put(field, value);
         }
 
@@ -178,8 +204,17 @@ public class JobVarService {
         stringSubstitutor.setVariablePrefix("{");
         stringSubstitutor.setVariableSuffix("}");
         // 替换变量值
-        apiUrl = stringSubstitutor.replace(apiUrl);
-        taskInfo.setApiUrl(apiUrl);
+        return stringSubstitutor.replace(string);
+    }
+
+    /**
+     * 字符串是否为 属性表达式 {field}
+     *
+     * @param string 字符串
+     * @return true-是属性表达式，false-不是
+     */
+    public static boolean isFieldExp(String string) {
+        return ReUtil.isMatch(DATA_FIELD_PATTERN, string);
     }
 
     /**
