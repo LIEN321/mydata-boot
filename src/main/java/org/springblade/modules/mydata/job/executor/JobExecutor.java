@@ -179,6 +179,7 @@ public class JobExecutor implements ApplicationRunner {
      */
     public void stopTask(Long id) {
         jobCache.removeTask(id);
+        executingJobs.remove(id);
     }
 
     public void restartTask(Long id, String starterName) {
