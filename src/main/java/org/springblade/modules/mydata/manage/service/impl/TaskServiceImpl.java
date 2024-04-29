@@ -302,11 +302,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     public List<Task> listRunningTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
                 .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
-                .and(qw -> {
-                    qw.isNotNull(Task::getConsumeMode).eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
-                            .or()
-                            .eq(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_API);
-                });
+                .eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
+                .ne(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_PUSH);
         return list(queryWrapper);
     }
 
