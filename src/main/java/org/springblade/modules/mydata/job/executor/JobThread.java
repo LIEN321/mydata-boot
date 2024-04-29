@@ -228,7 +228,6 @@ public class JobThread implements Runnable {
                         // 根据过滤条件 查询数据
                         taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
                         List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
-                        // taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
                         taskInfo.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理
@@ -253,10 +252,9 @@ public class JobThread implements Runnable {
                                 String originApiUrl = taskInfo.getApiUrl();
                                 taskInfo.getConsumeDataList().forEach(data -> {
                                     // 从url中解析出变量 并替换值
-                                    if (jobVarService.parseConsumeUrlVar(taskInfo)) {
-                                        taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
-                                    }
+                                    jobVarService.parseConsumeUrlVar(taskInfo);
                                     // 调用api传输数据
+                                    taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
                                     ApiUtil.write(taskInfo, data);
                                     // 恢复原来的apiUrl
                                     taskInfo.setApiUrl(originApiUrl);
