@@ -340,7 +340,7 @@ public class JobExecutor implements ApplicationRunner {
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
         task.setNextRunTime(null);
 
-        // 若任务异常
+        // 若任务失败则结束
         if (taskInfo.isFailed()) {
             // 更新任务状态为异常
             task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
@@ -348,20 +348,10 @@ public class JobExecutor implements ApplicationRunner {
             jobCache.removeTask(taskInfo.getId());
             // 清空可执行次数
             taskInfo.setTimes(0);
-        } else {
-            // 任务未异常
-            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
-                // 是订阅任务 且未成功，则继续执行
-                if (taskInfo.getFailCount() > 0) {
-                    taskInfo.setTaskPeriod(MdConstant.TASK_FAILED_PERIOD);
-                } else {
-                    // 订阅任务 成功，则结束
-                    taskInfo.setTimes(0);
-                }
-            } else {
-                // 不是订阅任务，则触发订阅任务
-                executeSubscribedTask(taskInfo);
-            }
+        }
+        // 订阅任务执行成功，则结束
+        else if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed()) && MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
+            taskInfo.setTimes(0);
         }
 
         // 更新task信息
@@ -377,6 +367,11 @@ public class JobExecutor implements ApplicationRunner {
             taskInfo.setTimes(times);
             // 继续执行任务
             cacheJob(taskInfo);
+        }
+
+        // 任务成功 则触发订阅任务
+        if (MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
+            executeSubscribedTask(taskInfo);
         }
     }
 
