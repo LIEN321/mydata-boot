@@ -56,55 +56,72 @@ public class JobDataService {
         // 字段层级前缀
         String apiFieldPrefix = taskInfo.getApiFieldPrefix();
 
-        JSON json = JSONUtil.parse(jsonString);
-        if (StrUtil.isNotEmpty(apiFieldPrefix)) {
-            Object prefixJson = json.getByPath(apiFieldPrefix);
-            if (!(prefixJson instanceof JSON)) {
-                throw new RuntimeException("接口前缀 无法解析为JSON");
-            }
-            json = (JSON) prefixJson;
-        }
-        JSONArray jsonArray;
-        if (json instanceof JSONArray) {
-            jsonArray = (JSONArray) json;
+        JSON originJson = JSONUtil.parse(jsonString);
+        JSONArray baseArray;
+        if (originJson instanceof JSONArray) {
+            baseArray = (JSONArray) originJson;
         } else {
-            jsonArray = new JSONArray();
-            jsonArray.add(json);
+            baseArray = new JSONArray();
+            baseArray.add(originJson);
         }
 
         // 声明方法返回结果
         List<Map> apiResponseDataList = CollUtil.newArrayList();
 
-        // 根据映射 解析出json中的数据 并存入数据
-        jsonArray.forEach(obj -> {
-            JSONObject jsonObject = (JSONObject) obj;
-            Map<String, Object> datacenterData = MapUtil.newHashMap();
-            fieldMapping.forEach((standardCode, apiCode) -> {
-                // 若字段映射中 未设置api参数名，则跳过处理；
-                if (StrUtil.isEmpty(apiCode)) {
-                    return;
+        baseArray.forEach(json -> {
+            JSON baseJson = (JSONObject) json;
+            JSON dataJson = baseJson;
+            if (StrUtil.isNotEmpty(apiFieldPrefix)) {
+                Object prefixJson = baseJson.getByPath(apiFieldPrefix);
+                if (!(prefixJson instanceof JSON)) {
+                    throw new RuntimeException("接口前缀 无法解析为JSON");
                 }
+                dataJson = (JSON) prefixJson;
+            }
+            JSONArray jsonArray;
+            if (dataJson instanceof JSONArray) {
+                jsonArray = (JSONArray) dataJson;
+            } else {
+                jsonArray = new JSONArray();
+                jsonArray.add(dataJson);
+            }
 
-                // 获取业务数据值
-                Object value = jsonObject.get(apiCode);
-                // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
-                if (value == null && JobVarService.isFieldExp(apiCode)) {
-                    value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar());
-                }
-                // 若接口数据中 没有执行的字段名，则跳过处理
-                if (value == null) {
-                    return;
-                }
+            // 根据映射 解析出json中的数据 并存入数据
+            jsonArray.forEach(obj -> {
+                JSONObject jsonObject = (JSONObject) obj;
+                Map<String, Object> datacenterData = MapUtil.newHashMap();
+                fieldMapping.forEach((standardCode, apiCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiCode)) {
+                        return;
+                    }
 
-                String targetType = fieldTypeMapping.get(standardCode);
-                try {
-                    datacenterData.put(standardCode, MdUtil.convertDataType(value, targetType));
-                } catch (Exception e) {
-                    taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
-                }
+                    // 获取业务数据值
+                    Object value;
+                    if (StrUtil.startWith(apiCode, MdConstant.FIELD_MAPPING_ROOT)) {
+                        value = baseJson.getByPath(apiCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
+                    } else {
+                        value = jsonObject.getByPath(apiCode);
+                    }
+                    // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
+                    if (value == null && JobVarService.isFieldExp(apiCode)) {
+                        value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar());
+                    }
+                    // 若接口数据中 没有执行的字段名，则跳过处理
+                    if (value == null) {
+                        return;
+                    }
+
+                    String targetType = fieldTypeMapping.get(standardCode);
+                    try {
+                        datacenterData.put(standardCode, MdUtil.convertDataType(value, targetType));
+                    } catch (Exception e) {
+                        taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
+                    }
+                });
+
+                apiResponseDataList.add(datacenterData);
             });
-
-            apiResponseDataList.add(datacenterData);
         });
 
         taskInfo.setProduceDataList(apiResponseDataList);
