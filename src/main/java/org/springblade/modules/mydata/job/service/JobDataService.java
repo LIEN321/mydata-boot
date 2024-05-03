@@ -243,6 +243,7 @@ public class JobDataService {
 
                     // 将保存的数据 按最新配置的类型转换对比
                     String targetType = task.getFieldTypeMapping().get(key);
+                    produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
                     queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
                     if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
                         isSame = false;
