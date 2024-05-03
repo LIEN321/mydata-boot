@@ -158,7 +158,7 @@ public class JobThread implements Runnable {
                             taskInfo.appendLog("过滤后的没有业务数据，跳过保存操作");
                         } else {
                             // 保存业务数据
-                            jobDataService.saveTaskData(taskInfo);
+                            jobDataService.saveProduceData(taskInfo);
                         }
 
                         // 更新环境变量

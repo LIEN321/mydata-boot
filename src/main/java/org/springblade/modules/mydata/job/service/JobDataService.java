@@ -37,6 +37,9 @@ public class JobDataService {
     @Resource
     private BizDataDAO bizDataDAO;
 
+    @Resource
+    private JobDataProcessService jobDataProcessService;
+
     /**
      * 根据任务配置，从json中解析出业务数据列表
      *
@@ -161,7 +164,13 @@ public class JobDataService {
         taskInfo.setConsumeDataList(apiRequestDataList);
     }
 
-    public void saveTaskData(TaskInfo task) {
+
+    /**
+     * 保存任务中的业务数据
+     *
+     * @param task 任务
+     */
+    public void saveProduceData(TaskInfo task) {
         Assert.notNull(task);
         //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
         if (CollUtil.isEmpty(task.getProduceDataList())) {
@@ -194,6 +203,9 @@ public class JobDataService {
 
             // 根据唯一标识 查询业务数据
             Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), task.getDataCode(), idMap);
+
+            // 根据字段映射配置 提前处理produceData数据，用于对比是否一致
+            jobDataProcessService.processBizData(task, produceData, queryData);
 
             if (queryData == null) {
                 // 未查到数据，则新增
