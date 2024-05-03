@@ -160,4 +160,9 @@ public class TaskDTO implements Serializable {
      * 订阅任务id
      */
     private Long subscribeTaskId;
+
+    /**
+     * 数据处理配置
+     */
+    private Map<String, Map<String, String>> dataProcess;
 }

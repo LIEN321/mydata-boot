@@ -310,6 +310,11 @@ public class TaskInfo implements Serializable {
     private Map taskVar = MapUtil.newHashMap();
 
     /**
+     * 数据处理配置
+     */
+    private Map<String, Map<String, String>> dataProcess;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

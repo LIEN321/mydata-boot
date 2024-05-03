@@ -247,4 +247,9 @@ public class TaskVO {
      */
     @JsonSerialize(using = ToStringSerializer.class, nullsUsing = NullSerializer.class)
     private Long appId;
+
+    /**
+     * 数据处理配置
+     */
+    private Map<String, Map<String, String>> dataProcess;
 }

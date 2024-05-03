@@ -250,4 +250,10 @@ public class Task extends TenantEntity {
      */
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Date nextRunTime;
+
+    /**
+     * 数据处理配置
+     */
+    @TableField(typeHandler = FastjsonTypeHandler.class)
+    private Map<String, Map<String, String>> dataProcess;
 }
