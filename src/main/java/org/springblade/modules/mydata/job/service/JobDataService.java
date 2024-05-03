@@ -133,6 +133,27 @@ public class JobDataService {
     }
 
     /**
+     * 查询消费的业务数据
+     *
+     * @param taskInfo 任务
+     * @param skip     跳过数量
+     * @param limit    限制数量
+     * @return 业务数据
+     */
+    public List<Map> listConsumeData(TaskInfo taskInfo, Long skip, Integer limit) {
+        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), taskInfo.getDataFilters(), skip, limit);
+        if (CollUtil.isEmpty(dataList)) {
+            return dataList;
+        }
+
+        dataList.forEach(consumeData -> {
+            jobDataProcessService.processBizData(taskInfo, consumeData, consumeData);
+        });
+
+        return dataList;
+    }
+
+    /**
      * 根据任务中字段映射，将consumeDataList转换为api参数结构
      *
      * @param taskInfo 任务

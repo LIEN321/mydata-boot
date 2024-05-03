@@ -11,9 +11,7 @@ import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
-import org.springblade.common.util.MdUtil;
 import org.springblade.core.tool.utils.SpringUtil;
-import org.springblade.modules.mydata.data.BizDataDAO;
 import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.job.service.*;
@@ -39,8 +37,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class JobThread implements Runnable {
     private final JobDataService jobDataService = SpringUtil.getBean(JobDataService.class);
-
-    private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
 
     private final JobExecutor jobExecutor = SpringUtil.getBean(JobExecutor.class);
 
@@ -204,6 +200,7 @@ public class JobThread implements Runnable {
                     List<BizDataFilter> filters = jobDataFilterService.parseFilterValue(taskInfo);
                     if (filters == null) {
                         filters = CollUtil.toList();
+                        taskInfo.setDataFilters(filters);
                     }
 
                     // 订阅任务 使用任务批次号 查询数据
@@ -231,8 +228,9 @@ public class JobThread implements Runnable {
                         }
 
                         // 根据过滤条件 查询数据
-                        taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
-                        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
+                        taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", taskInfo.getDataFilters(), skip, limit);
+//                        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
+                        List<Map> dataList = jobDataService.listConsumeData(taskInfo, skip, limit);
                         taskInfo.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理
