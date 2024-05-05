@@ -160,12 +160,4 @@ public class JobDataFilterService {
 
         return filters;
     }
-
-    public void sendNoticeEmail(TaskInfo taskInfo) {
-        List<Map> filteredDataList = taskInfo.getFilteredDataList();
-        // 若没有被过滤的无效数据，则结束
-        if (CollUtil.isEmpty(filteredDataList)) {
-            return;
-        }
-    }
 }
