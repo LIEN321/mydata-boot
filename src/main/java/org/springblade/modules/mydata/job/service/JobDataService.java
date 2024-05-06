@@ -189,30 +189,30 @@ public class JobDataService {
     /**
      * 保存任务中的业务数据
      *
-     * @param task 任务
+     * @param taskInfo 任务
      */
-    public void saveProduceData(TaskInfo task) {
-        Assert.notNull(task);
+    public void saveProduceData(TaskInfo taskInfo) {
+        Assert.notNull(taskInfo);
         //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
-        if (CollUtil.isEmpty(task.getProduceDataList())) {
+        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
             return;
         }
 
         final Date currentTime = DateUtil.date();
 
         // 标准数据编号
-        String dataCode = task.getDataCode();
+        String dataCode = taskInfo.getDataCode();
         // 数据的标识字段编号
-        String dataIdCode = task.getIdFieldCode();
+        String dataIdCode = taskInfo.getIdFieldCode();
         List<String> dataIdCodes = StrUtil.split(dataIdCode, StrPool.COMMA);
 
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
-        task.getProduceDataList().forEach(produceData -> {
+        taskInfo.getProduceDataList().forEach(produceData -> {
 
             Map<String, Object> idMap = MapUtil.newHashMap();
-            // 若数据的 标识字段值 无效，则不存储
+            // 若数据的 标识字段值 无效，则不存储 // TODO 转移到数据过滤逻辑中
             for (String idCode : dataIdCodes) {
                 Object idFieldValue = produceData.get(idCode);
                 if (ObjectUtil.isNull(idFieldValue)) {
@@ -223,10 +223,10 @@ public class JobDataService {
             }
 
             // 根据唯一标识 查询业务数据
-            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), task.getDataCode(), idMap);
+            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), idMap);
 
             // 根据字段映射配置 提前处理produceData数据，用于对比是否一致
-            jobDataProcessService.processBizData(task, produceData, queryData);
+            jobDataProcessService.processBizData(taskInfo, produceData, queryData);
 
             if (queryData == null) {
                 // 未查到数据，则新增
@@ -242,7 +242,7 @@ public class JobDataService {
                     Object queryDataValue = queryData.get(key);
 
                     // 将保存的数据 按最新配置的类型转换对比
-                    String targetType = task.getFieldTypeMapping().get(key);
+                    String targetType = taskInfo.getFieldTypeMapping().get(key);
                     produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
                     queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
                     if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
@@ -259,12 +259,12 @@ public class JobDataService {
 
             // 设置业务数据的最后更新时间
             queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, task.getDataBatchId());
+            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskInfo.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
         if (!dataInsertList.isEmpty()) {
-            bizDataDAO.insertBatch(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), dataCode, dataInsertList);
+            bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, dataInsertList);
         }
 
         // 更新数据仓库的数据
@@ -276,13 +276,13 @@ public class JobDataService {
                     idMap.put(idCode, dataIdValue);
                 });
 
-                bizDataDAO.update(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), dataCode, idMap, data);
+                bizDataDAO.update(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, idMap, data);
             });
         }
 
-        task.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
-        task.setInsertCount(task.getInsertCount() + dataInsertList.size());
-        task.setUpdateCount(task.getUpdateCount() + dataUpdateList.size());
+        taskInfo.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
+        taskInfo.setInsertCount(taskInfo.getInsertCount() + dataInsertList.size());
+        taskInfo.setUpdateCount(taskInfo.getUpdateCount() + dataUpdateList.size());
     }
 
     /**

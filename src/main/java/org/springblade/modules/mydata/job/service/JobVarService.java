@@ -47,16 +47,16 @@ public class JobVarService {
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
      *
-     * @param task       任务
+     * @param taskInfo   任务
      * @param jsonString json数据
      */
-    public void saveVarValue(TaskInfo task, String jsonString) {
-        if (task == null || StrUtil.isEmpty(jsonString)) {
+    public void saveVarValue(TaskInfo taskInfo, String jsonString) {
+        if (taskInfo == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
         // 接口字段 与 变量的映射
-        Map<String, String> fieldVarMapping = task.getFieldVarMapping();
+        Map<String, String> fieldVarMapping = taskInfo.getFieldVarMapping();
         if (CollUtil.isEmpty(fieldVarMapping)) {
             return;
         }
@@ -64,16 +64,16 @@ public class JobVarService {
         JSON json = JSONUtil.parse(jsonString);
         fieldVarMapping.forEach((apiField, varName) -> {
             String varValue = json.getByPath(apiField, String.class);
-            Long envId = task.getEnvId();
+            Long envId = taskInfo.getEnvId();
 
             EnvVar envVar = new EnvVar();
             envVar.setEnvId(envId);
             envVar.setVarName(varName);
             envVar.setVarValue(varValue);
-            envVar.setTenantId(task.getTenantId());
+            envVar.setTenantId(taskInfo.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
+            taskInfo.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
         });
 
     }
