@@ -19,4 +19,8 @@ CREATE TABLE `md_biz_data`
 
 ALTER TABLE `md_task`
     CHANGE COLUMN `single_mode` `data_mode` int (0) NULL DEFAULT NULL COMMENT '单条记录消费模式，1-对象、2-集合',
-    ADD COLUMN `data_process` text NULL COMMENT '数据处理' AFTER `next_run_time`;
+    ADD COLUMN `data_process` text NULL COMMENT '数据处理' AFTER `next_run_time`,
+    ADD COLUMN `req_body` text NULL COMMENT '请求体';
+
+ALTER TABLE `md_api`
+    ADD COLUMN `req_body` text NULL COMMENT '请求体';

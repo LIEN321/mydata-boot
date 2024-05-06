@@ -186,6 +186,7 @@ public class ApiController extends BladeController {
         LinkedHashMap<String, Object> params = (LinkedHashMap<String, Object>) MapUtil.union(apiDebugDTO.getGlobalParams(), MdUtil.parseToKvMapObj(apiDebugDTO.getHttpParams()));
         jobVarService.parseVar(params, apiDebugDTO.getEnvId());
         httpRequest.form(params);
+        httpRequest.body(apiDebugDTO.getHttpBody(), apiDebugDTO.getContentType());
 
         // 记录开始时间
         long beginTime = System.currentTimeMillis();

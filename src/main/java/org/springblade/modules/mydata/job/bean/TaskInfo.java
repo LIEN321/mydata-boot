@@ -315,6 +315,11 @@ public class TaskInfo implements Serializable {
     private Map<String, Map<String, String>> dataProcess;
 
     /**
+     * 请求体
+     */
+    private String reqBody;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

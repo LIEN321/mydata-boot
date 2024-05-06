@@ -67,4 +67,9 @@ public class ApiDTO implements Serializable {
      * 字段层级前缀
      */
     private String fieldPrefix;
+
+    /**
+     * 请求体
+     */
+    private String reqBody;
 }

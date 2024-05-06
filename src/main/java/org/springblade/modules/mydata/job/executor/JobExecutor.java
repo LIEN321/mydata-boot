@@ -450,6 +450,9 @@ public class JobExecutor implements ApplicationRunner {
             taskInfo.setOriginReqParams(jobParams);
             taskInfo.setReqParams(ObjectUtil.cloneByStream(taskInfo.getOriginReqParams()));
         }
+        // body
+        taskInfo.setReqBody(task.getReqBody());
+
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
 

@@ -173,6 +173,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             task.setDataType(api.getDataType());
             // 复制api的所属应用
             task.setAppId(api.getAppId());
+            // 复制api的请求体
+            task.setReqBody(api.getReqBody());
 
             // 从env和api中 汇总header、param，优先级api > env
             if (refEnv != null) {
@@ -438,7 +440,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     //    @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean updateApiUrlByApi(Api api) {
+    public boolean updateTaskByApi(Api api) {
         // 根据环境查询任务
         List<Task> tasks = list(null, api.getId(), null);
         if (CollUtil.isNotEmpty(tasks)) {
@@ -614,6 +616,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         LinkedHashMap<String, String> params = (LinkedHashMap<String, String>) MapUtil.union(env.getGlobalParams(), api.getReqParams());
         task.setReqHeaders(headers);
         task.setReqParams(params);
+        task.setReqBody(api.getReqBody());
     }
 
     private void restartRunningTasks(List<Task> tasks) {

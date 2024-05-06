@@ -25,11 +25,11 @@ public class ApiUtil {
     /**
      * 调用接口，获取返回结果
      *
-     * @param task 任务
+     * @param taskInfo 任务
      * @return 接口结果
      */
-    public static String read(TaskInfo task) {
-        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams());
+    public static String read(TaskInfo taskInfo) {
+        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
     }
 
     /**

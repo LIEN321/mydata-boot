@@ -256,4 +256,9 @@ public class Task extends TenantEntity {
      */
     @TableField(typeHandler = FastjsonTypeHandler.class)
     private Map<String, Map<String, String>> dataProcess;
+
+    /**
+     * 请求体
+     */
+    private String reqBody;
 }

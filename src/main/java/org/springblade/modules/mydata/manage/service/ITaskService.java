@@ -181,11 +181,12 @@ public interface ITaskService extends BaseService<Task> {
      * @param api API
      * @return 操作结果，true-成功，false-失败
      */
-    boolean updateApiUrlByApi(Api api);
+    boolean updateTaskByApi(Api api);
 
     /**
      * 更新任务的 标识字段，并重启服务
-     * @param dataId 任务id
+     *
+     * @param dataId       任务id
      * @param idFieldCodes 标识字段集合
      */
     void updateIdFieldCode(Long dataId, List<String> idFieldCodes);

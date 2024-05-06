@@ -58,4 +58,9 @@ public class ApiDebugDTO implements Serializable {
 
     @JsonSerialize(using = ToStringSerializer.class)
     private Long envId;
+
+    /**
+     * 请求体
+     */
+    private String httpBody;
 }

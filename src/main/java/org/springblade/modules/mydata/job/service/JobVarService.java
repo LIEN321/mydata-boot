@@ -89,18 +89,32 @@ public class JobVarService {
             return;
         }
 
-        //
-        Set<String> userVarNames = null;
-        if (CollUtil.isNotEmpty(map)) {
-            // 替换header中的系统内置变量
-            replaceSysVarValues(map);
-            // 提取用户自定义变量名
-            userVarNames = parseUserVarNames(map.values());
+        // 替换map中的系统内置变量
+        replaceSysVarValues(map);
+
+        // 提取用户自定义变量名
+        Map<String, String> userVars = parseUserVar(map.values(), envId);
+        if (MapUtil.isEmpty(userVars)) {
+            return;
         }
+
+        replaceUserVarValues(map, userVars);
+    }
+
+    /**
+     * 从字符串集合中，提取用户环境变量
+     *
+     * @param strings 字符串集合
+     * @param envId   环境id
+     * @return 用户环境变量
+     */
+    public <V> Map<String, String> parseUserVar(Collection<V> strings, Long envId) {
+        // 提取用户自定义变量名
+        Set<String> userVarNames = parseUserVarNames(strings);
 
         // 若没有用户变量名，则结束解析
         if (CollUtil.isEmpty(userVarNames)) {
-            return;
+            return null;
         }
 
         // 根据变量名 获取环境变量值
@@ -122,14 +136,7 @@ public class JobVarService {
         }
 
         // 将环境变量转化为key:value格式
-        Map<String, String> varMap = envVars.stream()
-                .collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
-
-        if (MapUtil.isEmpty(varMap)) {
-            return;
-        }
-
-        replaceUserVarValues(map, varMap);
+        return envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
     }
 
     /**
@@ -145,10 +152,22 @@ public class JobVarService {
 
         parseVar(reqHeaders, taskInfo.getEnvId());
         parseVar(reqParams, taskInfo.getEnvId());
+
+        // 替换 body 中的变量
+        if (StrUtil.isNotEmpty(taskInfo.getReqBody())) {
+            String reqBody = replaceSysVarValue(taskInfo.getReqBody());
+            Map<String, String> userVars = parseUserVar(CollUtil.toList(reqBody), taskInfo.getEnvId());
+            if (MapUtil.isEmpty(userVars)) {
+                return;
+            }
+
+            reqBody = replaceUserVarValues(reqBody, userVars);
+            taskInfo.setReqBody(reqBody);
+        }
     }
 
     /**
-     * 解析url中的 数据字段变量 并替换数据
+     * 解析url、header、param中的 数据字段变量 并替换数据
      *
      * @param taskInfo 任务
      */
@@ -229,6 +248,18 @@ public class JobVarService {
             // 替换用户自定义变量
             sourceMap.put(k, (V) stringSubstitutor.replace(v));
         });
+    }
+
+    /**
+     * 替换用户自定义变量 ${var}
+     *
+     * @param string 字符串
+     * @param varMap 变量名-变量值
+     */
+    private String replaceUserVarValues(String string, Map<String, String> varMap) {
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
+        // 替换用户自定义变量
+        return stringSubstitutor.replace(string);
     }
 
     /**
