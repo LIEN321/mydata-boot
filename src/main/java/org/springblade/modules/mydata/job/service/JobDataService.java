@@ -211,14 +211,10 @@ public class JobDataService {
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
         taskInfo.getProduceDataList().forEach(produceData -> {
 
+            // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
-            // 若数据的 标识字段值 无效，则不存储 // TODO 转移到数据过滤逻辑中
             for (String idCode : dataIdCodes) {
                 Object idFieldValue = produceData.get(idCode);
-                if (ObjectUtil.isNull(idFieldValue)) {
-                    return;
-                }
-
                 idMap.put(idCode, idFieldValue);
             }
 
