@@ -269,6 +269,11 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
+        // 非数据处理的任务 不支持订阅模式
+        if (ObjectUtil.isNull(parentTaskInfo.getDataId())) {
+            return;
+        }
+
         List<Map> produceDataList = parentTaskInfo.getProduceDataList();
 
         // 查询相同数据的订阅任务
