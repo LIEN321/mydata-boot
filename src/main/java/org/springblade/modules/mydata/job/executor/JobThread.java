@@ -63,7 +63,7 @@ public class JobThread implements Runnable {
         taskInfo.appendLog("任务开始执行");
 
         // 不是订阅任务 生成新的任务批次号，订阅任务已设置了前置任务的相同批次号
-        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+        if (StrUtil.isEmpty(taskInfo.getDataBatchId())) {
             taskInfo.setDataBatchId(RandomUtil.randomString(16));
         }
         taskInfo.appendLog("任务批次号 {}", taskInfo.getDataBatchId());
