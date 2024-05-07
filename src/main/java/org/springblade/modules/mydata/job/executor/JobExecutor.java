@@ -382,6 +382,16 @@ public class JobExecutor implements ApplicationRunner {
     }
 
     /**
+     * 更新任务日志
+     *
+     * @param taskInfo 任务
+     */
+    public void updateTaskLog(TaskInfo taskInfo) {
+        // 更新日志
+        taskLogService.saveOrUpdate(getTaskLog(taskInfo));
+    }
+
+    /**
      * 检测任务是否正在执行中
      *
      * @param taskId 任务id

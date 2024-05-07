@@ -103,7 +103,7 @@ public class JobThread implements Runnable {
                                 JobVarService.parseDataFieldVar(taskInfo, taskInfo.getTaskVar());
                             }
                             // 调用api 获取json
-                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
                             json = ApiUtil.read(taskInfo);
                             // 将json存入已接收数据，以便后续的订阅子任务复用
                             taskInfo.setAcceptedData(json);
@@ -165,6 +165,7 @@ public class JobThread implements Runnable {
 
                         // 若启用分批，则等待间隔
                         if (taskInfo.isBatch()) {
+                            jobExecutor.updateTaskLog(taskInfo);
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
                     } while (taskInfo.isBatch());
@@ -286,6 +287,7 @@ public class JobThread implements Runnable {
 
                         // 若启用分批，则等待间隔
                         if (taskInfo.isBatch()) {
+                            jobExecutor.updateTaskLog(taskInfo);
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
                     } while (taskInfo.isBatch());
