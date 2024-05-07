@@ -58,8 +58,9 @@ public class JobDataService {
 
         // 字段层级前缀
         String apiFieldPrefix = taskInfo.getApiFieldPrefix();
-
+        // 最初的json对象
         JSON originJson = JSONUtil.parse(jsonString);
+        // 使用数组模式 兼容单个对象和数组模式
         JSONArray baseArray;
         if (originJson instanceof JSONArray) {
             baseArray = (JSONArray) originJson;
@@ -72,7 +73,9 @@ public class JobDataService {
         List<Map> apiResponseDataList = CollUtil.newArrayList();
 
         baseArray.forEach(json -> {
+            // 保留根目录json，用于 /field 格式提取数据
             JSON baseJson = (JSONObject) json;
+            // 根据配置的prefix 定位到数据层级
             JSON dataJson = baseJson;
             if (StrUtil.isNotEmpty(apiFieldPrefix)) {
                 Object prefixJson = baseJson.getByPath(apiFieldPrefix);
@@ -81,6 +84,7 @@ public class JobDataService {
                 }
                 dataJson = (JSON) prefixJson;
             }
+            // 使用数组模式 兼容单个对象和数组模式
             JSONArray jsonArray;
             if (dataJson instanceof JSONArray) {
                 jsonArray = (JSONArray) dataJson;
@@ -101,6 +105,7 @@ public class JobDataService {
 
                     // 获取业务数据值
                     Object value;
+                    // /field 根目录格式
                     if (StrUtil.startWith(apiCode, MdConstant.FIELD_MAPPING_ROOT)) {
                         value = baseJson.getByPath(apiCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
                     } else {
