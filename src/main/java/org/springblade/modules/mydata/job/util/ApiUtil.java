@@ -60,20 +60,27 @@ public class ApiUtil {
         return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
     }
 
-    public static String write(TaskInfo taskInfo, Map data) {
+    public static void write(TaskInfo taskInfo, Map data) {
         if (CollUtil.isEmpty(data)) {
-            return "";
+            return;
         }
 
-        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
-        JSON json = new JSONObject(data);
+        JSON json;
+        String body = taskInfo.getReqBody();
+        // 有body时，直接发送body内容
+        if (StrUtil.isNotEmpty(body)) {
+            json = new JSONObject(body);
+        } else {
+            json = new JSONObject(data);
 
-        if (StrUtil.isNotBlank(apiFieldPrefix)) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.putByPath(apiFieldPrefix, json);
-            json = jsonObject;
+            String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+            if (StrUtil.isNotBlank(apiFieldPrefix)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.putByPath(apiFieldPrefix, json);
+                json = jsonObject;
+            }
         }
 
-        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
+        HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
     }
 }
