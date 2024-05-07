@@ -318,7 +318,7 @@ public class JobDataService {
         datas.forEach(data -> {
             Map<String, String> row = MapUtil.newHashMap();
             mFieldMapping.forEach((k, v) -> {
-                row.put(k, ObjectUtil.toString(data.get(k)));
+                row.put(k, ObjectUtil.defaultIfNull(StrUtil.toStringOrNull(data.get(k)), ""));
             });
             excelDataList.add(row);
         });
