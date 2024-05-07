@@ -73,7 +73,7 @@ public class JobVarService {
             envVar.setTenantId(taskInfo.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            taskInfo.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
+            taskInfo.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
         });
 
     }

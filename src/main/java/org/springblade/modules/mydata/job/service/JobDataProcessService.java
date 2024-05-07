@@ -57,10 +57,10 @@ public class JobDataProcessService {
             // 处理值
             String opValue = processOp.get(MdConstant.PARAM_VALUE);
             if (StrUtil.isNotEmpty(op)) {
-                // 解析处理值中的表达式 {fieldCode}
                 if (MapUtil.isEmpty(originData)) {
                     continue;
                 }
+                // 解析处理值中的表达式 {fieldCode}
                 opValue = JobVarService.parseDataFieldVar(opValue, originData);
                 // 获取新的值
                 Object newValue = processValue(originValue, op, opValue, originData);
