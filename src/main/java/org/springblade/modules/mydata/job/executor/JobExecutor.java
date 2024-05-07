@@ -303,7 +303,7 @@ public class JobExecutor implements ApplicationRunner {
                     acceptData(task, parentTaskInfo.getAcceptedData());
                 }
             }
-            // 订阅任务 是提供数据
+            // 订阅任务 是消费数据
             else if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_CONSUMER)) {
                 // 没有业务数据 则不执行消费子任务
                 if (CollUtil.isEmpty(produceDataList)) {
