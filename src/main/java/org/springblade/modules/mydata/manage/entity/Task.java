@@ -260,5 +260,6 @@ public class Task extends TenantEntity {
     /**
      * 请求体
      */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String reqBody;
 }
