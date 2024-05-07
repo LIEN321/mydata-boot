@@ -209,6 +209,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setFilteredDataList(CollUtil.toList());
         taskInfo.setInsertCount(0);
         taskInfo.setUpdateCount(0);
+        taskInfo.setConsumeCount(0);
 
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
