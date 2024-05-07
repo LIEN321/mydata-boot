@@ -338,9 +338,6 @@ public class JobThread implements Runnable {
             log.error(e.getMessage(), e);
         }
 
-        // 设置任务结束时间
-        taskInfo.setEndTime(new Date());
-
         jobExecutor.completeJob(taskInfo);
     }
 }
