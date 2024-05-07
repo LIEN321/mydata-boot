@@ -46,24 +46,30 @@ public class JobDataProcessService {
 
         Set<String> fieldCodes = dataProcess.keySet();
         for (String fieldCode : fieldCodes) {
-            // {op:op,v:value}
-            Map<String, String> processOp = dataProcess.get(fieldCode);
-            // 处理前的字段值
-            Object originValue = pendingData.get(fieldCode);
-            // 处理操作
-            String op = processOp.get(MdConstant.PARAM_OP);
+            // 获取字段的操作配置 {op:op,v:value}
+            Map<String, String> processMap = dataProcess.get(fieldCode);
+            // 若操作配置无效，则跳过
+            if (MapUtil.isEmpty(processMap)) {
+                continue;
+            }
 
-            // 优先处理置空
+            // 操作类型
+            String op = processMap.get(MdConstant.PARAM_OP);
+
+            // 优先处理 置空 操作
             if (isSetNull(op)) {
                 pendingData.put(fieldCode, null);
                 continue;
             }
 
-            if (ObjectUtil.isNull(originValue) || MapUtil.isEmpty(processOp)) {
+            // 处理前的字段值
+            Object originValue = pendingData.get(fieldCode);
+            // 若字段值无效，则不处理
+            if (ObjectUtil.isNull(originValue)) {
                 continue;
             }
             // 处理值
-            String opValue = processOp.get(MdConstant.PARAM_VALUE);
+            String opValue = processMap.get(MdConstant.PARAM_VALUE);
             if (StrUtil.isNotEmpty(op)) {
                 if (MapUtil.isEmpty(originData)) {
                     continue;
@@ -102,11 +108,16 @@ public class JobDataProcessService {
                     return originValue;
                 }
                 return ExpressionUtil.eval(StrUtil.toString(originValue) + op + opValue, originData);
-            // 字符串：md5，base64
+            // 字符串：md5，base64，prepend，append
             case "md5":
                 return MD5.create().digestHex(StrUtil.toString(originValue));
             case "base64":
                 return Base64.encode(StrUtil.toString(originValue));
+            case "prepend":
+                return StrUtil.prependIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+            case "append":
+                return StrUtil.appendIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+
             // 日期：add second
             case "add second":
                 Date date = DateUtil.parse(StrUtil.toString(originValue));
