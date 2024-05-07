@@ -50,11 +50,18 @@ public class JobDataProcessService {
             Map<String, String> processOp = dataProcess.get(fieldCode);
             // 处理前的字段值
             Object originValue = pendingData.get(fieldCode);
+            // 处理操作
+            String op = processOp.get(MdConstant.PARAM_OP);
+
+            // 优先处理置空
+            if (isSetNull(op)) {
+                pendingData.put(fieldCode, null);
+                continue;
+            }
+
             if (ObjectUtil.isNull(originValue) || MapUtil.isEmpty(processOp)) {
                 continue;
             }
-            // 处理操作
-            String op = processOp.get(MdConstant.PARAM_OP);
             // 处理值
             String opValue = processOp.get(MdConstant.PARAM_VALUE);
             if (StrUtil.isNotEmpty(op)) {
@@ -108,5 +115,15 @@ public class JobDataProcessService {
                 return calendar.getTime();
         }
         return originValue;
+    }
+
+    /**
+     * 判断指定处理类型 是否为置空null
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetNull(String targetOp) {
+        return "set null".equals(targetOp);
     }
 }
