@@ -3,6 +3,7 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.CalendarUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -62,10 +63,14 @@ public class JobDataProcessService {
                 }
                 // 解析处理值中的表达式 {fieldCode}
                 opValue = JobVarService.parseDataFieldVar(opValue, originData);
-                // 获取新的值
-                Object newValue = processValue(originValue, op, opValue, originData);
-                // 存入业务数据
-                pendingData.put(fieldCode, newValue);
+                try {
+                    // 获取新的值
+                    Object newValue = processValue(originValue, op, opValue, originData);
+                    // 存入业务数据
+                    pendingData.put(fieldCode, newValue);
+                } catch (Exception e) {
+                    ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} 业务数据={}，错误：{}", fieldCode, originValue, op, opValue, originData, e.getMessage()));
+                }
             }
         }
     }
