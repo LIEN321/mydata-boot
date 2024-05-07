@@ -366,6 +366,11 @@ public class JobExecutor implements ApplicationRunner {
         // 保存日志
         taskLogService.saveOrUpdate(getTaskLog(taskInfo));
 
+        // 任务成功 则触发订阅任务
+        if (MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
+            executeSubscribedTask(taskInfo);
+        }
+
         // 减少可执行次数
         int times = taskInfo.getTimes();
         // 判断可执行次数
@@ -373,11 +378,6 @@ public class JobExecutor implements ApplicationRunner {
             taskInfo.setTimes(times);
             // 继续执行任务
             cacheJob(taskInfo);
-        }
-
-        // 任务成功 则触发订阅任务
-        if (MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
-            executeSubscribedTask(taskInfo);
         }
     }
 
