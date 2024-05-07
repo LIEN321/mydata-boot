@@ -6,6 +6,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.HashUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -253,19 +254,25 @@ public class JobThread implements Runnable {
                             // 若消费任务是对象模式，则从字段映射中提取数据 替换url上的变量
                             if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getDataMode())) {
                                 // 记录原来的apiUrl地址
-                                String originApiUrl = taskInfo.getApiUrl();
+                                String originApiUrl = ObjectUtil.cloneByStream(taskInfo.getApiUrl());
+                                Map<String, String> reqHeaders = ObjectUtil.cloneByStream(taskInfo.getReqHeaders());
+                                Map<String, Object> reqParams = ObjectUtil.cloneByStream(taskInfo.getReqParams());
+                                String reqBody = ObjectUtil.cloneByStream(taskInfo.getReqBody());
                                 taskInfo.getConsumeDataList().forEach(data -> {
-                                    // 从url中解析出变量 并替换值
-                                    JobVarService.parseDataFieldVar(taskInfo, data);
+                                    // 解析url、header、param、body变量 并替换值
+                                    JobVarService.parseTaskDataVar(taskInfo, data);
                                     // 调用api传输数据
-                                    taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                                    taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
                                     ApiUtil.write(taskInfo, data);
-                                    // 恢复原来的apiUrl
+                                    // 恢复原来的url、header、param、body
                                     taskInfo.setApiUrl(originApiUrl);
+                                    taskInfo.setReqHeaders(reqHeaders);
+                                    taskInfo.setReqParams(reqParams);
+                                    taskInfo.setReqBody(reqBody);
                                 });
                             } else {
                                 // 调用api传输数据
-                                taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                                taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
                                 String json = ApiUtil.write(taskInfo);
                                 // 更新环境变量
                                 jobVarService.saveVarValue(taskInfo, json);
