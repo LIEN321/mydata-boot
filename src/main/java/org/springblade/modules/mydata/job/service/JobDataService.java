@@ -108,7 +108,7 @@ public class JobDataService {
                     }
                     // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
                     if (value == null && JobVarService.isFieldExp(apiCode)) {
-                        value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar());
+                        value = JobVarService.parseDataVar(apiCode, taskInfo.getTaskVar());
                     }
                     // 若接口数据中 没有执行的字段名，则跳过处理
                     if (value == null) {

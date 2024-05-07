@@ -101,7 +101,8 @@ public class JobThread implements Runnable {
                         String json = null;
                         if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskInfo.getProduceMode())) {
                             if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed()) && CollUtil.isNotEmpty(taskInfo.getTaskVar())) {
-                                JobVarService.parseDataFieldVar(taskInfo, taskInfo.getTaskVar());
+                                // 订阅的提供数据任务 从父任务获取数据并解析到当前任务中
+                                JobVarService.parseTaskDataVar(taskInfo, taskInfo.getTaskVar());
                             }
                             // 调用api 获取json
                             taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());

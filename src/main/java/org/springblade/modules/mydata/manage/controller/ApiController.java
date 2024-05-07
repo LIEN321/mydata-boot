@@ -181,11 +181,11 @@ public class ApiController extends BladeController {
         httpRequest.contentType(apiDebugDTO.getContentType());
         // 设置请求header，合并环境的全局header
         LinkedHashMap<String, String> headers = (LinkedHashMap<String, String>) MapUtil.union(apiDebugDTO.getGlobalHeaders(), MdUtil.parseToKvMap(apiDebugDTO.getHttpHeaders()));
-        jobVarService.parseVar(headers, apiDebugDTO.getEnvId());
+        jobVarService.parseSysAndEnvVar(headers, apiDebugDTO.getEnvId());
         httpRequest.headerMap(headers, true);
         // 设置请求参数，合并环境的全局param
         LinkedHashMap<String, Object> params = (LinkedHashMap<String, Object>) MapUtil.union(apiDebugDTO.getGlobalParams(), MdUtil.parseToKvMapObj(apiDebugDTO.getHttpParams()));
-        jobVarService.parseVar(params, apiDebugDTO.getEnvId());
+        jobVarService.parseSysAndEnvVar(params, apiDebugDTO.getEnvId());
         httpRequest.form(params);
         // 设置请求体
         if (StrUtil.isNotEmpty(apiDebugDTO.getHttpBody())) {

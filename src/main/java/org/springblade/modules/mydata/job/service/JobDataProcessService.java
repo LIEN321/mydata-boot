@@ -62,7 +62,7 @@ public class JobDataProcessService {
                     continue;
                 }
                 // 解析处理值中的表达式 {fieldCode}
-                opValue = JobVarService.parseDataFieldVar(opValue, originData);
+                opValue = JobVarService.parseDataVar(opValue, originData);
                 try {
                     // 获取新的值
                     Object newValue = processValue(originValue, op, opValue, originData);
