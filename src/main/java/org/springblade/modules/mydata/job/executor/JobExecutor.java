@@ -278,6 +278,13 @@ public class JobExecutor implements ApplicationRunner {
 
         // 查询相同数据的订阅任务
         List<Task> subTasks = taskService.listRunningSubTasks(parentTaskInfo.getDataId(), parentTaskInfo.getEnvId(), parentTaskInfo.getId());
+        if (CollUtil.isEmpty(subTasks)) {
+            parentTaskInfo.appendLog("无订阅任务", subTasks.size());
+            return;
+        }
+
+        parentTaskInfo.appendLog("共有{}个订阅任务", subTasks.size());
+
         subTasks.forEach(task -> {
             // 订阅任务 是提供数据
             if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_PRODUCER)) {
@@ -288,6 +295,7 @@ public class JobExecutor implements ApplicationRunner {
                         TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
                         // 执行订阅任务
                         executeJob(subTaskInfo);
+                        parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
                     } else {
                         // 将业务数据作为 消费数据，逐个触发执行子任务
                         produceDataList.forEach(data -> {
@@ -295,12 +303,14 @@ public class JobExecutor implements ApplicationRunner {
                             subTaskInfo.setTaskVar(data);
                             // 执行订阅任务
                             executeJob(subTaskInfo);
+                            parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
                         });
                     }
                 }
                 // 接收推送
                 else {
                     acceptData(task, parentTaskInfo.getAcceptedData());
+                    parentTaskInfo.appendLog("触发接收推送任务：{}", task.getTaskName());
                 }
             }
             // 订阅任务 是消费数据
@@ -312,6 +322,7 @@ public class JobExecutor implements ApplicationRunner {
                 TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
                 // 执行订阅任务
                 executeJob(subTaskInfo);
+                parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
             }
         });
     }
@@ -363,13 +374,18 @@ public class JobExecutor implements ApplicationRunner {
         // 更新task信息
         taskService.finishTask(task);
 
-        // 保存日志
-        taskLogService.saveOrUpdate(getTaskLog(taskInfo));
-
         // 任务成功 则触发订阅任务
         if (MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
             executeSubscribedTask(taskInfo);
         }
+
+
+        // 设置任务结束时间
+        taskInfo.setEndTime(new Date());
+        taskInfo.appendLog("本次任务结束");
+
+        // 保存日志
+        taskLogService.saveOrUpdate(getTaskLog(taskInfo));
 
         // 减少可执行次数
         int times = taskInfo.getTimes();
