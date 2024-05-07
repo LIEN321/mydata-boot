@@ -446,7 +446,10 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (CollUtil.isNotEmpty(tasks)) {
             // 批量更新任务的api地址
             tasks.forEach(task -> {
-                Env env = ManageCache.getEnv(task.getEnvId());
+                Env env = ManageCache.getEnv(task.getRefEnvId());
+                if (env == null) {
+                    env = ManageCache.getEnv(task.getEnvId());
+                }
                 if (env != null) {
                     mergeApiAndEnv(task, api, env);
                 }
