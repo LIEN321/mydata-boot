@@ -315,10 +315,7 @@ public class JobExecutor implements ApplicationRunner {
             }
             // 订阅任务 是消费数据
             else if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_CONSUMER)) {
-                // 没有业务数据 则不执行消费子任务
-                if (CollUtil.isEmpty(produceDataList)) {
-                    return;
-                }
+                // 执行订阅任务，不判断前置任务是否有produceData，可能跨多级订阅时 再之前的任务才有数据
                 TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
                 // 执行订阅任务
                 executeJob(subTaskInfo);
