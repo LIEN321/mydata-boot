@@ -1,6 +1,7 @@
 package org.springblade.modules.mydata.manage.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
@@ -186,7 +187,10 @@ public class ApiController extends BladeController {
         LinkedHashMap<String, Object> params = (LinkedHashMap<String, Object>) MapUtil.union(apiDebugDTO.getGlobalParams(), MdUtil.parseToKvMapObj(apiDebugDTO.getHttpParams()));
         jobVarService.parseVar(params, apiDebugDTO.getEnvId());
         httpRequest.form(params);
-        httpRequest.body(apiDebugDTO.getHttpBody(), apiDebugDTO.getContentType());
+        // 设置请求体
+        if (StrUtil.isNotEmpty(apiDebugDTO.getHttpBody())) {
+            httpRequest.body(apiDebugDTO.getHttpBody(), apiDebugDTO.getContentType());
+        }
 
         // 记录开始时间
         long beginTime = System.currentTimeMillis();
