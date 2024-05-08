@@ -108,7 +108,7 @@ public class JobDataProcessService {
                     return originValue;
                 }
                 return ExpressionUtil.eval(StrUtil.toString(originValue) + op + opValue, originData);
-            // 字符串：md5，base64，prepend，append
+            // 字符串：md5，base64，prepend，append，set empty
             case "md5":
                 return MD5.create().digestHex(StrUtil.toString(originValue));
             case "base64":
@@ -117,7 +117,8 @@ public class JobDataProcessService {
                 return StrUtil.prependIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
             case "append":
                 return StrUtil.appendIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
-
+            case "set empty":
+                return StrUtil.EMPTY;
             // 日期：add second
             case "add second":
                 Date date = DateUtil.parse(StrUtil.toString(originValue));

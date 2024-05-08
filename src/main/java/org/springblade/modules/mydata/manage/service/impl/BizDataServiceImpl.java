@@ -81,6 +81,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
             Data data = ManageCache.getData(dataId);
             envIdList.forEach(envId -> {
                 bizDataDAO.drop(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode());
+                updateDataCount(data.getTenantId(), data.getProjectId(), envId, data.getId());
             });
         }
         return true;
@@ -94,22 +95,19 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         return deleteByEnvs(dataId, CollUtil.toList(envId));
     }
 
-    @Deprecated
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateDataCount(String tenantId, Long projectId, Long envId, Long dataId) {
         long total = getTotalCount(tenantId, projectId, envId, dataId);
-        if (total > 0) {
-            BizData bizData = getOne(projectId, envId, dataId);
-            if (bizData == null) {
-                bizData = new BizData();
-                bizData.setProjectId(projectId);
-                bizData.setEnvId(envId);
-                bizData.setDataId(dataId);
-            }
-            bizData.setDataCount(total);
-            saveOrUpdate(bizData);
+        BizData bizData = getOne(projectId, envId, dataId);
+        if (bizData == null) {
+            bizData = new BizData();
+            bizData.setProjectId(projectId);
+            bizData.setEnvId(envId);
+            bizData.setDataId(dataId);
         }
+        bizData.setDataCount(total);
+        saveOrUpdate(bizData);
     }
 
     @Override
