@@ -98,16 +98,26 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateDataCount(String tenantId, Long projectId, Long envId, Long dataId) {
+        // 从数据仓库统计最新数量
         long total = getTotalCount(tenantId, projectId, envId, dataId);
+        // 查询业务数据量记录
         BizData bizData = getOne(projectId, envId, dataId);
-        if (bizData == null) {
-            bizData = new BizData();
-            bizData.setProjectId(projectId);
-            bizData.setEnvId(envId);
-            bizData.setDataId(dataId);
+        if (total > 0) {
+            // 若统计结果大于0，则更新记录
+            if (bizData == null) {
+                bizData = new BizData();
+                bizData.setProjectId(projectId);
+                bizData.setEnvId(envId);
+                bizData.setDataId(dataId);
+            }
+            bizData.setDataCount(total);
+            saveOrUpdate(bizData);
+        } else {
+            // 统计结果没有数据，则删除记录
+            if (bizData != null) {
+                removeById(bizData.getId());
+            }
         }
-        bizData.setDataCount(total);
-        saveOrUpdate(bizData);
     }
 
     @Override
