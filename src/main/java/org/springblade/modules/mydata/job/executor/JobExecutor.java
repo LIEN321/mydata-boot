@@ -520,7 +520,11 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setConsumeDataList(CollUtil.toList());
         taskInfo.setFilteredDataList(CollUtil.toList());
         taskInfo.setCreateUser(task.getCreateUser());
-        taskInfo.setDataProcess(ObjectUtil.defaultIfNull(task.getDataProcess(), MapUtil.newHashMap()));
+        Map<String, Map<String, String>> dataProcess = task.getDataProcess();
+        if (dataProcess == null) {
+            dataProcess = MapUtil.newHashMap();
+        }
+        taskInfo.setDataProcess(dataProcess);
 
         return taskInfo;
     }
