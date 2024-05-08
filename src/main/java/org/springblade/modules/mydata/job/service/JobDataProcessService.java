@@ -90,8 +90,8 @@ public class JobDataProcessService {
                 if (MapUtil.isEmpty(originData)) {
                     continue;
                 }
-                // 解析处理值中的表达式 {fieldCode}
-                opValue = JobVarService.parseDataVar(opValue, originData);
+                // 解析处理值中的表达式 {{field}}
+                opValue = JobVarService.parseDataVar(opValue, originData, taskInfo.getFieldTypeMapping());
                 try {
                     // 获取新的值
                     Object newValue = processValue(originValue, op, opValue, originData);

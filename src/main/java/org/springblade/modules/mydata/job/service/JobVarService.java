@@ -3,12 +3,12 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import org.apache.commons.text.StringSubstitutor;
+import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
 import org.springblade.modules.mydata.manage.entity.Env;
@@ -178,13 +178,13 @@ public class JobVarService {
         // api地址
         String apiUrl = taskInfo.getApiUrl();
         // 替换属性变量值
-        taskInfo.setApiUrl(parseDataVar(apiUrl, data));
+        taskInfo.setApiUrl(parseDataVar(apiUrl, data, taskInfo.getFieldTypeMapping()));
 
         // 解析param中的属性变量名
         Map<String, Object> reqParams = taskInfo.getReqParams();
         if (MapUtil.isNotEmpty(reqParams)) {
             reqParams.forEach((k, v) -> {
-                reqParams.put(k, parseDataVar(StrUtil.toString(v), data));
+                reqParams.put(k, parseDataVar(StrUtil.toString(v), data, taskInfo.getFieldTypeMapping()));
             });
         }
 
@@ -192,26 +192,26 @@ public class JobVarService {
         Map<String, String> reqHeaders = taskInfo.getReqHeaders();
         if (MapUtil.isNotEmpty(reqHeaders)) {
             reqHeaders.forEach((k, v) -> {
-                reqHeaders.put(k, parseDataVar(v, data));
+                reqHeaders.put(k, parseDataVar(v, data, taskInfo.getFieldTypeMapping()));
             });
         }
 
         // body
-        taskInfo.setReqBody(parseDataVar(taskInfo.getReqBody(), data));
+        taskInfo.setReqBody(parseDataVar(taskInfo.getReqBody(), data, taskInfo.getFieldTypeMapping()));
     }
 
     /**
-     * 解析 字符串中{field}格式的数据变量
+     * 解析 字符串中{{field}}格式的数据变量
      *
      * @param string 字符串
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseDataVar(String string, Map data) {
+    public static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
         if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
             return string;
         }
-        // 解析url中的属性变量名 {field}
+        // 解析url中的属性变量名 {{field}}
         List<String> fieldNames = parseVarNames(string, DATA_FIELD_PATTERN, "{{", "}}");
         // 若解析为空，则结束
         if (CollUtil.isEmpty(fieldNames)) {
@@ -223,8 +223,10 @@ public class JobVarService {
             if (!data.containsKey(field)) {
                 continue;
             }
+            // 尝试获取数据的类型，若没有则默认为字符串
+            String targetType = fieldTypeMapping.get(field);
             // 从数据中 取出数据 并存入替换映射
-            String value = ObjectUtil.toString(data.get(field));
+            String value = MdUtil.formatData(data.get(field), targetType);
             replaceMap.put(field, value);
         }
 
@@ -236,7 +238,7 @@ public class JobVarService {
     }
 
     /**
-     * 字符串是否为 属性表达式 {field}
+     * 字符串是否为 属性表达式 {{field}}
      *
      * @param string 字符串
      * @return true-是属性表达式，false-不是
