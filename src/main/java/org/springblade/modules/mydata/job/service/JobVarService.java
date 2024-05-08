@@ -3,12 +3,12 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import org.apache.commons.text.StringSubstitutor;
+import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
 import org.springblade.modules.mydata.manage.entity.Env;
@@ -18,11 +18,7 @@ import org.springblade.modules.mydata.manage.service.IEnvVarService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,21 +42,21 @@ public class JobVarService {
     // 系统内置变量 {$} 的正则表达式
     private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
 
-    private static final String DATA_FIELD_PATTERN = "\\{([^}]*)\\}";
+    private static final String DATA_FIELD_PATTERN = "\\{\\{([^}]*)\\}\\}";
 
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
      *
-     * @param task       任务
+     * @param taskInfo   任务
      * @param jsonString json数据
      */
-    public void saveVarValue(TaskInfo task, String jsonString) {
-        if (task == null || StrUtil.isEmpty(jsonString)) {
+    public void saveVarValue(TaskInfo taskInfo, String jsonString) {
+        if (taskInfo == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
         // 接口字段 与 变量的映射
-        Map<String, String> fieldVarMapping = task.getFieldVarMapping();
+        Map<String, String> fieldVarMapping = taskInfo.getFieldVarMapping();
         if (CollUtil.isEmpty(fieldVarMapping)) {
             return;
         }
@@ -68,53 +64,60 @@ public class JobVarService {
         JSON json = JSONUtil.parse(jsonString);
         fieldVarMapping.forEach((apiField, varName) -> {
             String varValue = json.getByPath(apiField, String.class);
-            Long envId = task.getEnvId();
+            Long envId = taskInfo.getEnvId();
 
             EnvVar envVar = new EnvVar();
             envVar.setEnvId(envId);
             envVar.setVarName(varName);
             envVar.setVarValue(varValue);
-            envVar.setTenantId(task.getTenantId());
+            envVar.setTenantId(taskInfo.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            task.appendLog("保存环境变量，tenantId：{}，varName：{}，varValue：{}", envVar.getTenantId(), envVar.getVarName(), envVar.getVarValue());
+            taskInfo.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
         });
 
     }
 
     /**
-     * 解析任务API header和param中的变量表达式，从任务对应环境中获取变量值 并替换变量；
+     * 从指定map的value中，解析 系统变量、用户环境变量
      *
-     * @param taskInfo 任务
+     * @param map   解析源
+     * @param envId 环境id
      */
-    public void parseVar(TaskInfo taskInfo) {
-        Set<String> userVarNames = CollUtil.newHashSet();
-
-        // 从API的header和param中 解析变量表达式
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
-        Map<String, Object> reqParams = taskInfo.getReqParams();
-
-        if (CollUtil.isNotEmpty(reqHeaders)) {
-            //varNames.addAll(MdUtil.parseVarNames(reqHeaders.keySet()));
-            // 替换header中的系统内置变量
-            replaceSysVarValues(reqHeaders);
-            // 提取用户自定义变量名
-            userVarNames.addAll(parseUserVarNames(reqHeaders.values()));
-        }
-        if (CollUtil.isNotEmpty(reqParams)) {
-            //varNames.addAll(MdUtil.parseVarNames(reqParams.keySet()));
-            // 替换param中的系统内置变量
-            replaceSysVarValues(reqParams);
-            // 提取用户自定义变量名
-            userVarNames.addAll(parseUserVarNames(reqParams.values()));
-        }
-        // 若没有变量名，则结束解析
-        if (CollUtil.isEmpty(userVarNames)) {
+    public <V> void parseSysAndEnvVar(Map<String, V> map, Long envId) {
+        if (CollUtil.isEmpty(map)) {
             return;
         }
 
+        // 替换map中的系统内置变量
+        replaceSysVarValues(map);
+
+        // 提取用户自定义变量名
+        Map<String, String> userVars = parseEnvVar(map.values(), envId);
+        if (MapUtil.isEmpty(userVars)) {
+            return;
+        }
+
+        replaceUserVarValues(map, userVars);
+    }
+
+    /**
+     * 从字符串集合中，提取用户环境变量
+     *
+     * @param strings 字符串集合
+     * @param envId   环境id
+     * @return 用户环境变量
+     */
+    public <V> Map<String, String> parseEnvVar(Collection<V> strings, Long envId) {
+        // 提取用户自定义变量名
+        Set<String> userVarNames = parseUserVarNames(strings);
+
+        // 若没有用户变量名，则结束解析
+        if (CollUtil.isEmpty(userVarNames)) {
+            return null;
+        }
+
         // 根据变量名 获取环境变量值
-        Long envId = taskInfo.getEnvId();
         List<EnvVar> envVars = CollUtil.newArrayList();
         Env env = envService.getById(envId);
 
@@ -133,53 +136,115 @@ public class JobVarService {
         }
 
         // 将环境变量转化为key:value格式
-        Map<String, String> varMap = envVars.stream()
-                .collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
+        return envVars.stream().collect(Collectors.toMap(EnvVar::getVarName, EnvVar::getVarValue));
+    }
 
-        taskInfo.appendLog("解析出用户变量：{}", varMap);
+    /**
+     * 解析任务API header、param、body 中的系统和环境变量
+     *
+     * @param taskInfo 任务
+     */
+    public void parseTaskVar(TaskInfo taskInfo) {
 
         // 替换 header和param 中的变量
-        if (CollUtil.isNotEmpty(reqHeaders)) {
-            taskInfo.setReqHeaders(replaceUserVarValues(reqHeaders, varMap));
-        }
-        if (CollUtil.isNotEmpty(reqParams)) {
-            taskInfo.setReqParams(replaceUserVarValues(reqParams, varMap));
+        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        Map<String, Object> reqParams = taskInfo.getReqParams();
+
+        parseSysAndEnvVar(reqHeaders, taskInfo.getEnvId());
+        parseSysAndEnvVar(reqParams, taskInfo.getEnvId());
+
+        // 替换 body 中的变量
+        if (StrUtil.isNotEmpty(taskInfo.getReqBody())) {
+            String reqBody = replaceSysVarValue(taskInfo.getReqBody());
+            Map<String, String> userVars = parseEnvVar(CollUtil.toList(reqBody), taskInfo.getEnvId());
+            if (MapUtil.isEmpty(userVars)) {
+                return;
+            }
+
+            reqBody = replaceUserVarValues(reqBody, userVars);
+            taskInfo.setReqBody(reqBody);
         }
     }
 
     /**
-     * 解析url中的 数据字段变量 并替换数据
+     * 解析 url、header、param、body 中的 数据字段变量 并替换数据
      *
      * @param taskInfo 任务
      */
-    public void parseConsumeUrlVar(TaskInfo taskInfo) {
-        // api地址
-        String apiUrl = taskInfo.getApiUrl();
-        // 解析{field}格式的变量名
-        List<String> fieldNames = parseVarNames(apiUrl, DATA_FIELD_PATTERN, "{", "}");
-        // 若解析为空，则结束
-        if (CollUtil.isEmpty(fieldNames)) {
+    public static void parseTaskDataVar(TaskInfo taskInfo, Map data) {
+        if (MapUtil.isEmpty(data)) {
             return;
         }
-        // 提取第一条消费数据
-        Map data = taskInfo.getConsumeDataList().get(0);
+        // api地址
+        String apiUrl = taskInfo.getApiUrl();
+        // 替换属性变量值
+        taskInfo.setApiUrl(parseDataVar(apiUrl, data, taskInfo.getFieldTypeMapping()));
+
+        // 解析param中的属性变量名
+        Map<String, Object> reqParams = taskInfo.getReqParams();
+        if (MapUtil.isNotEmpty(reqParams)) {
+            reqParams.forEach((k, v) -> {
+                reqParams.put(k, parseDataVar(StrUtil.toString(v), data, taskInfo.getFieldTypeMapping()));
+            });
+        }
+
+        // 解析header中的属性变量名
+        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        if (MapUtil.isNotEmpty(reqHeaders)) {
+            reqHeaders.forEach((k, v) -> {
+                reqHeaders.put(k, parseDataVar(v, data, taskInfo.getFieldTypeMapping()));
+            });
+        }
+
+        // body
+        taskInfo.setReqBody(parseDataVar(taskInfo.getReqBody(), data, taskInfo.getFieldTypeMapping()));
+    }
+
+    /**
+     * 解析 字符串中{{field}}格式的数据变量
+     *
+     * @param string 字符串
+     * @param data   数据
+     * @return 解析后的字符串
+     */
+    public static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+        if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
+            return string;
+        }
+        // 解析url中的属性变量名 {{field}}
+        List<String> fieldNames = parseVarNames(string, DATA_FIELD_PATTERN, "{{", "}}");
+        // 若解析为空，则结束
+        if (CollUtil.isEmpty(fieldNames)) {
+            return string;
+        }
         // 替换映射
         Map<String, String> replaceMap = MapUtil.newHashMap();
         for (String field : fieldNames) {
             if (!data.containsKey(field)) {
                 continue;
             }
+            // 尝试获取数据的类型，若没有则默认为字符串
+            String targetType = fieldTypeMapping.get(field);
             // 从数据中 取出数据 并存入替换映射
-            String value = ObjectUtil.toString(data.remove(field));
+            String value = MdUtil.formatData(data.get(field), targetType);
             replaceMap.put(field, value);
         }
 
         StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
-        stringSubstitutor.setVariablePrefix("{");
-        stringSubstitutor.setVariableSuffix("}");
+        stringSubstitutor.setVariablePrefix("{{");
+        stringSubstitutor.setVariableSuffix("}}");
         // 替换变量值
-        apiUrl = stringSubstitutor.replace(apiUrl);
-        taskInfo.setApiUrl(apiUrl);
+        return stringSubstitutor.replace(string);
+    }
+
+    /**
+     * 字符串是否为 属性表达式 {{field}}
+     *
+     * @param string 字符串
+     * @return true-是属性表达式，false-不是
+     */
+    public static boolean isFieldExp(String string) {
+        return ReUtil.isMatch(DATA_FIELD_PATTERN, string);
     }
 
     /**
@@ -187,17 +252,25 @@ public class JobVarService {
      *
      * @param sourceMap 替换前的map数据
      * @param varMap    变量名-变量值
-     * @return 替换后的数据
      */
-    private <V> Map<String, V> replaceUserVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
-        Map<String, V> resultMap = MapUtil.newHashMap();
+    private <V> void replaceUserVarValues(Map<String, V> sourceMap, Map<String, String> varMap) {
         StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
         sourceMap.forEach((k, v) -> {
             // 替换用户自定义变量
-            resultMap.put(k, (V) stringSubstitutor.replace(v));
+            sourceMap.put(k, (V) stringSubstitutor.replace(v));
         });
+    }
 
-        return resultMap;
+    /**
+     * 替换用户自定义变量 ${var}
+     *
+     * @param string 字符串
+     * @param varMap 变量名-变量值
+     */
+    private String replaceUserVarValues(String string, Map<String, String> varMap) {
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(varMap);
+        // 替换用户自定义变量
+        return stringSubstitutor.replace(string);
     }
 
     /**
@@ -206,14 +279,14 @@ public class JobVarService {
      * @param strings 字符串集合
      * @return 变量名列表
      */
-    private List<String> parseUserVarNames(Collection<?> strings) {
-        List<String> list = CollUtil.newArrayList();
+    private Set<String> parseUserVarNames(Collection<?> strings) {
+        Set<String> userVarNames = CollUtil.newHashSet();
         if (CollUtil.isNotEmpty(strings)) {
             for (Object string : strings) {
-                list.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN, "${", "}"));
+                userVarNames.addAll(parseVarNames(string.toString(), USER_VAR_PATTERN, "${", "}"));
             }
         }
-        return list;
+        return userVarNames;
     }
 
     /**

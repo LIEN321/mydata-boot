@@ -23,11 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.File;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 任务的数据处理类
@@ -40,6 +36,9 @@ public class JobDataService {
 
     @Resource
     private BizDataDAO bizDataDAO;
+
+    @Resource
+    private JobDataProcessService jobDataProcessService;
 
     /**
      * 根据任务配置，从json中解析出业务数据列表
@@ -59,49 +58,104 @@ public class JobDataService {
 
         // 字段层级前缀
         String apiFieldPrefix = taskInfo.getApiFieldPrefix();
-
-        JSON json = JSONUtil.parse(jsonString);
-        if (StrUtil.isNotEmpty(apiFieldPrefix)) {
-            Object prefixJson = json.getByPath(apiFieldPrefix);
-            if (!(prefixJson instanceof JSON)) {
-                throw new RuntimeException("接口前缀 无法解析为JSON");
-            }
-            json = (JSON) prefixJson;
-        }
-        JSONArray jsonArray;
-        if (json instanceof JSONArray) {
-            jsonArray = (JSONArray) json;
+        // 最初的json对象
+        JSON originJson = JSONUtil.parse(jsonString);
+        // 使用数组模式 兼容单个对象和数组模式
+        JSONArray baseArray;
+        if (originJson instanceof JSONArray) {
+            baseArray = (JSONArray) originJson;
         } else {
-            jsonArray = new JSONArray();
-            jsonArray.add(json);
+            baseArray = new JSONArray();
+            baseArray.add(originJson);
         }
 
         // 声明方法返回结果
         List<Map> apiResponseDataList = CollUtil.newArrayList();
 
-        // 根据映射 解析出json中的数据 并存入数据
-        jsonArray.forEach(obj -> {
-            JSONObject jsonObject = (JSONObject) obj;
-            Map<String, Object> datacenterData = MapUtil.newHashMap();
-            fieldMapping.forEach((standardCode, apiCode) -> {
-                // 若字段映射中 未设置api参数名，则跳过处理；
-                if (StrUtil.isEmpty(apiCode)) {
-                    return;
+        baseArray.forEach(json -> {
+            // 保留根目录json，用于 /field 格式提取数据
+            JSON baseJson = (JSONObject) json;
+            // 根据配置的prefix 定位到数据层级
+            JSON dataJson = baseJson;
+            if (StrUtil.isNotEmpty(apiFieldPrefix)) {
+                Object prefixJson = baseJson.getByPath(apiFieldPrefix);
+                if (!(prefixJson instanceof JSON)) {
+                    throw new RuntimeException("接口前缀 无法解析为JSON");
                 }
-                String targetType = fieldTypeMapping.get(standardCode);
-                try {
-                    datacenterData.put(standardCode, MdUtil.convertDataType(jsonObject.get(apiCode), targetType));
-                } catch (Exception e) {
-                    taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
-                }
-            });
+                dataJson = (JSON) prefixJson;
+            }
+            // 使用数组模式 兼容单个对象和数组模式
+            JSONArray jsonArray;
+            if (dataJson instanceof JSONArray) {
+                jsonArray = (JSONArray) dataJson;
+            } else {
+                jsonArray = new JSONArray();
+                jsonArray.add(dataJson);
+            }
 
-            apiResponseDataList.add(datacenterData);
+            // 根据映射 解析出json中的数据 并存入数据
+            jsonArray.forEach(obj -> {
+                JSONObject jsonObject = (JSONObject) obj;
+                Map<String, Object> datacenterData = MapUtil.newHashMap();
+                fieldMapping.forEach((standardCode, apiCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiCode)) {
+                        return;
+                    }
+
+                    // 获取业务数据值
+                    Object value;
+                    // /field 根目录格式
+                    if (StrUtil.startWith(apiCode, MdConstant.FIELD_MAPPING_ROOT)) {
+                        value = baseJson.getByPath(apiCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
+                    } else {
+                        value = jsonObject.getByPath(apiCode);
+                    }
+                    // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
+                    if (value == null && JobVarService.isFieldExp(apiCode)) {
+                        value = JobVarService.parseDataVar(apiCode, taskInfo.getTaskVar(), taskInfo.getFieldTypeMapping());
+                    }
+                    // 若接口数据中 没有执行的字段名，则跳过处理
+                    if (value == null) {
+                        return;
+                    }
+
+                    String targetType = fieldTypeMapping.get(standardCode);
+                    try {
+                        datacenterData.put(standardCode, MdUtil.convertDataType(value, targetType));
+                    } catch (Exception e) {
+                        taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
+                    }
+                });
+
+                apiResponseDataList.add(datacenterData);
+            });
         });
 
         taskInfo.setProduceDataList(apiResponseDataList);
         //        taskInfo.appendLog("解析前json数据：{}", jsonString);
         //        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
+    }
+
+    /**
+     * 查询消费的业务数据
+     *
+     * @param taskInfo 任务
+     * @param skip     跳过数量
+     * @param limit    限制数量
+     * @return 业务数据
+     */
+    public List<Map> listConsumeData(TaskInfo taskInfo, Long skip, Integer limit) {
+        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), taskInfo.getDataFilters(), skip, limit);
+        if (CollUtil.isEmpty(dataList)) {
+            return dataList;
+        }
+
+        dataList.forEach(consumeData -> {
+            jobDataProcessService.processBizData(taskInfo, consumeData, consumeData, true);
+        });
+
+        return dataList;
     }
 
     /**
@@ -136,40 +190,44 @@ public class JobDataService {
         taskInfo.setConsumeDataList(apiRequestDataList);
     }
 
-    public void saveTaskData(TaskInfo task) {
-        Assert.notNull(task);
+
+    /**
+     * 保存任务中的业务数据
+     *
+     * @param taskInfo 任务
+     */
+    public void saveProduceData(TaskInfo taskInfo) {
+        Assert.notNull(taskInfo);
         //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
-        if (CollUtil.isEmpty(task.getProduceDataList())) {
-            task.appendLog("任务中没有业务数据，跳过保存操作");
+        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
             return;
         }
 
         final Date currentTime = DateUtil.date();
 
         // 标准数据编号
-        String dataCode = task.getDataCode();
+        String dataCode = taskInfo.getDataCode();
         // 数据的标识字段编号
-        String dataIdCode = task.getIdFieldCode();
+        String dataIdCode = taskInfo.getIdFieldCode();
         List<String> dataIdCodes = StrUtil.split(dataIdCode, StrPool.COMMA);
 
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
-        task.getProduceDataList().forEach(produceData -> {
+        taskInfo.getProduceDataList().forEach(produceData -> {
 
+            // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
-            // 若数据的 标识字段值 无效，则不存储
             for (String idCode : dataIdCodes) {
                 Object idFieldValue = produceData.get(idCode);
-                if (ObjectUtil.isNull(idFieldValue)) {
-                    return;
-                }
-
                 idMap.put(idCode, idFieldValue);
             }
 
             // 根据唯一标识 查询业务数据
-            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), task.getDataCode(), idMap);
+            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), idMap);
+
+            // 根据字段映射配置 提前处理produceData数据，用于对比是否一致
+            jobDataProcessService.processBizData(taskInfo, produceData, queryData);
 
             if (queryData == null) {
                 // 未查到数据，则新增
@@ -185,7 +243,8 @@ public class JobDataService {
                     Object queryDataValue = queryData.get(key);
 
                     // 将保存的数据 按最新配置的类型转换对比
-                    String targetType = task.getFieldTypeMapping().get(key);
+                    String targetType = taskInfo.getFieldTypeMapping().get(key);
+                    produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
                     queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
                     if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
                         isSame = false;
@@ -201,12 +260,12 @@ public class JobDataService {
 
             // 设置业务数据的最后更新时间
             queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, task.getDataBatchId());
+            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskInfo.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
         if (!dataInsertList.isEmpty()) {
-            bizDataDAO.insertBatch(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), dataCode, dataInsertList);
+            bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, dataInsertList);
         }
 
         // 更新数据仓库的数据
@@ -218,17 +277,13 @@ public class JobDataService {
                     idMap.put(idCode, dataIdValue);
                 });
 
-                bizDataDAO.update(MdUtil.getBizDbCode(task.getTenantId(), task.getProjectId(), task.getEnvId()), dataCode, idMap, data);
+                bizDataDAO.update(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, idMap, data);
             });
         }
 
-        // 更新业务数据量
-        // v0.7.0 取消，该字段由于数据按环境区分存储而失效
-        // dataService.updateDataCount(task.getTenantId(), task.getDataId());
-
-        task.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
-        task.setInsertCount(task.getInsertCount() + dataInsertList.size());
-        task.setUpdateCount(task.getUpdateCount() + dataUpdateList.size());
+        taskInfo.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
+        taskInfo.setInsertCount(taskInfo.getInsertCount() + dataInsertList.size());
+        taskInfo.setUpdateCount(taskInfo.getUpdateCount() + dataUpdateList.size());
     }
 
     /**
@@ -268,7 +323,7 @@ public class JobDataService {
         datas.forEach(data -> {
             Map<String, String> row = MapUtil.newHashMap();
             mFieldMapping.forEach((k, v) -> {
-                row.put(k, ObjectUtil.toString(data.get(k)));
+                row.put(k, ObjectUtil.defaultIfNull(StrUtil.toStringOrNull(data.get(k)), ""));
             });
             excelDataList.add(row);
         });

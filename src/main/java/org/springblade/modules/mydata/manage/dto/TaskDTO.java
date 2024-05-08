@@ -154,10 +154,15 @@ public class TaskDTO implements Serializable {
     /**
      * 单条记录消费模式，1-对象、2-集合
      */
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 订阅任务id
      */
     private Long subscribeTaskId;
+
+    /**
+     * 数据处理配置
+     */
+    private Map<String, Map<String, String>> dataProcess;
 }

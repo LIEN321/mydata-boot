@@ -6,22 +6,19 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.HashUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
-import org.springblade.common.util.MdUtil;
 import org.springblade.core.tool.utils.SpringUtil;
-import org.springblade.modules.mydata.data.BizDataDAO;
 import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
-import org.springblade.modules.mydata.job.service.JobBatchService;
-import org.springblade.modules.mydata.job.service.JobDataFilterService;
-import org.springblade.modules.mydata.job.service.JobDataService;
-import org.springblade.modules.mydata.job.service.JobEmailService;
-import org.springblade.modules.mydata.job.service.JobVarService;
+import org.springblade.modules.mydata.job.service.*;
 import org.springblade.modules.mydata.job.util.ApiUtil;
+import org.springblade.modules.mydata.manage.service.IBizDataService;
+import org.springblade.modules.mydata.manage.service.impl.BizDataServiceImpl;
 import org.springblade.modules.system.entity.UserInfo;
 import org.springblade.modules.system.service.IUserService;
 import org.springblade.modules.system.service.impl.UserServiceImpl;
@@ -42,8 +39,6 @@ import java.util.concurrent.TimeUnit;
 public class JobThread implements Runnable {
     private final JobDataService jobDataService = SpringUtil.getBean(JobDataService.class);
 
-    private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
-
     private final JobExecutor jobExecutor = SpringUtil.getBean(JobExecutor.class);
 
     private final JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
@@ -56,6 +51,8 @@ public class JobThread implements Runnable {
 
     private final IUserService userService = SpringUtil.getBean(UserServiceImpl.class);
 
+    private final IBizDataService bizDataService = SpringUtil.getBean(BizDataServiceImpl.class);
+
     private final TaskInfo taskInfo;
 
     public JobThread(TaskInfo taskInfo) {
@@ -67,7 +64,7 @@ public class JobThread implements Runnable {
         taskInfo.appendLog("任务开始执行");
 
         // 不是订阅任务 生成新的任务批次号，订阅任务已设置了前置任务的相同批次号
-        if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
+        if (StrUtil.isEmpty(taskInfo.getDataBatchId())) {
             taskInfo.setDataBatchId(RandomUtil.randomString(16));
         }
         taskInfo.appendLog("任务批次号 {}", taskInfo.getDataBatchId());
@@ -80,8 +77,7 @@ public class JobThread implements Runnable {
 
         try {
             // 解析并替换api中的环境变量
-            taskInfo.appendLog("解析变量开始");
-            jobVarService.parseVar(taskInfo);
+            jobVarService.parseTaskVar(taskInfo);
             // 根据操作类型 执行读或写
             switch (opType) {
                 // 提供数据
@@ -104,9 +100,15 @@ public class JobThread implements Runnable {
 
                         String json = null;
                         if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskInfo.getProduceMode())) {
+                            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed()) && CollUtil.isNotEmpty(taskInfo.getTaskVar())) {
+                                // 订阅的提供数据任务 从父任务获取数据并解析到当前任务中
+                                JobVarService.parseTaskDataVar(taskInfo, taskInfo.getTaskVar());
+                            }
                             // 调用api 获取json
-                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
+                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
                             json = ApiUtil.read(taskInfo);
+                            // 将json存入已接收数据，以便后续的订阅子任务复用
+                            taskInfo.setAcceptedData(json);
                         } else if (MdConstant.TASK_PRODUCE_MODE_PUSH.equals(taskInfo.getProduceMode())) {
                             // 使用接收的数据
                             json = taskInfo.getAcceptedData();
@@ -130,29 +132,32 @@ public class JobThread implements Runnable {
                         }
                         lastJsonHash = HashUtil.mixHash(json);
 
-                        // 将json按字段映射 解析为业务数据
-                        jobDataService.parseProduceData(taskInfo, json);
-                        taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
-                        // 若没有返回数据，则结束处理
-                        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
-                            taskInfo.appendLog("业务数据为空，任务结束");
-                            break;
-                        }
-
-                        // 根据条件过滤数据
-                        if (CollUtil.isNotEmpty(taskInfo.getDataFilters())) {
-                            taskInfo.appendLog("过滤业务数据开始");
-                            taskInfo.appendLog("过滤条件：{}", taskInfo.getDataFilters());
-                            jobDataFilterService.doFilter(taskInfo);
-                            taskInfo.appendLog("过滤后的剩余数据量：{}", taskInfo.getProduceDataList().size());
+                        // 获取任务中的字段映射配置，若没有则跳过数据处理
+                        Map<String, String> fieldMapping = taskInfo.getFieldMapping();
+                        if (MapUtil.isNotEmpty(fieldMapping)) {
+                            // 将json按字段映射 解析为业务数据
+                            jobDataService.parseProduceData(taskInfo, json);
+                            taskInfo.appendLog("获得业务数据量：{}，解析结束", taskInfo.getProduceDataList().size());
+                            // 若没有返回数据，则结束处理
                             if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
-                                taskInfo.appendLog("过滤后的没有业务数据，跳过后续处理");
+                                taskInfo.appendLog("业务数据为空，任务结束");
                                 break;
                             }
                         }
 
-                        // 保存业务数据
-                        jobDataService.saveTaskData(taskInfo);
+                        // 根据条件过滤数据
+                        if (CollUtil.isNotEmpty(taskInfo.getDataFilters())) {
+                            taskInfo.appendLog("过滤业务数据，过滤条件：{}", taskInfo.getDataFilters());
+                            jobDataFilterService.doFilter(taskInfo);
+                            taskInfo.appendLog("过滤后的剩余数据量：{}", taskInfo.getProduceDataList().size());
+                        }
+
+                        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
+                            taskInfo.appendLog("过滤后的没有业务数据，跳过保存操作");
+                        } else {
+                            // 保存业务数据
+                            jobDataService.saveProduceData(taskInfo);
+                        }
 
                         // 更新环境变量
                         jobVarService.saveVarValue(taskInfo, json);
@@ -162,6 +167,7 @@ public class JobThread implements Runnable {
 
                         // 若启用分批，则等待间隔
                         if (taskInfo.isBatch()) {
+                            jobExecutor.updateTaskLog(taskInfo);
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
                     } while (taskInfo.isBatch());
@@ -181,6 +187,9 @@ public class JobThread implements Runnable {
                         }
                     }
 
+                    // 更新业务数据量，根据项目、环境、数据code 统计数据量
+                    bizDataService.updateDataCount(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId(), taskInfo.getDataId());
+
                     taskInfo.appendLog("获取数据结束，共计新增{} 更新{}", taskInfo.getInsertCount(), taskInfo.getUpdateCount());
                     break;
                 // 消费数据
@@ -194,6 +203,7 @@ public class JobThread implements Runnable {
                     List<BizDataFilter> filters = jobDataFilterService.parseFilterValue(taskInfo);
                     if (filters == null) {
                         filters = CollUtil.toList();
+                        taskInfo.setDataFilters(filters);
                     }
 
                     // 订阅任务 使用任务批次号 查询数据
@@ -221,9 +231,9 @@ public class JobThread implements Runnable {
                         }
 
                         // 根据过滤条件 查询数据
-                        taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", filters, skip, limit);
-                        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
-                        // taskInfo.appendLog("查询业务数据的结果是 {}", dataList);
+                        taskInfo.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", taskInfo.getDataFilters(), skip, limit);
+//                        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, filters, skip, limit);
+                        List<Map> dataList = jobDataService.listConsumeData(taskInfo, skip, limit);
                         taskInfo.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理
@@ -243,16 +253,31 @@ public class JobThread implements Runnable {
                             jobDataService.convertConsumeData(taskInfo);
 
                             // 若消费任务是对象模式，则从字段映射中提取数据 替换url上的变量
-                            if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getSingleMode())) {
-                                // 从url中解析出变量
-                                jobVarService.parseConsumeUrlVar(taskInfo);
-                                taskInfo.appendLog("替换API变量后 新地址为：url={}", taskInfo.getApiUrl());
+                            if (MdConstant.TASK_SINGLE_MODE_OBJECT.equals(taskInfo.getDataMode())) {
+                                // 记录原来的apiUrl地址
+                                String originApiUrl = ObjectUtil.cloneByStream(taskInfo.getApiUrl());
+                                Map<String, String> reqHeaders = ObjectUtil.cloneByStream(taskInfo.getReqHeaders());
+                                Map<String, Object> reqParams = ObjectUtil.cloneByStream(taskInfo.getReqParams());
+                                String reqBody = ObjectUtil.cloneByStream(taskInfo.getReqBody());
+                                taskInfo.getConsumeDataList().forEach(data -> {
+                                    // 解析url、header、param、body变量 并替换值
+                                    JobVarService.parseTaskDataVar(taskInfo, data);
+                                    // 调用api传输数据
+                                    taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
+                                    ApiUtil.write(taskInfo, data);
+                                    // 恢复原来的url、header、param、body
+                                    taskInfo.setApiUrl(originApiUrl);
+                                    taskInfo.setReqHeaders(reqHeaders);
+                                    taskInfo.setReqParams(reqParams);
+                                    taskInfo.setReqBody(reqBody);
+                                });
+                            } else {
+                                // 调用api传输数据
+                                taskInfo.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
+                                String json = ApiUtil.write(taskInfo);
+                                // 更新环境变量
+                                jobVarService.saveVarValue(taskInfo, json);
                             }
-                            // 调用api传输数据
-                            taskInfo.appendLog("调用API 获取数据，method={}，url={}，headers={}，params={}", taskInfo.getApiMethod(), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams());
-                            String json = ApiUtil.write(taskInfo);
-                            // 更新环境变量
-                            jobVarService.saveVarValue(taskInfo, json);
                         }
                         // 消费模式是发送邮件
                         else if (MdConstant.TASK_CONSUME_MODE_EMAIL.equals(taskInfo.getConsumeMode())) {
@@ -270,6 +295,7 @@ public class JobThread implements Runnable {
 
                         // 若启用分批，则等待间隔
                         if (taskInfo.isBatch()) {
+                            jobExecutor.updateTaskLog(taskInfo);
                             ThreadUtil.sleep(taskInfo.getBatchInterval(), TimeUnit.SECONDS);
                         }
                     } while (taskInfo.isBatch());
@@ -311,9 +337,6 @@ public class JobThread implements Runnable {
             taskInfo.appendLog("任务失败原因：{}", e.getMessage());
             log.error(e.getMessage(), e);
         }
-
-        // 设置任务结束时间
-        taskInfo.setEndTime(new Date());
 
         jobExecutor.completeJob(taskInfo);
     }

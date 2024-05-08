@@ -26,6 +26,7 @@ public class TaskLogVO {
     /**
      * 所属任务
      */
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long taskId;
 
     /**

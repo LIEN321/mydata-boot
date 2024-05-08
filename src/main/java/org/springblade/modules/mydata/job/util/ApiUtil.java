@@ -6,7 +6,6 @@ import cn.hutool.http.Method;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.HttpUtils;
 import org.springblade.modules.mydata.job.bean.TaskInfo;
 import org.springframework.stereotype.Component;
@@ -26,34 +25,31 @@ public class ApiUtil {
     /**
      * 调用接口，获取返回结果
      *
-     * @param task 任务
+     * @param taskInfo 任务
      * @return 接口结果
      */
-    public static String read(TaskInfo task) {
-        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams());
+    public static String read(TaskInfo taskInfo) {
+        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
     }
 
     /**
      * 调用接口，发送标准数据
      *
-     * @param task 任务
+     * @param taskInfo 任务
      */
-    public static String write(TaskInfo task) {
-        List<Map> consumeDataList = task.getConsumeDataList();
-        if (CollUtil.isEmpty(consumeDataList)) {
+    public static String write(TaskInfo taskInfo) {
+        return write(taskInfo, taskInfo.getConsumeDataList());
+    }
+
+    public static String write(TaskInfo taskInfo, List<Map> dataList) {
+        if (CollUtil.isEmpty(dataList)) {
             return "";
         }
 
-        String apiFieldPrefix = task.getApiFieldPrefix();
-        JSON json;
-
-        if (consumeDataList.size() == 1 && MdConstant.TASK_SINGLE_MODE_OBJECT.equals(task.getSingleMode())) {
-            json = new JSONObject(consumeDataList.get(0));
-        } else {
-            JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(consumeDataList);
-            json = jsonArray;
-        }
+        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.addAll(dataList);
+        JSON json = jsonArray;
 
         if (StrUtil.isNotBlank(apiFieldPrefix)) {
             JSONObject jsonObject = new JSONObject();
@@ -61,6 +57,30 @@ public class ApiUtil {
             json = jsonObject;
         }
 
-        return HttpUtils.send(Method.valueOf(task.getApiMethod()), task.getApiUrl(), task.getReqHeaders(), task.getReqParams(), json.toString());
+        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
+    }
+
+    public static void write(TaskInfo taskInfo, Map data) {
+        if (CollUtil.isEmpty(data)) {
+            return;
+        }
+
+        JSON json;
+        String body = taskInfo.getReqBody();
+        // 有body时，直接发送body内容
+        if (StrUtil.isNotEmpty(body)) {
+            json = new JSONObject(body);
+        } else {
+            json = new JSONObject(data);
+
+            String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+            if (StrUtil.isNotBlank(apiFieldPrefix)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.putByPath(apiFieldPrefix, json);
+                json = jsonObject;
+            }
+        }
+
+        HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
     }
 }

@@ -41,8 +41,8 @@ public class DataFieldServiceImpl extends BaseServiceImpl<DataFieldMapper, DataF
         remove(Wrappers.<DataField>lambdaUpdate().eq(DataField::getDataId, dataId));
         // 保存数据项字段
         List<DataField> dataFieldList = BeanUtil.copyToList(dataFieldDTOList, DataField.class);
-        Set<String> fieldCodeSet = CollUtil.newHashSet();
         if (CollUtil.isNotEmpty(dataFieldList)) {
+            Set<String> fieldCodeSet = CollUtil.newHashSet();
             dataFieldList.forEach(dataField -> {
                 Assert.isFalse(fieldCodeSet.contains(dataField.getFieldCode()), "提交失败：字段编号 {} 不能重复！", dataField.getFieldCode());
                 dataField.setDataId(dataId);

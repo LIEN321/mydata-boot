@@ -88,8 +88,8 @@ public class ApiServiceImpl extends BaseServiceImpl<ApiMapper, Api> implements I
         Api api = ManageCache.getApi(id);
         Assert.notNull(api, "同步失败，参数id不存在，id={}", id);
 
-        // 更新任务地址 并重启运行中的任务
-        taskService.updateApiUrlByApi(api);
+        // 更新任务 并重启运行中的任务
+        taskService.updateTaskByApi(api);
 
         api.setSyncTaskTime(new Date());
         boolean result = updateById(api);

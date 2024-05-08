@@ -33,7 +33,7 @@ public class JobCheckSchedule {
     @Resource
     private JobExecutor jobExecutor;
 
-    @Scheduled(cron = "50 0/1 * * * ?")
+    @Scheduled(cron = "55 0/10 * * * ?")
     public void jobCheck() {
         // 查询运行中的任务记录列表
         List<Task> tasks = taskService.listRunningTasks();
@@ -43,6 +43,11 @@ public class JobCheckSchedule {
 
         // 逐个检测是否存在对应缓存，若无则重新生成缓存任务
         tasks.forEach(task -> {
+            // 若任务在执行中，则跳过处理
+            if (jobExecutor.isTaskExecuting(task.getId())) {
+                log.info("JobCheckSchedule: 任务{}正在执行中，无需修复", task.getTaskName());
+                return;
+            }
             String taskId = StrUtil.toString(task.getId());
             // 先检查task缓存
             TaskInfo taskInfo = jobCache.getTask(taskId);

@@ -129,7 +129,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 复制标识字段的编号
         if (idFields != null) {
             List<String> idFieldCodes = idFields.stream().map(DataField::getFieldCode).collect(Collectors.toList());
-            task.setIdFieldCode(CollUtil.join(idFieldCodes, StrPool.COMMA));
+            task.setIdFieldCode(convertIdFieldCode(idFieldCodes));
 
             // 转换过滤条件的值类型
             List<Map<String, Object>> dataFilters = task.getDataFilter();
@@ -173,6 +173,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             task.setDataType(api.getDataType());
             // 复制api的所属应用
             task.setAppId(api.getAppId());
+            // 复制api的请求体
+            task.setReqBody(api.getReqBody());
 
             // 从env和api中 汇总header、param，优先级api > env
             if (refEnv != null) {
@@ -234,6 +236,10 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 更新任务状态为启动
         Task task = getById(id);
         Assert.notNull(task, "启动失败，任务无效！");
+
+        // 启动任务前，校验数据是否配置标识字段
+        // Assert.notEmpty(task.getIdFieldCode(), "启动失败：数据未设置标识字段！");
+
         task.setTaskStatus(MdConstant.TASK_STATUS_RUNNING);
         boolean result = updateById(task);
 
@@ -241,7 +247,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (result && !MdConstant.TASK_IS_SUBSCRIBED.equals(task.getIsSubscribed()) && !MdConstant.TASK_PRODUCE_MODE_PUSH.equals(task.getProduceMode())) {
             // 通知任务服务
             try {
-                jobExecutor.startTask(task, "任务管理 手动启动");
+                jobExecutor.startTask(task, "任务管理启动");
             } catch (Exception e) {
                 // TODO 优化对job服务访问异常的处理
                 e.printStackTrace();
@@ -298,11 +304,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     public List<Task> listRunningTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
                 .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
-                .and(qw -> {
-                    qw.isNotNull(Task::getConsumeMode).eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
-                            .or()
-                            .eq(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_API);
-                });
+                .eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
+                .ne(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_PUSH);
         return list(queryWrapper);
     }
 
@@ -330,6 +333,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
                 .eq(Task::getDataId, dataId)
                 .eq(Task::getEnvId, envId)
+                // 订阅当前taskId 或 全部 的任务
                 .and(qw -> qw.eq(Task::getSubscribeTaskId, taskId).or().eq(Task::getSubscribeTaskId, 0));
 
         return list(queryWrapper);
@@ -427,19 +431,8 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             });
             updateBatchById(tasks);
 
-            // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream()
-                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(runningTasks)) {
-                // 重启任务的调度
-                try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改环境参数 重启任务"));
-                } catch (Exception e) {
-                    // TODO 优化对job服务访问异常的处理
-                    e.printStackTrace();
-                }
-            }
+            // 重启运行的任务
+            restartRunningTasks(tasks);
         }
         return true;
     }
@@ -447,34 +440,54 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     //    @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean updateApiUrlByApi(Api api) {
+    public boolean updateTaskByApi(Api api) {
         // 根据环境查询任务
         List<Task> tasks = list(null, api.getId(), null);
         if (CollUtil.isNotEmpty(tasks)) {
             // 批量更新任务的api地址
             tasks.forEach(task -> {
-                Env env = ManageCache.getEnv(task.getEnvId());
+                Env env = ManageCache.getEnv(task.getRefEnvId());
+                if (env == null) {
+                    env = ManageCache.getEnv(task.getEnvId());
+                }
                 if (env != null) {
                     mergeApiAndEnv(task, api, env);
                 }
             });
             updateBatchById(tasks);
 
-            // 筛选运行中的任务
-            List<Task> runningTasks = tasks.stream()
-                    .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(runningTasks)) {
-                // 重启任务的调度
-                try {
-                    runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改API 重启任务"));
-                } catch (Exception e) {
-                    // TODO 优化对job服务访问异常的处理
-                    e.printStackTrace();
-                }
-            }
+            // 重启运行的任务
+            restartRunningTasks(tasks);
         }
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateIdFieldCode(Long dataId, List<String> idFieldCodes) {
+        String codes = convertIdFieldCode(idFieldCodes);
+
+        // 根据环境查询任务
+        List<Task> tasks = list(dataId, null, null);
+        if (CollUtil.isNotEmpty(tasks)) {
+            List<Task> updateTasks = CollUtil.newArrayList();
+            // 批量更新任务的api地址
+            tasks.forEach(task -> {
+                // 比对新旧id集合，若有变化才更新
+                if (!codes.equals(task.getIdFieldCode())) {
+                    task.setIdFieldCode(codes);
+                    updateTasks.add(task);
+                }
+            });
+
+            if (CollUtil.isNotEmpty(updateTasks)) {
+                // 更新任务
+                updateBatchById(tasks);
+
+                // 重启运行的任务
+                restartRunningTasks(tasks);
+            }
+        }
     }
 
     @Override
@@ -606,5 +619,35 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         LinkedHashMap<String, String> params = (LinkedHashMap<String, String>) MapUtil.union(env.getGlobalParams(), api.getReqParams());
         task.setReqHeaders(headers);
         task.setReqParams(params);
+        task.setReqBody(api.getReqBody());
+    }
+
+    private void restartRunningTasks(List<Task> tasks) {
+        // 筛选运行中的任务
+        List<Task> runningTasks = tasks.stream()
+                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(runningTasks)) {
+            // 重启任务的调度
+            try {
+                runningTasks.forEach(task -> jobExecutor.restartTask(task.getId(), "修改API 重启任务"));
+            } catch (Exception e) {
+                // TODO 优化对job服务访问异常的处理
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 转换任务的标识字段字符串
+     *
+     * @param idFieldCodes 标识字段id集合
+     * @return 标识字段字符串
+     */
+    private String convertIdFieldCode(List<String> idFieldCodes) {
+        if (CollUtil.isEmpty(idFieldCodes)) {
+            return "";
+        }
+        return CollUtil.join(idFieldCodes, StrPool.COMMA);
     }
 }

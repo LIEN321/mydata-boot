@@ -42,4 +42,16 @@ public class DataVO extends Data {
      */
     private List<DataFieldVO> dataFields;
 
+    /**
+     * 所属项目名称
+     */
+    private String projectName;
+
+    /**
+     * 业务数据概况
+     */
+    private List<BizDataVO> bizDataList;
+
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long projectId;
 }

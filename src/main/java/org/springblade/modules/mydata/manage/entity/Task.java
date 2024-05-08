@@ -238,7 +238,7 @@ public class Task extends TenantEntity {
     /**
      * 单条记录消费模式，1-对象、2-集合
      */
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 订阅任务id
@@ -250,4 +250,16 @@ public class Task extends TenantEntity {
      */
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Date nextRunTime;
+
+    /**
+     * 数据处理配置
+     */
+    @TableField(typeHandler = FastjsonTypeHandler.class)
+    private Map<String, Map<String, String>> dataProcess;
+
+    /**
+     * 请求体
+     */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private String reqBody;
 }

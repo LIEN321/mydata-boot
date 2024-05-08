@@ -7,7 +7,7 @@
     <groupId>lien</groupId>
     <artifactId>mydata-boot</artifactId>
     <packaging>jar</packaging>
-    <version>0.8.1.1</version>
+    <version>0.8.1.2</version>
 
     <properties>
         <blade.tool.version>3.7.1</blade.tool.version>
@@ -81,6 +81,11 @@
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>4.1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.aviator</groupId>
+                <artifactId>aviator</artifactId>
+                <version>5.4.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -176,6 +181,10 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
         </dependency>
     </dependencies>
 

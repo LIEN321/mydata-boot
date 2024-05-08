@@ -346,4 +346,9 @@ public interface MdConstant {
      * HMAC的secret
      */
     String TASK_AUTH_HMAC_SECRET = "secret";
+
+    /**
+     * 字段映射的根目录
+     */
+    String FIELD_MAPPING_ROOT = "/";
 }

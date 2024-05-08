@@ -1,12 +1,14 @@
 package org.springblade.modules.mydata.job.executor;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.executor.CronExpression;
 import org.springblade.common.constant.MdConstant;
@@ -30,10 +32,7 @@ import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +75,11 @@ public class JobExecutor implements ApplicationRunner {
     private ThreadPoolExecutor threadPoolExecutor;
 
     /**
+     * 正在运行的任务
+     */
+    private final ConcurrentHashMap<Long, TaskInfo> executingJobs = MapUtil.newConcurrentHashMap();
+
+    /**
      * 线程数量
      */
     @Value("${datacenter.job.threadCount:10}")
@@ -90,7 +94,9 @@ public class JobExecutor implements ApplicationRunner {
         List<Task> tasks = taskService.listRunningTasks();
         log.info("tasks.size() = " + tasks.size());
         if (CollUtil.isNotEmpty(tasks)) {
-            tasks.forEach(task -> {startTask(task,"服务启动");});
+            tasks.forEach(task -> {
+                startTask(task, "启动服务 自动开始");
+            });
         }
     }
 
@@ -118,8 +124,7 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
-        TaskInfo taskInfo = this.build(task);
-        taskInfo.setStarterName(starterName);
+        TaskInfo taskInfo = this.build(task, starterName);
         cacheJob(taskInfo);
     }
 
@@ -133,11 +138,16 @@ public class JobExecutor implements ApplicationRunner {
         if (task == null) {
             return;
         }
-        TaskInfo taskInfo = this.build(task);
+        TaskInfo taskInfo = this.build(task, "手动执行");
         taskInfo.setTimes(1);
         taskInfo.setStartTime(new Date());
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
+        // 生成日志
+        TaskLog taskLog = getTaskLog(taskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            taskInfo.setTaskLogId(taskLog.getId());
+        }
 
-        taskInfo.appendLog("手动执行一次任务");
         executeJob(taskInfo);
     }
 
@@ -145,12 +155,20 @@ public class JobExecutor implements ApplicationRunner {
         if (task == null) {
             return;
         }
-        TaskInfo taskInfo = this.build(task);
+        TaskInfo taskInfo = this.build(task, "接收推送数据");
         taskInfo.setTimes(1);
         taskInfo.setStartTime(new Date());
         taskInfo.setAcceptedData(acceptedData);
 
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
         taskInfo.appendLog("接收推送数据：{}", taskInfo.getAcceptedData());
+
+        // 生成日志
+        TaskLog taskLog = getTaskLog(taskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            taskInfo.setTaskLogId(taskLog.getId());
+        }
+
         executeJob(taskInfo);
     }
 
@@ -161,6 +179,7 @@ public class JobExecutor implements ApplicationRunner {
      */
     public void stopTask(Long id) {
         jobCache.removeTask(id);
+        executingJobs.remove(id);
     }
 
     public void restartTask(Long id, String starterName) {
@@ -190,12 +209,15 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setFilteredDataList(CollUtil.toList());
         taskInfo.setInsertCount(0);
         taskInfo.setUpdateCount(0);
+        taskInfo.setConsumeCount(0);
 
         // 清空任务日志
         taskInfo.setLog(new StringBuffer());
         taskInfo.setTaskLogId(null);
         // 重置状态
         taskInfo.setExecuteResult(null);
+
+        taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
 
         int i = 0;
         while (i < MdConstant.TASK_MAX_FAIL_COUNT) {
@@ -206,8 +228,9 @@ public class JobExecutor implements ApplicationRunner {
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskInfo);
 
-                taskInfo.appendLog("任务开始执行，触发功能是 {}", taskInfo.getStarterName());
-                taskInfo.appendLog("预计执行时间：{}", DateUtil.formatDateTime(taskInfo.getNextRunTime()));
+                taskInfo.appendLog("预计执行时间：{}，缓存时长：{}秒"
+                        , DateUtil.formatDateTime(taskInfo.getNextRunTime())
+                        , DateUtil.between(taskInfo.getStartTime(), taskInfo.getNextRunTime(), DateUnit.SECOND));
 
                 // 生成日志
                 TaskLog taskLog = getTaskLog(taskInfo);
@@ -236,30 +259,68 @@ public class JobExecutor implements ApplicationRunner {
     }
 
     /**
-     * 执行订阅任务
+     * 执行订阅的子任务
      *
-     * @param taskInfo 当前执行的任务
+     * @param parentTaskInfo 当前执行的任务
      */
-    public void executeSubscribedTask(TaskInfo taskInfo) {
+    public void executeSubscribedTask(TaskInfo parentTaskInfo) {
         // 当前任务不是 提供数据，则结束
-        if (MdConstant.DATA_PRODUCER != taskInfo.getOpType()) {
+        if (MdConstant.DATA_PRODUCER != parentTaskInfo.getOpType()) {
             return;
         }
 
-        List<Map> produceDataList = taskInfo.getProduceDataList();
-        if (CollUtil.isEmpty(produceDataList)) {
+        // 非数据处理的任务 不支持订阅模式
+        if (ObjectUtil.isNull(parentTaskInfo.getDataId())) {
             return;
         }
+
+        List<Map> produceDataList = parentTaskInfo.getProduceDataList();
+
         // 查询相同数据的订阅任务
-        List<Task> subTasks = taskService.listRunningSubTasks(taskInfo.getDataId(), taskInfo.getEnvId(), taskInfo.getId());
+        List<Task> subTasks = taskService.listRunningSubTasks(parentTaskInfo.getDataId(), parentTaskInfo.getEnvId(), parentTaskInfo.getId());
+        if (CollUtil.isEmpty(subTasks)) {
+            parentTaskInfo.appendLog("无订阅任务", subTasks.size());
+            return;
+        }
+
+        parentTaskInfo.appendLog("共有{}个订阅任务", subTasks.size());
+
         subTasks.forEach(task -> {
-            TaskInfo subTaskInfo = build(task);
-            // 订阅任务现在执行
-            subTaskInfo.setStartTime(new Date());
-            // 设置数据批次编号
-            subTaskInfo.setDataBatchId(taskInfo.getDataBatchId());
-            // 指定订阅任务，调用接口发送数据
-            executeJob(subTaskInfo);
+            // 订阅任务 是提供数据
+            if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_PRODUCER)) {
+                // 调用API模式
+                if (ObjectUtil.equal(task.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
+                    // 没有业务数据 则触发子任务
+                    if (CollUtil.isEmpty(produceDataList)) {
+                        TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                        // 执行订阅任务
+                        executeJob(subTaskInfo);
+                        parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
+                    } else {
+                        // 将业务数据作为 消费数据，逐个触发执行子任务
+                        produceDataList.forEach(data -> {
+                            TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                            subTaskInfo.setTaskVar(data);
+                            // 执行订阅任务
+                            executeJob(subTaskInfo);
+                            parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
+                        });
+                    }
+                }
+                // 接收推送
+                else {
+                    acceptData(task, parentTaskInfo.getAcceptedData());
+                    parentTaskInfo.appendLog("触发接收推送任务：{}", task.getTaskName());
+                }
+            }
+            // 订阅任务 是消费数据
+            else if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_CONSUMER)) {
+                // 执行订阅任务，不判断前置任务是否有produceData，可能跨多级订阅时 再之前的任务才有数据
+                TaskInfo subTaskInfo = buildSubTaskJob(parentTaskInfo, task);
+                // 执行订阅任务
+                executeJob(subTaskInfo);
+                parentTaskInfo.appendLog("触发执行订阅任务：{}", subTaskInfo.getTaskName());
+            }
         });
     }
 
@@ -270,11 +331,22 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
+        // 存入正在运行的任务集合中
+        executingJobs.put(taskInfo.getId(), taskInfo);
+
         taskInfo.appendLog("缓存到期");
         executeJob(taskInfo);
     }
 
     public void completeJob(TaskInfo taskInfo) {
+        if (executingJobs.containsKey(taskInfo.getId())) {
+            // 从正在运行集合中移除
+            executingJobs.remove(taskInfo.getId());
+        } else {
+            // 任务不继续执行
+            taskInfo.setTimes(0);
+        }
+
         // 更新任务的 最后执行时间、最后成功时间
         Task task = new Task();
         task.setId(taskInfo.getId());
@@ -282,7 +354,7 @@ public class JobExecutor implements ApplicationRunner {
         task.setLastSuccessTime(taskInfo.getLastSuccessTime());
         task.setNextRunTime(null);
 
-        // 若任务异常
+        // 若任务失败则结束
         if (taskInfo.isFailed()) {
             // 更新任务状态为异常
             task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
@@ -290,24 +362,24 @@ public class JobExecutor implements ApplicationRunner {
             jobCache.removeTask(taskInfo.getId());
             // 清空可执行次数
             taskInfo.setTimes(0);
-        } else {
-            // 任务未异常
-            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed())) {
-                // 是订阅任务 且未成功，则继续执行
-                if (taskInfo.getFailCount() > 0) {
-                    taskInfo.setTaskPeriod(MdConstant.TASK_FAILED_PERIOD);
-                } else {
-                    // 订阅任务 成功，则结束
-                    taskInfo.setTimes(0);
-                }
-            } else {
-                // 不是订阅任务，则触发订阅任务
-                executeSubscribedTask(taskInfo);
-            }
+        }
+        // 订阅任务执行成功，则结束
+        else if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskInfo.getIsSubscribed()) && MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
+            taskInfo.setTimes(0);
         }
 
         // 更新task信息
         taskService.finishTask(task);
+
+        // 任务成功 则触发订阅任务
+        if (MdConstant.TASK_RESULT_SUCCESS == taskInfo.getExecuteResult()) {
+            executeSubscribedTask(taskInfo);
+        }
+
+
+        // 设置任务结束时间
+        taskInfo.setEndTime(new Date());
+        taskInfo.appendLog("本次任务结束");
 
         // 保存日志
         taskLogService.saveOrUpdate(getTaskLog(taskInfo));
@@ -320,6 +392,29 @@ public class JobExecutor implements ApplicationRunner {
             // 继续执行任务
             cacheJob(taskInfo);
         }
+    }
+
+    /**
+     * 更新任务日志
+     *
+     * @param taskInfo 任务
+     */
+    public void updateTaskLog(TaskInfo taskInfo) {
+        // 更新日志
+        taskLogService.saveOrUpdate(getTaskLog(taskInfo));
+    }
+
+    /**
+     * 检测任务是否正在执行中
+     *
+     * @param taskId 任务id
+     * @return true-执行中，false-不在执行中
+     */
+    public boolean isTaskExecuting(Long taskId) {
+        if (ObjectUtil.isNull(taskId)) {
+            return false;
+        }
+        return executingJobs.containsKey(taskId);
     }
 
     /**
@@ -339,9 +434,10 @@ public class JobExecutor implements ApplicationRunner {
      * @param task Task
      * @return TaskJob
      */
-    private TaskInfo build(Task task) {
+    private TaskInfo build(Task task, String starterName) {
         TaskInfo taskInfo = new TaskInfo();
 
+        taskInfo.setStarterName(starterName);
         // 任务基本信息
         taskInfo.setId(task.getId());
         taskInfo.setTaskName(task.getTaskName());
@@ -352,7 +448,7 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setApiMethod(task.getApiMethod());
         taskInfo.setApiUrl(task.getApiUrl());
         taskInfo.setProjectId(task.getProjectId());
-        taskInfo.setSingleMode(task.getSingleMode());
+        taskInfo.setDataMode(task.getDataMode());
 
         // 所属租户
         taskInfo.setTenantId(task.getTenantId());
@@ -374,15 +470,18 @@ public class JobExecutor implements ApplicationRunner {
 
         // header
         taskInfo.setOriginReqHeaders(task.getReqHeaders());
-//        taskInfo.setReqHeaders(ObjectUtil.clone(taskInfo.getOriginReqHeaders()));
+        taskInfo.setReqHeaders(ObjectUtil.cloneByStream(taskInfo.getOriginReqHeaders()));
         // param
         Map<String, String> taskParams = task.getReqParams();
         if (CollUtil.isNotEmpty(taskParams)) {
             Map<String, Object> jobParams = MapUtil.newHashMap();
             jobParams.putAll(task.getReqParams());
             taskInfo.setOriginReqParams(jobParams);
-//            taskInfo.setReqParams(taskInfo.getOriginReqParams());
+            taskInfo.setReqParams(ObjectUtil.cloneByStream(taskInfo.getOriginReqParams()));
         }
+        // body
+        taskInfo.setReqBody(task.getReqBody());
+
         // field var mapping
         taskInfo.setFieldVarMapping(task.getFieldVarMapping());
 
@@ -393,7 +492,8 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setBatch(MdConstant.ENABLED == task.getBatchStatus());
         taskInfo.setBatchInterval(task.getBatchInterval());
         taskInfo.setOriginBatchParams(jobBatchService.parseTaskBatchParam(task.getBatchParams()));
-//        taskInfo.setBatchParams(ObjectUtil.clone(taskInfo.getOriginBatchParams()));
+        taskInfo.setBatchParams(ObjectUtil.cloneByStream(taskInfo.getOriginBatchParams()));
+
         Integer batchSize = ObjectUtil.defaultIfNull(task.getBatchSize(), MdConstant.ROUND_DATA_COUNT);
         taskInfo.setBatchSize(batchSize);
         // 消费模式
@@ -410,13 +510,8 @@ public class JobExecutor implements ApplicationRunner {
             // 获取配置映射的数据字段的类型
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
                 // 映射 字段编号：字段类型
-                Map<String, String> fieldTypeMap = dataFields.stream()
+                Map<String, String> fieldTypeMapping = dataFields.stream()
                         .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                Map<String, String> fieldTypeMapping = MapUtil.newHashMap();
-                task.getFieldMapping().forEach((k, v) -> {
-                    fieldTypeMapping.put(k, fieldTypeMap.get(k));
-                });
-
                 // 映射字段的类型
                 taskInfo.setFieldTypeMapping(fieldTypeMapping);
             }
@@ -425,8 +520,35 @@ public class JobExecutor implements ApplicationRunner {
         taskInfo.setConsumeDataList(CollUtil.toList());
         taskInfo.setFilteredDataList(CollUtil.toList());
         taskInfo.setCreateUser(task.getCreateUser());
+        Map<String, Map<String, String>> dataProcess = task.getDataProcess();
+        if (dataProcess == null) {
+            dataProcess = MapUtil.newHashMap();
+        }
+        taskInfo.setDataProcess(dataProcess);
 
         return taskInfo;
+    }
+
+    /**
+     * 根据任务 构建订阅的子任务job
+     *
+     * @param parentTaskInfo 父任务job
+     * @param subTask        子任务
+     * @return TaskJob 子任务job
+     */
+    private TaskInfo buildSubTaskJob(TaskInfo parentTaskInfo, Task subTask) {
+        // 订阅任务 是消费数据
+        TaskInfo subTaskInfo = build(subTask, StrUtil.format("{} 触发执行当前订阅任务", parentTaskInfo.getTaskName()));
+        // 订阅任务现在执行
+        subTaskInfo.setStartTime(new Date());
+        // 设置数据批次编号
+        subTaskInfo.setDataBatchId(parentTaskInfo.getDataBatchId());
+        // 生成日志
+        TaskLog taskLog = getTaskLog(subTaskInfo);
+        if (taskLogService.saveOrUpdate(taskLog)) {
+            subTaskInfo.setTaskLogId(taskLog.getId());
+        }
+        return subTaskInfo;
     }
 
     /**
@@ -441,7 +563,6 @@ public class JobExecutor implements ApplicationRunner {
         Date date = taskInfo.getStartTime();
         String period = taskInfo.getTaskPeriod();
         if (taskInfo.getFailCount() > 0) {
-            //            date = taskInfo.getNextRunTime();
             period = MdConstant.TASK_FAILED_PERIOD;
         }
 

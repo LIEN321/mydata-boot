@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springblade.common.constant.MdConstant;
+import org.springblade.common.util.MapUtil;
 import org.springblade.modules.mydata.data.BizDataFilter;
 
 import java.io.Serializable;
@@ -291,7 +292,7 @@ public class TaskInfo implements Serializable {
     /**
      * 单条记录消费模式，1-对象、2-集合
      */
-    private Integer singleMode;
+    private Integer dataMode;
 
     /**
      * 数据批次标识
@@ -302,6 +303,21 @@ public class TaskInfo implements Serializable {
      * 任务日志
      */
     private Long taskLogId;
+
+    /**
+     * 任务内置变量
+     */
+    private Map taskVar = MapUtil.newHashMap();
+
+    /**
+     * 数据处理配置
+     */
+    private Map<String, Map<String, String>> dataProcess;
+
+    /**
+     * 请求体
+     */
+    private String reqBody;
 
     /**
      * 追加日志

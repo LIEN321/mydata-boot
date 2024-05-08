@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,5 +157,21 @@ public class MdUtil {
         }
 
         return convertValue;
+    }
+
+    public static String formatData(Object value, String targetType) {
+        if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
+            switch (targetType) {
+                case "int":
+                case "string":
+                case "number":
+                    return StrUtil.toString(value);
+                case "date":
+                    Date date = DateUtil.parse(StrUtil.toString(value));
+                    return DateUtil.formatDateTime(date);
+            }
+        }
+
+        return StrUtil.toString(value);
     }
 }

@@ -3,7 +3,9 @@ package org.springblade.modules.mydata.job.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.data.BizDataFilter;
@@ -57,6 +59,10 @@ public class JobDataFilterService {
             return;
         }
 
+        // 数据的标识字段编号，用于检测 标识字段值 是否有效
+        String dataIdCode = taskInfo.getIdFieldCode();
+        List<String> dataIdCodes = StrUtil.split(dataIdCode, StrPool.COMMA);
+
         Map<String, String> fieldTypeMapping = taskInfo.getFieldTypeMapping();
 
         // 过滤后的有效数据
@@ -66,71 +72,8 @@ public class JobDataFilterService {
         // 遍历数据，并进行过滤
         dataList.forEach(data -> {
 
-            boolean isCorrect = false;
-
-            for (BizDataFilter filter : dataFilters) {
-                String key = filter.getKey();
-                Object filterValue = filter.getValue();
-                String op = filter.getOp();
-
-                // 当数据中 不包含 过滤的字段名，则执行下一项过滤
-                if (!data.containsKey(key)) {
-                    continue;
-                }
-
-                // 当数据中 指定字段的值 无效，则过滤该数据
-                Object dataValue = data.get(key);
-                filterValue = MdUtil.convertDataType(filterValue, fieldTypeMapping.get(key));
-
-                // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
-//                if (!(dataValue instanceof Comparable && filterValue instanceof Comparable)) {
-//                    break;
-//                }
-
-                Comparable cDataValue = (Comparable) dataValue;
-                Comparable cFilterValue = (Comparable) filterValue;
-                // 根据op类型，过滤数据
-                switch (op) {
-                    case MdConstant.DATA_NOT_NULL:
-                        // not null
-                        isCorrect = ObjectUtil.isNotNull(dataValue);
-                        break;
-                    case MdConstant.DATA_NOT_EMPTY:
-                        // not empty
-                        isCorrect = ObjectUtil.isNotEmpty(dataValue);
-                        break;
-                    case MdConstant.DATA_OP_EQ:
-                        // 等于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
-                        break;
-                    case MdConstant.DATA_OP_NE:
-                        // 不等于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
-                        break;
-                    case MdConstant.DATA_OP_GT:
-                        // 大于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
-                        break;
-                    case MdConstant.DATA_OP_GTE:
-                        // 大于等于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
-                        break;
-                    case MdConstant.DATA_OP_LT:
-                        // 小于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
-                        break;
-                    case MdConstant.DATA_OP_LTE:
-                        // 小于等于
-                        isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
-                        break;
-
-                    default:
-                        throw new RuntimeException("JobDataFilter: 不支持的过滤操作");
-                }
-            }
-
-            // 当 未被过滤，则添加到过滤结果
-            if (isCorrect) {
+            // 当数据未被过滤，则添加到过滤结果
+            if (checkIdValue(data, dataIdCodes) && filterDataValues(data, fieldTypeMapping, dataFilters)) {
                 validDataList.add(data);
             } else {
                 filteredDataList.add(data);
@@ -161,11 +104,81 @@ public class JobDataFilterService {
         return filters;
     }
 
-    public void sendNoticeEmail(TaskInfo taskInfo) {
-        List<Map> filteredDataList = taskInfo.getFilteredDataList();
-        // 若没有被过滤的无效数据，则结束
-        if (CollUtil.isEmpty(filteredDataList)) {
-            return;
+    private boolean checkIdValue(Map data, List<String> idCodes) {
+        // 检测 标识字段值 是否有效
+        for (String idCode : idCodes) {
+            Object idFieldValue = data.get(idCode);
+            if (ObjectUtil.isNull(idFieldValue)) {
+                return false;
+            }
         }
+        return true;
+    }
+
+    private boolean filterDataValues(Map data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {
+        boolean isCorrect = false;
+
+        for (BizDataFilter filter : dataFilters) {
+            String key = filter.getKey();
+            Object filterValue = filter.getValue();
+            String op = filter.getOp();
+
+            // 当数据中 不包含 过滤的字段名，则执行下一项过滤
+            if (!data.containsKey(key)) {
+                continue;
+            }
+
+            // 当数据中 指定字段的值 无效，则过滤该数据
+            Object dataValue = data.get(key);
+            filterValue = MdUtil.convertDataType(filterValue, fieldTypeMapping.get(key));
+
+            // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
+//                if (!(dataValue instanceof Comparable && filterValue instanceof Comparable)) {
+//                    break;
+//                }
+
+            Comparable cDataValue = (Comparable) dataValue;
+            Comparable cFilterValue = (Comparable) filterValue;
+            // 根据op类型，过滤数据
+            switch (op) {
+                case MdConstant.DATA_NOT_NULL:
+                    // not null
+                    isCorrect = ObjectUtil.isNotNull(dataValue);
+                    break;
+                case MdConstant.DATA_NOT_EMPTY:
+                    // not empty
+                    isCorrect = ObjectUtil.isNotEmpty(dataValue);
+                    break;
+                case MdConstant.DATA_OP_EQ:
+                    // 等于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
+                    break;
+                case MdConstant.DATA_OP_NE:
+                    // 不等于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
+                    break;
+                case MdConstant.DATA_OP_GT:
+                    // 大于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
+                    break;
+                case MdConstant.DATA_OP_GTE:
+                    // 大于等于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
+                    break;
+                case MdConstant.DATA_OP_LT:
+                    // 小于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
+                    break;
+                case MdConstant.DATA_OP_LTE:
+                    // 小于等于
+                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
+                    break;
+
+                default:
+                    throw new RuntimeException("JobDataFilter: 不支持的过滤操作");
+            }
+        }
+
+        return isCorrect;
     }
 }
