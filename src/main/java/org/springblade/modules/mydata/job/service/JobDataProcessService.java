@@ -27,15 +27,26 @@ import java.util.Set;
  */
 @Component
 public class JobDataProcessService {
+    /**
+     * 根据字段映射配置 处理业务数据
+     *
+     * @param taskInfo      任务
+     * @param processedData 待处理数据
+     * @param originData    原始的业务数据
+     */
+    public void processBizData(TaskInfo taskInfo, Map<String, Object> processedData, Map<String, Object> originData) {
+        processBizData(taskInfo, processedData, originData, false);
+    }
 
     /**
      * 根据字段映射配置 处理业务数据
      *
-     * @param taskInfo    任务
-     * @param pendingData 待处理数据
-     * @param originData  原始的业务数据
+     * @param taskInfo      任务
+     * @param processedData 待处理数据
+     * @param originData    原始的业务数据
+     * @param forceToEmpty  是否将null值转为empty
      */
-    public void processBizData(TaskInfo taskInfo, Map<String, Object> pendingData, Map<String, Object> originData) {
+    public void processBizData(TaskInfo taskInfo, Map<String, Object> processedData, Map<String, Object> originData, boolean forceToEmpty) {
         // 任务中的字段数据处理配置
         Map<String, Map<String, String>> dataProcess = taskInfo.getDataProcess();
 
@@ -58,14 +69,19 @@ public class JobDataProcessService {
 
             // 优先处理 置空 操作
             if (isSetNull(op)) {
-                pendingData.put(fieldCode, null);
+                processedData.put(fieldCode, forceToEmpty ? StrUtil.EMPTY : null);
                 continue;
             }
 
             // 处理前的字段值
-            Object originValue = pendingData.get(fieldCode);
-            // 若字段值无效，则不处理
+            Object originValue = processedData.get(fieldCode);
+            // 若字段值无效
             if (ObjectUtil.isNull(originValue)) {
+                // 若置empty
+                if (forceToEmpty) {
+                    processedData.put(fieldCode, StrUtil.EMPTY);
+                }
+                // 否则不处理
                 continue;
             }
             // 处理值
@@ -80,7 +96,7 @@ public class JobDataProcessService {
                     // 获取新的值
                     Object newValue = processValue(originValue, op, opValue, originData);
                     // 存入业务数据
-                    pendingData.put(fieldCode, newValue);
+                    processedData.put(fieldCode, newValue);
                 } catch (Exception e) {
                     ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} 业务数据={}，错误：{}", fieldCode, originValue, op, opValue, originData, e.getMessage()));
                 }

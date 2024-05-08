@@ -152,7 +152,7 @@ public class JobDataService {
         }
 
         dataList.forEach(consumeData -> {
-            jobDataProcessService.processBizData(taskInfo, consumeData, consumeData);
+            jobDataProcessService.processBizData(taskInfo, consumeData, consumeData, true);
         });
 
         return dataList;
