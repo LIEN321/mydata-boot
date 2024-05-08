@@ -510,13 +510,8 @@ public class JobExecutor implements ApplicationRunner {
             // 获取配置映射的数据字段的类型
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
                 // 映射 字段编号：字段类型
-                Map<String, String> fieldTypeMap = dataFields.stream()
+                Map<String, String> fieldTypeMapping = dataFields.stream()
                         .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                Map<String, String> fieldTypeMapping = MapUtil.newHashMap();
-                task.getFieldMapping().forEach((k, v) -> {
-                    fieldTypeMapping.put(k, fieldTypeMap.get(k));
-                });
-
                 // 映射字段的类型
                 taskInfo.setFieldTypeMapping(fieldTypeMapping);
             }
