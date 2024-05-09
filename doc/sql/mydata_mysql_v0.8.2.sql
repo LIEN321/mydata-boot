@@ -4050,6 +4050,7 @@ CREATE TABLE `md_api`  (
   `sync_task_time` datetime(0) NULL DEFAULT NULL COMMENT '同步到任务的时间',
   `app_id` bigint(0) NULL DEFAULT NULL COMMENT '所属应用id',
   `field_prefix` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '字段层级前缀',
+  `req_body` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '请求体',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '应用接口' ROW_FORMAT = Dynamic;
 
@@ -4078,6 +4079,31 @@ CREATE TABLE `md_app`  (
 
 -- ----------------------------
 -- Records of md_app
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for md_biz_data
+-- ----------------------------
+DROP TABLE IF EXISTS `md_biz_data`;
+CREATE TABLE `md_biz_data`  (
+  `id` bigint(0) NOT NULL COMMENT '主键',
+  `status` tinyint(0) UNSIGNED NULL DEFAULT NULL COMMENT '业务状态',
+  `is_deleted` tinyint(0) UNSIGNED NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
+  `create_user` bigint(0) NULL DEFAULT NULL COMMENT '创建人',
+  `create_dept` bigint(0) NULL DEFAULT NULL COMMENT '创建部门',
+  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+  `update_user` bigint(0) NULL DEFAULT NULL COMMENT '更新人',
+  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '更新时间',
+  `tenant_id` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '所属租户',
+  `project_id` bigint(0) NULL DEFAULT NULL COMMENT '项目id',
+  `env_id` bigint(0) NULL DEFAULT NULL COMMENT '环境id',
+  `data_id` bigint(0) NULL DEFAULT NULL COMMENT '数据项编号',
+  `data_count` bigint(0) NULL DEFAULT NULL COMMENT '数据量',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '业务数据概况' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of md_biz_data
 -- ----------------------------
 
 -- ----------------------------
@@ -4251,9 +4277,17 @@ CREATE TABLE `md_task`  (
   `batch_interval` int(0) NULL DEFAULT 2 COMMENT '分批间隔（秒）',
   `batch_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '分批参数',
   `batch_size` int(0) NULL DEFAULT NULL COMMENT '分批数量',
-  `consume_mode` int(0) NULL DEFAULT 1 COMMENT '消费数据模式，默认1，1-API、2-发邮件',
+  `consume_mode` int(0) NULL DEFAULT NULL COMMENT '消费数据模式，默认1，1-API、2-发邮件',
   `consume_email` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '消费数据模式的收件人邮件',
   `skip_error` int(0) NULL DEFAULT 0 COMMENT '跳过特殊情况，0-不跳过，1-跳过相同数据异常',
+  `produce_mode` int(0) NULL DEFAULT NULL COMMENT '提供数据模式，默认1，1-API、2-接收推送',
+  `auth_type` int(0) NULL DEFAULT 0 COMMENT '提供数据的 认证方式',
+  `auth_params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '提供数据的 认证参数',
+  `data_mode` int(0) NULL DEFAULT NULL COMMENT '单条记录消费模式，1-对象、2-集合',
+  `subscribe_task_id` bigint(0) NULL DEFAULT NULL COMMENT '订阅任务id',
+  `next_run_time` datetime(0) NULL DEFAULT NULL COMMENT '下次执行时间',
+  `data_process` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '数据处理',
+  `req_body` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '请求体',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '集成任务' ROW_FORMAT = Dynamic;
 
