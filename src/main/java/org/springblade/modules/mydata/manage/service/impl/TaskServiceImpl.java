@@ -149,8 +149,13 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                     Object value = filter.get(MdConstant.PARAM_VALUE);
                     // 条件类型
                     Object type = filter.get(MdConstant.PARAM_TYPE);
+                    // 条件操作
+                    String op = filter.get(MdConstant.PARAM_OP).toString();
                     // 不是值类型 则不做类型转换
                     if (!MdConstant.TASK_FILTER_TYPE_VALUE.equals(type)) {
+                        continue;
+                    }
+                    if (MdConstant.DATA_NOT_NULL.equals(op) || MdConstant.DATA_NOT_EMPTY.equals(op)) {
                         continue;
                     }
                     // 转换值类型
