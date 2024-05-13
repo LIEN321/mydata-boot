@@ -176,8 +176,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             task.setApiMethod(api.getApiMethod());
             // 复制api的数据类型
             task.setDataType(api.getDataType());
-            // 复制api的所属应用
-            task.setAppId(api.getAppId());
             // 复制api的请求体
             task.setReqBody(api.getReqBody());
 
@@ -190,6 +188,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                 task.setRefOpType(null);
             }
         }
+
+        // 任务所属应用
+        task.setAppId(taskDTO.getAppId());
 
         // 新建任务的初始状态为“停止”
         if (task.getId() == null) {

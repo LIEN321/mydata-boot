@@ -249,6 +249,11 @@ public class TaskVO {
     private Long appId;
 
     /**
+     * 应用名称
+     */
+    private String appName;
+
+    /**
      * 数据处理配置
      */
     private Map<String, Map<String, String>> dataProcess;
