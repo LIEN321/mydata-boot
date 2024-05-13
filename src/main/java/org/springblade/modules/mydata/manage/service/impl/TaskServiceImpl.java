@@ -30,7 +30,6 @@ import org.springblade.modules.mydata.manage.service.ITaskLogService;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 import org.springblade.modules.mydata.manage.wrapper.TaskWrapper;
-import org.springblade.modules.system.service.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,9 +53,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Resource
     private final ITaskLogService taskLogService;
-
-    @Resource
-    private final IUserService userService;
 
     @Resource
     private final JobExecutor jobExecutor;

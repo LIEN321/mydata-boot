@@ -49,6 +49,7 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, Tenant> imp
 	private final DeptMapper deptMapper;
 	private final IPostService postService;
 	private final UserMapper userMapper;
+    private final IMyDataService myDataService;
 
 	@Override
 	public IPage<Tenant> selectTenantPage(IPage<Tenant> page, Tenant tenant) {
@@ -109,6 +110,9 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, Tenant> imp
 			user.setSex(1);
 			user.setIsDeleted(BladeConstant.DB_NOT_DELETED);
 			userMapper.insert(user);
+
+            // 初始示例数据
+            myDataService.initData(tenantId);
 		}
 		return super.saveOrUpdate(tenant);
 	}
