@@ -136,6 +136,27 @@ public interface MdConstant {
      */
     String DATA_VALUE_TASK_LAST_SUCCESS_TIME = "_MD_TASK_LAST_SUCCESS_";
 
+    /**
+     * 数据类型：默认，随提供放返回而定
+     */
+    String DATA_TYPE_DEFAULT = "default";
+    /**
+     * 数据类型：整数
+     */
+    String DATA_TYPE_INT = "int";
+    /**
+     * 数据类型：字符串
+     */
+    String DATA_TYPE_STRING = "string";
+    /**
+     * 数据类型：日期
+     */
+    String DATA_TYPE_DATE = "date";
+    /**
+     * 数据类型：数字，包括小数
+     */
+    String DATA_TYPE_NUMBER = "number";
+
     // ---------- 网络常量 ----------
 
     /**
