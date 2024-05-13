@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import lombok.AllArgsConstructor;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.core.tool.utils.Func;
@@ -13,6 +14,7 @@ import org.springblade.modules.mydata.manage.dto.ProjectDTO;
 import org.springblade.modules.mydata.manage.dto.ProjectStatDTO;
 import org.springblade.modules.mydata.manage.entity.Project;
 import org.springblade.modules.mydata.manage.mapper.ProjectMapper;
+import org.springblade.modules.mydata.manage.service.IEnvService;
 import org.springblade.modules.mydata.manage.service.IProjectService;
 import org.springblade.modules.mydata.manage.vo.ProjectVO;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,11 @@ import java.util.List;
  * @since 2023/12/5
  */
 @Service
+@AllArgsConstructor
 public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> implements IProjectService {
+
+    private final IEnvService envService;
+
     @Override
     public IPage<ProjectVO> selectProjectPage(IPage<ProjectVO> page, ProjectVO project) {
         return page.setRecords(baseMapper.selectProjectPage(page, project));
@@ -41,8 +47,16 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
 
         // 复制提交信息
         Project project = BeanUtil.copyProperties(projectDTO, Project.class);
+        boolean isNewProject = project.getId() == null;
 
-        return saveOrUpdate(project);
+        // 保存项目
+        boolean result = saveOrUpdate(project);
+
+        // 若保存项目成功 且 是新项目
+        if (result && isNewProject) {
+            result = envService.addDefaultEnv(project.getId(), project.getProjectName());
+        }
+        return result;
     }
 
     @Transactional(rollbackFor = Exception.class)

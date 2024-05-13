@@ -93,6 +93,17 @@ public class EnvServiceImpl extends BaseServiceImpl<EnvMapper, Env>
         return list(queryWrapper);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean addDefaultEnv(Long projectId, String projectName) {
+        Env env = new Env();
+        env.setEnvName(projectName + "-默认环境");
+        env.setEnvPrefix("");
+        env.setProjectId(projectId);
+        env.setSort(1);
+        return save(env);
+    }
+
     private void checkEnv(EnvDTO envDTO) {
         Assert.notNull(envDTO, "提交失败：参数无效！");
         String envName = envDTO.getEnvName();
@@ -102,7 +113,7 @@ public class EnvServiceImpl extends BaseServiceImpl<EnvMapper, Env>
         Assert.notBlank(envName, "提交失败：环境名称 不能为空！");
         // 环境名称 长度不能超过限制
         Assert.isTrue(envName.length() <= MdConstant.MAX_NAME_LENGTH, "提交失败：环境名称 不能超过{}位！",
-                      MdConstant.MAX_NAME_LENGTH);
+                MdConstant.MAX_NAME_LENGTH);
 
         // 环境前置路径 不能为空
         // Assert.notBlank(envPrefix, "提交失败：前置路径 不能为空！");
@@ -111,6 +122,6 @@ public class EnvServiceImpl extends BaseServiceImpl<EnvMapper, Env>
         }
         // 环境前置路径 长度不能超过限制
         Assert.isTrue(envPrefix == null || envPrefix.length() <= MdConstant.MAX_URI_LENGTH,
-                      "提交失败：前置路径 不能超过{}位！", MdConstant.MAX_URI_LENGTH);
+                "提交失败：前置路径 不能超过{}位！", MdConstant.MAX_URI_LENGTH);
     }
 }
