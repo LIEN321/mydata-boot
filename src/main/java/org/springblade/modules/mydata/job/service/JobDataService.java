@@ -113,7 +113,7 @@ public class JobDataService {
                     }
                     // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
                     if (value == null && JobVarService.isFieldExp(apiCode)) {
-                        value = JobVarService.parseDataVar(apiCode, taskInfo.getTaskVar(), taskInfo.getFieldTypeMapping());
+                        value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar(), taskInfo.getFieldTypeMapping());
                     }
                     // 若接口数据中 没有执行的字段名，则跳过处理
                     if (value == null) {
@@ -152,7 +152,7 @@ public class JobDataService {
         }
 
         dataList.forEach(consumeData -> {
-            jobDataProcessService.processBizData(taskInfo, consumeData, consumeData, true);
+            jobDataProcessService.processConsumeData(taskInfo, consumeData);
         });
 
         return dataList;
@@ -171,9 +171,9 @@ public class JobDataService {
         Assert.notEmpty(mFieldMapping, "任务未设置数据映射");
 
         // 遍历数据中心数据，根据映射 转换为接口结构的数据
-        List<Map> apiRequestDataList = CollUtil.newArrayList();
+        List<Map> apiDataList = CollUtil.newArrayList();
 
-        consumeDataList.forEach(data -> {
+        consumeDataList.forEach(bizData -> {
             Map<String, Object> apiData = MapUtil.newHashMap();
             // 根据映射关系 将数据转换为api的数据结构
             mFieldMapping.forEach((standardCode, apiCode) -> {
@@ -181,13 +181,13 @@ public class JobDataService {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
-                apiData.put(apiCode, data.get(standardCode));
+                apiData.put(apiCode, bizData.get(standardCode));
             });
 
-            apiRequestDataList.add(apiData);
+            apiDataList.add(apiData);
         });
 
-        taskInfo.setConsumeDataList(apiRequestDataList);
+        taskInfo.setConsumeDataList(apiDataList);
     }
 
 
@@ -227,7 +227,7 @@ public class JobDataService {
             Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), idMap);
 
             // 根据字段映射配置 提前处理produceData数据，用于对比是否一致
-            jobDataProcessService.processBizData(taskInfo, produceData, queryData);
+            jobDataProcessService.processProduceData(taskInfo, produceData, queryData);
 
             if (queryData == null) {
                 // 未查到数据，则新增

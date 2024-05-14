@@ -28,14 +28,24 @@ import java.util.Set;
 @Component
 public class JobDataProcessService {
     /**
-     * 根据字段映射配置 处理业务数据
+     * 根据字段映射配置处理 提供 的业务数据
      *
      * @param taskInfo      任务
      * @param processedData 待处理数据
      * @param originData    原始的业务数据
      */
-    public void processBizData(TaskInfo taskInfo, Map<String, Object> processedData, Map<String, Object> originData) {
+    public void processProduceData(TaskInfo taskInfo, Map<String, Object> processedData, Map<String, Object> originData) {
         processBizData(taskInfo, processedData, originData, false);
+    }
+
+    /**
+     * 根据字段映射配置处理 消费 的业务数据
+     *
+     * @param taskInfo      任务
+     * @param processedData 待处理数据
+     */
+    public void processConsumeData(TaskInfo taskInfo, Map<String, Object> processedData) {
+        processBizData(taskInfo, processedData, null, true);
     }
 
     /**
@@ -87,18 +97,20 @@ public class JobDataProcessService {
             // 处理值
             String opValue = processMap.get(MdConstant.PARAM_VALUE);
             if (StrUtil.isNotEmpty(op)) {
-                if (MapUtil.isEmpty(originData)) {
+                if (MapUtil.isEmpty(processedData)) {
                     continue;
                 }
-                // 解析处理值中的表达式 {{field}}
-                opValue = JobVarService.parseDataVar(opValue, originData, taskInfo.getFieldTypeMapping());
+                // 先解析 {{$field}}
+                opValue = JobVarService.parseExistedDataVar(opValue, originData, taskInfo.getFieldTypeMapping());
+                // 再解析 {{field}}
+                opValue = JobVarService.parseDataFieldVar(opValue, processedData, taskInfo.getFieldTypeMapping());
                 try {
                     // 获取新的值
-                    Object newValue = processValue(originValue, op, opValue, originData);
+                    Object newValue = processValue(originValue, op, opValue, processedData);
                     // 存入业务数据
                     processedData.put(fieldCode, newValue);
                 } catch (Exception e) {
-                    ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} 业务数据={}，错误：{}", fieldCode, originValue, op, opValue, originData, e.getMessage()));
+                    ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} 业务数据={}，错误：{}", fieldCode, originValue, op, opValue, processedData, e.getMessage()));
                 }
             }
         }
