@@ -24,6 +24,7 @@ import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.core.tool.constant.BladeConstant;
 import org.springblade.core.tool.utils.DigestUtil;
 import org.springblade.core.tool.utils.Func;
+import org.springblade.modules.mydata.manage.service.IMyDataService;
 import org.springblade.modules.system.entity.*;
 import org.springblade.modules.system.mapper.*;
 import org.springblade.modules.system.service.IPostService;
