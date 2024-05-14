@@ -70,7 +70,7 @@ public class JobDataService {
         }
 
         // 声明方法返回结果
-        List<Map> apiResponseDataList = CollUtil.newArrayList();
+        List<Map> produceDataList = CollUtil.newArrayList();
 
         baseArray.forEach(json -> {
             // 保留根目录json，用于 /field 格式提取数据
@@ -96,7 +96,7 @@ public class JobDataService {
             // 根据映射 解析出json中的数据 并存入数据
             jsonArray.forEach(obj -> {
                 JSONObject jsonObject = (JSONObject) obj;
-                Map<String, Object> datacenterData = MapUtil.newHashMap();
+                Map<String, Object> produceData = MapUtil.newHashMap();
                 fieldMapping.forEach((standardCode, apiCode) -> {
                     // 若字段映射中 未设置api参数名，则跳过处理；
                     if (StrUtil.isEmpty(apiCode)) {
@@ -122,17 +122,17 @@ public class JobDataService {
 
                     String targetType = fieldTypeMapping.get(standardCode);
                     try {
-                        datacenterData.put(standardCode, MdUtil.convertDataType(value, targetType));
+                        produceData.put(standardCode, MdUtil.convertDataType(value, targetType));
                     } catch (Exception e) {
                         taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
                     }
                 });
 
-                apiResponseDataList.add(datacenterData);
+                produceDataList.add(produceData);
             });
         });
 
-        taskInfo.setProduceDataList(apiResponseDataList);
+        taskInfo.setProduceDataList(produceDataList);
         //        taskInfo.appendLog("解析前json数据：{}", jsonString);
         //        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
     }

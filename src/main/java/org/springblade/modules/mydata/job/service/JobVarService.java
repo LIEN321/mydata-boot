@@ -211,7 +211,7 @@ public class JobVarService {
         if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
             return string;
         }
-        // 解析url中的属性变量名 {{field}}
+        // 解析字符串中的属性变量名 {{field}}
         List<String> fieldNames = parseVarNames(string, DATA_FIELD_PATTERN, "{{", "}}");
         // 若解析为空，则结束
         if (CollUtil.isEmpty(fieldNames)) {
