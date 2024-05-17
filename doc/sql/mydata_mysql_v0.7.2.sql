@@ -970,7 +970,7 @@ CREATE TABLE `md_project`(
   `tenant_id` VARCHAR(12) comment '所属租户',
   `project_code` VARCHAR(64) comment '项目编号',
   `project_name` VARCHAR(64) comment '项目名称',
-  `project_desc` VARCHAR(1024) DEFAULT '0' comment '项目描述',
+  `project_desc` VARCHAR(1024) DEFAULT NULL comment '项目描述',
   PRIMARY Key(`id`)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci comment '项目';
 
