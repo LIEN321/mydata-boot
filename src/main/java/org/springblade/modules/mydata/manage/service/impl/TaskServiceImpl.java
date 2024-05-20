@@ -295,8 +295,19 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public boolean executeTask(Long id) {
         try {
-            jobExecutor.executeOnce(id);
-            return true;
+            // 校验参数
+            Assert.notNull(id);
+
+            // 更新任务状态为启动
+            Task task = getById(id);
+            Assert.notNull(task, "执行失败，任务无效！");
+            task.setTaskStatus(MdConstant.TASK_STATUS_STARTED);
+            boolean result = updateById(task);
+            if (result) {
+                jobExecutor.executeOnce(id);
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
