@@ -212,6 +212,7 @@ public class JobExecutor implements ApplicationRunner {
         taskJob.setLastRunTime(null);
         taskJob.setLastSuccessTime(null);
         taskJob.setEndTime(null);
+        taskJob.setCreateTime(null);
 
         // 恢复原来的参数，及变量表达式，以便下次可获取最新变量值
         taskJob.setReqHeaders(ObjectUtil.cloneByStream(taskJob.getOriginReqHeaders()));
@@ -236,14 +237,17 @@ public class JobExecutor implements ApplicationRunner {
         while (i < MdConstant.TASK_MAX_FAIL_COUNT) {
             try {
                 // 设置开始时间
-                taskJob.setStartTime(new Date());
+                taskJob.setCreateTime(new Date());
 
                 // 任务周期，若是任务重试 则使用系统默认重试间隔
                 String period = isRetry ? MdConstant.TASK_FAILED_PERIOD : taskJob.getTaskPeriod();
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskJob, period);
 
-                taskJob.appendLog("预计开始时间：{}，距离时长：{}秒", DateUtil.formatDateTime(taskJob.getNextRunTime()), DateUtil.between(taskJob.getStartTime(), taskJob.getNextRunTime(), DateUnit.SECOND));
+                // 设置开始时间
+                taskJob.setStartTime(taskJob.getNextRunTime());
+
+                taskJob.appendLog("准备第{}次执行，预计开始时间：{}，等待时长：{}秒", taskJob.getExecuteCount() + 1, DateUtil.formatDateTime(taskJob.getNextRunTime()), DateUtil.between(taskJob.getCreateTime(), taskJob.getNextRunTime(), DateUnit.SECOND));
 
                 // 生成日志
                 TaskLog taskLog = getTaskLog(taskJob);
@@ -596,9 +600,8 @@ public class JobExecutor implements ApplicationRunner {
      */
     private void calculateNextRunTime(TaskJob taskJob, String period) {
         Assert.notNull(taskJob);
-        Assert.notEmpty(taskJob.getTaskPeriod());
 
-        Date date = taskJob.getStartTime();
+        Date date = taskJob.getCreateTime();
         CronExpression cronExpression = new CronExpression(period);
         Date nextRunTime = cronExpression.getNextValidTimeAfter(date);
         taskJob.setNextRunTime(nextRunTime);

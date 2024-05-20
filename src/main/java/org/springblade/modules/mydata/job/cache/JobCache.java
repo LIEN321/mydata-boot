@@ -53,10 +53,10 @@ public class JobCache {
      */
     public void cacheJob(TaskJob taskJob) throws IllegalArgumentException {
         // 计算任务缓存有效时长
-        long expire = DateUtil.between(taskJob.getStartTime(), taskJob.getNextRunTime(), DateUnit.SECOND);
+        long expire = DateUtil.between(taskJob.getCreateTime(), taskJob.getNextRunTime(), DateUnit.SECOND);
         if (expire < 1) {
             throw new IllegalArgumentException(StrUtil.format("expire < 1秒, startTime = {}, nextRunTime = {}"
-                    , DateUtil.format(taskJob.getStartTime(), DatePattern.NORM_DATETIME_MS_PATTERN)
+                    , DateUtil.format(taskJob.getCreateTime(), DatePattern.NORM_DATETIME_MS_PATTERN)
                     , DateUtil.format(taskJob.getNextRunTime(), "HH:mm:ss.SSS")));
         }
 

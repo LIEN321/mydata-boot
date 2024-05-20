@@ -145,6 +145,11 @@ public class TaskJob implements Serializable {
     private Date nextRunTime = new Date();
 
     /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
      * 开始时间
      */
     private Date startTime;
