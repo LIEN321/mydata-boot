@@ -27,11 +27,6 @@ public class TaskInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 触发任务执行的名称
-     */
-    private String starterName;
-
     // ----- 任务相关信息 -----
     private Long id;
 
@@ -180,9 +175,9 @@ public class TaskInfo implements Serializable {
     private Integer executeResult;
 
     /**
-     * 任务失败次数
+     * 任务执行次数，记录重试次数
      */
-    private int failCount = 0;
+    private int executeCount = 0;
 
     /**
      * 是否为订阅任务：0-不订阅，1-订阅

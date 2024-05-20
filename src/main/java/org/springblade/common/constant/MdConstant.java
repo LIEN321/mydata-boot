@@ -297,7 +297,7 @@ public interface MdConstant {
     /**
      * 任务失败重试间隔
      */
-    String TASK_FAILED_PERIOD = "0 0/1 * * * ?";
+    String TASK_FAILED_PERIOD = "0/5 * * * * ?";
 
     /**
      * 单条记录消费模式 - 单个对象对象

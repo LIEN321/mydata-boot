@@ -69,6 +69,8 @@ public class JobThread implements Runnable {
         }
         taskInfo.appendLog("任务批次号 {}", taskInfo.getDataBatchId());
 
+        // 设置任务开始时间
+        taskInfo.setStartTime(new Date());
         // 设置任务最新运行时间
         taskInfo.setLastRunTime(new Date());
 
@@ -307,34 +309,15 @@ public class JobThread implements Runnable {
             }
             // 任务执行成功
             taskInfo.setExecuteResult(MdConstant.TASK_RESULT_SUCCESS);
-            // 成功后，重置错误次数
-            taskInfo.setFailCount(0);
-            // 设置任务的成功时间
+            // 记录成功时间
             taskInfo.setLastSuccessTime(new Date());
-            taskInfo.appendLog("任务执行成功");
-
+            // 记录成功日志
+            taskInfo.appendLog("任务第{}次执行成功", taskInfo.getExecuteCount());
         } catch (Exception e) {
             // 任务执行失败
             taskInfo.setExecuteResult(MdConstant.TASK_RESULT_FAILED);
-            // 累加失败次数
-            int failCount = taskInfo.getFailCount();
-            failCount++;
-
-            // 小于失败上限，可继续执行
-            if (failCount < MdConstant.TASK_MAX_FAIL_COUNT) {
-                taskInfo.setFailCount(failCount);
-                taskInfo.appendLog("任务第{}次失败", failCount);
-            } else {
-                // 任务失败，中止运行
-                taskInfo.setFailed(true);
-                taskInfo.appendLog("任务失败达到{}次，将终止且不再执行", failCount);
-
-                // 发送任务失败通知邮件 给任务创建人
-                UserInfo userInfo = userService.userInfo(taskInfo.getCreateUser());
-                String emailAddress = userInfo.getUser().getEmail();
-                jobEmailService.sendFailedNotice(taskInfo, emailAddress);
-            }
-            taskInfo.appendLog("任务失败原因：{}", e.getMessage());
+            // 记录失败日志
+            taskInfo.appendLog("任务第{}次失败，原因：{}", taskInfo.getExecuteCount(), e.getMessage());
             log.error(e.getMessage(), e);
         }
 
