@@ -301,10 +301,11 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             // 更新任务状态为启动
             Task task = getById(id);
             Assert.notNull(task, "执行失败，任务无效！");
+            Integer oldTaskStatus = task.getTaskStatus();
             task.setTaskStatus(MdConstant.TASK_STATUS_STARTED);
             boolean result = updateById(task);
             if (result) {
-                jobExecutor.executeOnce(id);
+                jobExecutor.executeOnce(id, oldTaskStatus);
                 return true;
             }
             return false;

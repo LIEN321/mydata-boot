@@ -141,7 +141,7 @@ public class JobExecutor implements ApplicationRunner {
      *
      * @param id 任务id
      */
-    public void executeOnce(Long id) {
+    public void executeOnce(Long id, Integer oldTaskStatus) {
         TaskJob taskJob = jobCache.getTask(id.toString());
         if (taskJob == null) {
             Task task = taskService.getById(id);
@@ -149,8 +149,10 @@ public class JobExecutor implements ApplicationRunner {
                 return;
             }
             taskJob = this.build(task);
-            taskJob.setTimes(1);
         }
+        taskJob.setTimes(1);
+        taskJob.setTemp(true);
+        taskJob.setOldTaskStatus(oldTaskStatus);
         executeJob(taskJob);
     }
 
@@ -188,6 +190,7 @@ public class JobExecutor implements ApplicationRunner {
      * @param taskJob 任务
      */
     public void cacheJob(TaskJob taskJob) {
+        taskJob.setExecuteCount(0);
         cacheJob(taskJob, false);
     }
 
@@ -391,9 +394,6 @@ public class JobExecutor implements ApplicationRunner {
             jobEmailService.sendFailedNotice(taskJob, emailAddress);
         }
 
-        // 更新task信息
-        taskService.finishTask(task);
-
         // 若任务成功 则触发订阅任务，并减少可执行次数
         if (MdConstant.TASK_RESULT_SUCCESS == taskJob.getExecuteResult()) {
             // 触发订阅任务
@@ -401,7 +401,7 @@ public class JobExecutor implements ApplicationRunner {
 
             // 设置任务结束时间
             taskJob.setEndTime(new Date());
-            taskJob.appendLog("本次任务结束");
+            taskJob.appendLog("任务结束");
 
             // 保存日志
             taskLogService.saveOrUpdate(getTaskLog(taskJob));
@@ -414,23 +414,28 @@ public class JobExecutor implements ApplicationRunner {
                 // 继续执行任务
                 cacheJob(taskJob);
             } else {
-                // 可执行次数为0，则结束任务
-                taskService.stopTask(taskJob.getId());
+                if (taskJob.isTemp()) {
+                    task.setTaskStatus(taskJob.getOldTaskStatus());
+                }
             }
         }
         // 任务失败
         else {
-            if (!taskJob.isFailed()) {
-                retryJob(taskJob);
-            } else {
+            if (taskJob.isFailed()) {
                 // 设置任务结束时间
                 taskJob.setEndTime(new Date());
-                taskJob.appendLog("本次任务结束");
+                taskJob.appendLog("任务结束");
 
                 // 保存日志
                 taskLogService.saveOrUpdate(getTaskLog(taskJob));
+            } else {
+                // 任务未终止，重新尝试
+                retryJob(taskJob);
             }
         }
+
+        // 更新task信息
+        taskService.finishTask(task);
     }
 
     /**

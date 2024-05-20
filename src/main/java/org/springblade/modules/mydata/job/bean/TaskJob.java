@@ -320,6 +320,16 @@ public class TaskJob implements Serializable {
     private String reqBody;
 
     /**
+     * 是否手动执行的临时任务
+     */
+    private boolean isTemp;
+
+    /**
+     * 任务原来的状态，以便手动执行后 恢复为原来状态
+     */
+    private Integer oldTaskStatus;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

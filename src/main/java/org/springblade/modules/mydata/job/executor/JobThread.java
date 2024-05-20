@@ -213,7 +213,7 @@ public class JobThread implements Runnable {
                     }
 
                     // 订阅任务 使用任务批次号 查询数据
-                    if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed())) {
+                    if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed()) && !taskJob.isTemp()) {
                         // 构建数据批次查询条件 _MD_BATCH_ID_ = dataBatchId
                         BizDataFilter bizDataFilter = new BizDataFilter();
                         bizDataFilter.setKey(MdConstant.DATA_COLUMN_BATCH_ID);
