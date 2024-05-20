@@ -331,9 +331,6 @@ public class JobExecutor implements ApplicationRunner {
             return;
         }
 
-        // 存入正在运行的任务集合中
-        executingJobs.put(taskInfo.getId(), taskInfo);
-
         taskInfo.appendLog("缓存到期");
         executeJob(taskInfo);
     }
@@ -424,6 +421,9 @@ public class JobExecutor implements ApplicationRunner {
      */
     private void executeJob(TaskInfo taskInfo) {
         taskInfo.appendLog("任务存入执行队列");
+        // 存入正在运行的任务集合中
+        executingJobs.put(taskInfo.getId(), taskInfo);
+
         Runnable runnable = new JobThread(taskInfo);
         getThreadPoolExecutor().execute(runnable);
     }
