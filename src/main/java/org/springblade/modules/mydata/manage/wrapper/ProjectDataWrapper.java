@@ -51,19 +51,21 @@ public class ProjectDataWrapper extends BaseEntityWrapper<Data, ProjectDataVO> {
 
             long provideAppCount = tasks.stream()
                     .filter(t -> (t.getEnvId().equals(envId) && t.getOpType() == MdConstant.DATA_PRODUCER)
-                            || (t.getRefEnvId() != null && t.getRefEnvId().equals(envId) && t.getRefOpType() == MdConstant.DATA_PRODUCER))
+                            || (t.getRefEnvId() != null && t.getRefEnvId()
+                            .equals(envId) && t.getRefOpType() == MdConstant.DATA_PRODUCER))
                     .map(Task::getAppId)
                     .collect(Collectors.toSet())
                     .size();
             long consumeAppCount = tasks.stream()
                     .filter(t -> (t.getEnvId().equals(envId) && t.getOpType() == MdConstant.DATA_CONSUMER)
-                            || (t.getRefEnvId() != null && t.getRefEnvId().equals(envId) && t.getRefOpType() == MdConstant.DATA_CONSUMER))
+                            || (t.getRefEnvId() != null && t.getRefEnvId()
+                            .equals(envId) && t.getRefOpType() == MdConstant.DATA_CONSUMER))
                     .map(Task::getAppId)
                     .collect(Collectors.toSet())
                     .size();
 
             long runningTaskCount = tasks.stream()
-                    .filter(t -> t.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                    .filter(t -> t.getTaskStatus() == MdConstant.TASK_STATUS_STARTED)
                     .count();
 
             long stoppedTaskCount = tasks.stream()

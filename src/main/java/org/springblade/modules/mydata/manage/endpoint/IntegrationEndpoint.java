@@ -12,13 +12,7 @@ import org.springblade.modules.mydata.job.executor.JobExecutor;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Map;
@@ -60,7 +54,7 @@ public class IntegrationEndpoint {
         Assert.notEmpty(taskUrl, "操作失败：地址 {} 无效！", taskUrl);
         Task task = taskService.findByApiUrl(taskUrl);
         Assert.notNull(task, "操作失败：地址 {} 无效！", taskUrl);
-        Assert.equals(task.getTaskStatus(), MdConstant.TASK_STATUS_RUNNING, "操作失败：任务未启动 无法执行！");
+        Assert.equals(task.getTaskStatus(), MdConstant.TASK_STATUS_STARTED, "操作失败：任务未启动 无法执行！");
 
         Integer authType = task.getAuthType();
         if (MdConstant.TASK_AUTH_TYPE_NONE.equals(authType)) {

@@ -242,7 +242,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 启动任务前，校验数据是否配置标识字段
         // Assert.notEmpty(task.getIdFieldCode(), "启动失败：数据未设置标识字段！");
 
-        task.setTaskStatus(MdConstant.TASK_STATUS_RUNNING);
+        task.setTaskStatus(MdConstant.TASK_STATUS_STARTED);
         boolean result = updateById(task);
 
         // 非订阅模式、非接收推送的任务 启动定时任务
@@ -305,7 +305,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public List<Task> listRunningTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
                 .ne(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_PUSH);
         return list(queryWrapper);
@@ -331,7 +331,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(dataId, "参数dataId无效，dataId = {}", dataId);
 
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
                 .eq(Task::getDataId, dataId)
                 .eq(Task::getEnvId, envId)
@@ -344,7 +344,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public List<Task> listSuccessTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .orderByDesc(Task::getLastSuccessTime);
 
         IPage<Task> page = new Page<>();
@@ -372,7 +372,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (task == null) {
             return true;
         }
-        if (task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING) {
+        if (task.getTaskStatus() == MdConstant.TASK_STATUS_STARTED) {
             throw new ServiceException("删除失败，任务正在运行！");
         }
 
@@ -627,7 +627,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     private void restartRunningTasks(List<Task> tasks) {
         // 筛选运行中的任务
         List<Task> runningTasks = tasks.stream()
-                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_STARTED)
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(runningTasks)) {
             // 重启任务的调度

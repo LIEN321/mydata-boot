@@ -210,9 +210,9 @@ public interface MdConstant {
     int TASK_STATUS_STOPPED = 3;
 
     /**
-     * 运行状态
+     * 已启动状态
      */
-    int TASK_STATUS_RUNNING = 1;
+    int TASK_STATUS_STARTED = 1;
 
     /**
      * 失败状态

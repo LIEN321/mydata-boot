@@ -85,7 +85,7 @@ public class Task extends TenantEntity {
     /**
      * 运行状态
      *
-     * @see MdConstant#TASK_STATUS_RUNNING  运行
+     * @see MdConstant#TASK_STATUS_STARTED  运行
      * @see MdConstant#TASK_STATUS_FAILED   异常
      * @see MdConstant#TASK_STATUS_STOPPED  停止
      */
