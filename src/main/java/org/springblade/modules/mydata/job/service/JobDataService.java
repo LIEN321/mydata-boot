@@ -18,7 +18,7 @@ import org.apache.poi.ss.util.SheetUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.data.BizDataDAO;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -43,21 +43,21 @@ public class JobDataService {
     /**
      * 根据任务配置，从json中解析出业务数据列表
      *
-     * @param taskInfo   任务
+     * @param taskJob    任务
      * @param jsonString json字符串
      */
-    public void parseProduceData(TaskInfo taskInfo, String jsonString) {
+    public void parseProduceData(TaskJob taskJob, String jsonString) {
         // 获取任务中的字段映射配置
-        Map<String, String> fieldMapping = taskInfo.getFieldMapping();
+        Map<String, String> fieldMapping = taskJob.getFieldMapping();
         // 映射字段的类型
-        Map<String, String> fieldTypeMapping = taskInfo.getFieldTypeMapping();
+        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
         if (CollUtil.isEmpty(fieldMapping)) {
-            taskInfo.appendLog("任务没有配置字段映射，跳过解析业务数据");
+            taskJob.appendLog("任务没有配置字段映射，跳过解析业务数据");
             return;
         }
 
         // 字段层级前缀
-        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+        String apiFieldPrefix = taskJob.getApiFieldPrefix();
         // 最初的json对象
         JSON originJson = JSONUtil.parse(jsonString);
         // 使用数组模式 兼容单个对象和数组模式
@@ -113,7 +113,7 @@ public class JobDataService {
                     }
                     // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
                     if (value == null && JobVarService.isFieldExp(apiCode)) {
-                        value = JobVarService.parseDataFieldVar(apiCode, taskInfo.getTaskVar(), taskInfo.getFieldTypeMapping());
+                        value = JobVarService.parseDataFieldVar(apiCode, taskJob.getTaskVar(), taskJob.getFieldTypeMapping());
                     }
                     // 若接口数据中 没有执行的字段名，则跳过处理
                     if (value == null) {
@@ -124,7 +124,7 @@ public class JobDataService {
                     try {
                         produceData.put(standardCode, MdUtil.convertDataType(value, targetType));
                     } catch (Exception e) {
-                        taskInfo.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
+                        taskJob.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
                     }
                 });
 
@@ -132,27 +132,25 @@ public class JobDataService {
             });
         });
 
-        taskInfo.setProduceDataList(produceDataList);
-        //        taskInfo.appendLog("解析前json数据：{}", jsonString);
-        //        taskInfo.appendLog("解析后业务数据：{}", apiResponseDataList);
+        taskJob.setProduceDataList(produceDataList);
     }
 
     /**
      * 查询消费的业务数据
      *
-     * @param taskInfo 任务
-     * @param skip     跳过数量
-     * @param limit    限制数量
+     * @param taskJob 任务
+     * @param skip    跳过数量
+     * @param limit   限制数量
      * @return 业务数据
      */
-    public List<Map> listConsumeData(TaskInfo taskInfo, Long skip, Integer limit) {
-        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), taskInfo.getDataFilters(), skip, limit);
+    public List<Map> listConsumeData(TaskJob taskJob, Long skip, Integer limit) {
+        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), taskJob.getDataFilters(), skip, limit);
         if (CollUtil.isEmpty(dataList)) {
             return dataList;
         }
 
         dataList.forEach(consumeData -> {
-            jobDataProcessService.processConsumeData(taskInfo, consumeData);
+            jobDataProcessService.processConsumeData(taskJob, consumeData);
         });
 
         return dataList;
@@ -161,13 +159,13 @@ public class JobDataService {
     /**
      * 根据任务中字段映射，将consumeDataList转换为api参数结构
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public void convertConsumeData(TaskInfo taskInfo) {
-        List<Map> consumeDataList = taskInfo.getConsumeDataList();
+    public void convertConsumeData(TaskJob taskJob) {
+        List<Map> consumeDataList = taskJob.getConsumeDataList();
         // 获取任务的数据映射
         // 映射中，key为数据中心字段名，value为api字段名
-        Map<String, String> mFieldMapping = taskInfo.getFieldMapping();
+        Map<String, String> mFieldMapping = taskJob.getFieldMapping();
         Assert.notEmpty(mFieldMapping, "任务未设置数据映射");
 
         // 遍历数据中心数据，根据映射 转换为接口结构的数据
@@ -187,34 +185,34 @@ public class JobDataService {
             apiDataList.add(apiData);
         });
 
-        taskInfo.setConsumeDataList(apiDataList);
+        taskJob.setConsumeDataList(apiDataList);
     }
 
 
     /**
      * 保存任务中的业务数据
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public void saveProduceData(TaskInfo taskInfo) {
-        Assert.notNull(taskInfo);
+    public void saveProduceData(TaskJob taskJob) {
+        Assert.notNull(taskJob);
         //        Assert.notEmpty(task.getProduceDataList(), "error: 保存数据到仓库失败，task.datas是空的");
-        if (CollUtil.isEmpty(taskInfo.getProduceDataList())) {
+        if (CollUtil.isEmpty(taskJob.getProduceDataList())) {
             return;
         }
 
         final Date currentTime = DateUtil.date();
 
         // 标准数据编号
-        String dataCode = taskInfo.getDataCode();
+        String dataCode = taskJob.getDataCode();
         // 数据的标识字段编号
-        String dataIdCode = taskInfo.getIdFieldCode();
+        String dataIdCode = taskJob.getIdFieldCode();
         List<String> dataIdCodes = StrUtil.split(dataIdCode, StrPool.COMMA);
 
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
-        taskInfo.getProduceDataList().forEach(produceData -> {
+        taskJob.getProduceDataList().forEach(produceData -> {
 
             // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
@@ -224,10 +222,10 @@ public class JobDataService {
             }
 
             // 根据唯一标识 查询业务数据
-            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), taskInfo.getDataCode(), idMap);
+            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), idMap);
 
             // 根据字段映射配置 提前处理produceData数据，用于对比是否一致
-            jobDataProcessService.processProduceData(taskInfo, produceData, queryData);
+            jobDataProcessService.processProduceData(taskJob, produceData, queryData);
 
             if (queryData == null) {
                 // 未查到数据，则新增
@@ -243,7 +241,7 @@ public class JobDataService {
                     Object queryDataValue = queryData.get(key);
 
                     // 将保存的数据 按最新配置的类型转换对比
-                    String targetType = taskInfo.getFieldTypeMapping().get(key);
+                    String targetType = taskJob.getFieldTypeMapping().get(key);
                     produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
                     queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
                     if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
@@ -260,12 +258,12 @@ public class JobDataService {
 
             // 设置业务数据的最后更新时间
             queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskInfo.getDataBatchId());
+            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskJob.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
         if (!dataInsertList.isEmpty()) {
-            bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, dataInsertList);
+            bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, dataInsertList);
         }
 
         // 更新数据仓库的数据
@@ -277,35 +275,35 @@ public class JobDataService {
                     idMap.put(idCode, dataIdValue);
                 });
 
-                bizDataDAO.update(MdUtil.getBizDbCode(taskInfo.getTenantId(), taskInfo.getProjectId(), taskInfo.getEnvId()), dataCode, idMap, data);
+                bizDataDAO.update(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, idMap, data);
             });
         }
 
-        taskInfo.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
-        taskInfo.setInsertCount(taskInfo.getInsertCount() + dataInsertList.size());
-        taskInfo.setUpdateCount(taskInfo.getUpdateCount() + dataUpdateList.size());
+        taskJob.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
+        taskJob.setInsertCount(taskJob.getInsertCount() + dataInsertList.size());
+        taskJob.setUpdateCount(taskJob.getUpdateCount() + dataUpdateList.size());
     }
 
     /**
      * 导出消费数据的excel文件
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      * @return excel文件
      */
-    public File exportConsumeDataExcel(TaskInfo taskInfo) {
-        List<Map> consumeDataList = taskInfo.getConsumeDataList();
-        return exportExcel(consumeDataList, taskInfo.getFieldMapping());
+    public File exportConsumeDataExcel(TaskJob taskJob) {
+        List<Map> consumeDataList = taskJob.getConsumeDataList();
+        return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
     /**
      * 导出过滤数据的excel文件
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      * @return excel文件
      */
-    public File exportFilteredDataExcel(TaskInfo taskInfo) {
-        List<Map> consumeDataList = taskInfo.getFilteredDataList();
-        return exportExcel(consumeDataList, taskInfo.getFieldMapping());
+    public File exportFilteredDataExcel(TaskJob taskJob) {
+        List<Map> consumeDataList = taskJob.getFilteredDataList();
+        return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
     /**

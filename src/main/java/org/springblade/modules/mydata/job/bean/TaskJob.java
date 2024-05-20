@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode(of = "id")
-public class TaskInfo implements Serializable {
+public class TaskJob implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

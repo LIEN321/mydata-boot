@@ -9,7 +9,7 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springblade.common.util.MdUtil;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
 import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.EnvVar;
@@ -59,16 +59,16 @@ public class JobVarService {
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
      *
-     * @param taskInfo   任务
+     * @param taskJob    任务
      * @param jsonString json数据
      */
-    public void saveVarValue(TaskInfo taskInfo, String jsonString) {
-        if (taskInfo == null || StrUtil.isEmpty(jsonString)) {
+    public void saveVarValue(TaskJob taskJob, String jsonString) {
+        if (taskJob == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
         // 接口字段 与 变量的映射
-        Map<String, String> fieldVarMapping = taskInfo.getFieldVarMapping();
+        Map<String, String> fieldVarMapping = taskJob.getFieldVarMapping();
         if (CollUtil.isEmpty(fieldVarMapping)) {
             return;
         }
@@ -76,16 +76,16 @@ public class JobVarService {
         JSON json = JSONUtil.parse(jsonString);
         fieldVarMapping.forEach((apiField, varName) -> {
             String varValue = json.getByPath(apiField, String.class);
-            Long envId = taskInfo.getEnvId();
+            Long envId = taskJob.getEnvId();
 
             EnvVar envVar = new EnvVar();
             envVar.setEnvId(envId);
             envVar.setVarName(varName);
             envVar.setVarValue(varValue);
-            envVar.setTenantId(taskInfo.getTenantId());
+            envVar.setTenantId(taskJob.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            taskInfo.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
+            taskJob.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
         });
 
     }
@@ -154,62 +154,62 @@ public class JobVarService {
     /**
      * 解析任务API header、param、body 中的系统和环境变量
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public void parseTaskVar(TaskInfo taskInfo) {
+    public void parseTaskVar(TaskJob taskJob) {
 
         // 替换 header和param 中的变量
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
-        Map<String, Object> reqParams = taskInfo.getReqParams();
+        Map<String, String> reqHeaders = taskJob.getReqHeaders();
+        Map<String, Object> reqParams = taskJob.getReqParams();
 
-        parseSysAndEnvVar(reqHeaders, taskInfo.getEnvId());
-        parseSysAndEnvVar(reqParams, taskInfo.getEnvId());
+        parseSysAndEnvVar(reqHeaders, taskJob.getEnvId());
+        parseSysAndEnvVar(reqParams, taskJob.getEnvId());
 
         // 替换 body 中的变量
-        if (StrUtil.isNotEmpty(taskInfo.getReqBody())) {
-            String reqBody = replaceSysVarValue(taskInfo.getReqBody());
-            Map<String, String> userVars = parseEnvVar(CollUtil.toList(reqBody), taskInfo.getEnvId());
+        if (StrUtil.isNotEmpty(taskJob.getReqBody())) {
+            String reqBody = replaceSysVarValue(taskJob.getReqBody());
+            Map<String, String> userVars = parseEnvVar(CollUtil.toList(reqBody), taskJob.getEnvId());
             if (MapUtil.isEmpty(userVars)) {
                 return;
             }
 
             reqBody = replaceUserVarValues(reqBody, userVars);
-            taskInfo.setReqBody(reqBody);
+            taskJob.setReqBody(reqBody);
         }
     }
 
     /**
      * 解析 url、header、param、body 中的 数据字段变量 并替换数据
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public static void parseTaskDataVar(TaskInfo taskInfo, Map data) {
+    public static void parseTaskDataVar(TaskJob taskJob, Map data) {
         if (MapUtil.isEmpty(data)) {
             return;
         }
         // api地址
-        String apiUrl = taskInfo.getApiUrl();
+        String apiUrl = taskJob.getApiUrl();
         // 替换属性变量值
-        taskInfo.setApiUrl(parseDataFieldVar(apiUrl, data, taskInfo.getFieldTypeMapping()));
+        taskJob.setApiUrl(parseDataFieldVar(apiUrl, data, taskJob.getFieldTypeMapping()));
 
         // 解析param中的属性变量名
-        Map<String, Object> reqParams = taskInfo.getReqParams();
+        Map<String, Object> reqParams = taskJob.getReqParams();
         if (MapUtil.isNotEmpty(reqParams)) {
             reqParams.forEach((k, v) -> {
-                reqParams.put(k, parseDataFieldVar(StrUtil.toString(v), data, taskInfo.getFieldTypeMapping()));
+                reqParams.put(k, parseDataFieldVar(StrUtil.toString(v), data, taskJob.getFieldTypeMapping()));
             });
         }
 
         // 解析header中的属性变量名
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        Map<String, String> reqHeaders = taskJob.getReqHeaders();
         if (MapUtil.isNotEmpty(reqHeaders)) {
             reqHeaders.forEach((k, v) -> {
-                reqHeaders.put(k, parseDataFieldVar(v, data, taskInfo.getFieldTypeMapping()));
+                reqHeaders.put(k, parseDataFieldVar(v, data, taskJob.getFieldTypeMapping()));
             });
         }
 
         // body
-        taskInfo.setReqBody(parseDataFieldVar(taskInfo.getReqBody(), data, taskInfo.getFieldTypeMapping()));
+        taskJob.setReqBody(parseDataFieldVar(taskJob.getReqBody(), data, taskJob.getFieldTypeMapping()));
     }
 
     /**

@@ -7,7 +7,7 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import org.springblade.common.util.HttpUtils;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,28 +25,28 @@ public class ApiUtil {
     /**
      * 调用接口，获取返回结果
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      * @return 接口结果
      */
-    public static String read(TaskInfo taskInfo) {
-        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), taskInfo.getReqBody());
+    public static String read(TaskJob taskJob) {
+        return HttpUtils.send(Method.valueOf(taskJob.getApiMethod()), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), taskJob.getReqBody());
     }
 
     /**
      * 调用接口，发送标准数据
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public static String write(TaskInfo taskInfo) {
-        return write(taskInfo, taskInfo.getConsumeDataList());
+    public static String write(TaskJob taskJob) {
+        return write(taskJob, taskJob.getConsumeDataList());
     }
 
-    public static String write(TaskInfo taskInfo, List<Map> dataList) {
+    public static String write(TaskJob taskJob, List<Map> dataList) {
         if (CollUtil.isEmpty(dataList)) {
             return "";
         }
 
-        String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+        String apiFieldPrefix = taskJob.getApiFieldPrefix();
         JSONArray jsonArray = new JSONArray();
         jsonArray.addAll(dataList);
         JSON json = jsonArray;
@@ -57,23 +57,23 @@ public class ApiUtil {
             json = jsonObject;
         }
 
-        return HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
+        return HttpUtils.send(Method.valueOf(taskJob.getApiMethod()), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), json.toString());
     }
 
-    public static void write(TaskInfo taskInfo, Map data) {
+    public static void write(TaskJob taskJob, Map data) {
         if (CollUtil.isEmpty(data)) {
             return;
         }
 
         JSON json;
-        String body = taskInfo.getReqBody();
+        String body = taskJob.getReqBody();
         // 有body时，直接发送body内容
         if (StrUtil.isNotEmpty(body)) {
             json = new JSONObject(body);
         } else {
             json = new JSONObject(data);
 
-            String apiFieldPrefix = taskInfo.getApiFieldPrefix();
+            String apiFieldPrefix = taskJob.getApiFieldPrefix();
             if (StrUtil.isNotBlank(apiFieldPrefix)) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.putByPath(apiFieldPrefix, json);
@@ -81,6 +81,6 @@ public class ApiUtil {
             }
         }
 
-        HttpUtils.send(Method.valueOf(taskInfo.getApiMethod()), taskInfo.getApiUrl(), taskInfo.getReqHeaders(), taskInfo.getReqParams(), json.toString());
+        HttpUtils.send(Method.valueOf(taskJob.getApiMethod()), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), json.toString());
     }
 }

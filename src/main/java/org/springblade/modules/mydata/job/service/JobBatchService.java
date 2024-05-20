@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.modules.mydata.job.bean.TaskBatchParam;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -45,15 +45,15 @@ public class JobBatchService {
     /**
      * 将分批参数 转为请求参数
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      * @return 请求参数
      */
-    public Map<String, Object> parseToMap(TaskInfo taskInfo) {
-        if (!taskInfo.isBatch()) {
+    public Map<String, Object> parseToMap(TaskJob taskJob) {
+        if (!taskJob.isBatch()) {
             return null;
         }
 
-        List<TaskBatchParam> batchParams = taskInfo.getBatchParams();
+        List<TaskBatchParam> batchParams = taskJob.getBatchParams();
         if (CollUtil.isEmpty(batchParams)) {
             return null;
         }
@@ -68,16 +68,16 @@ public class JobBatchService {
     /**
      * 递增分批参数
      *
-     * @param taskInfo 任务对象
+     * @param taskJob 任务对象
      */
-    public void incBatchParam(TaskInfo taskInfo) {
-        Assert.notNull(taskInfo);
+    public void incBatchParam(TaskJob taskJob) {
+        Assert.notNull(taskJob);
         // 未开启递增，则不处理
-        if (!taskInfo.isBatch()) {
+        if (!taskJob.isBatch()) {
             return;
         }
 
-        List<TaskBatchParam> taskBatchParams = taskInfo.getBatchParams();
+        List<TaskBatchParam> taskBatchParams = taskJob.getBatchParams();
         if (CollUtil.isEmpty(taskBatchParams)) {
             return;
         }
