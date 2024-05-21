@@ -14,6 +14,7 @@ import org.springblade.modules.mydata.manage.vo.DataFieldVO;
 import org.springblade.modules.mydata.manage.wrapper.DataFieldWrapper;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -47,8 +48,16 @@ public class BizDataController {
     }
 
     @GetMapping("/data_list")
-    public R<IPage<Map>> list(BizDataDTO bizDataDTO, Query query) {
-        return R.data(bizDataService.bizDataPage(Condition.getPage(query), bizDataDTO));
+    public R<IPage<Map>> list(@RequestParam Map<String, Object> params) {
+        BizDataDTO bizDataDTO = new BizDataDTO();
+        bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
+        bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
+        bizDataDTO.setDataId(Long.parseLong(params.remove("dataId").toString()));
+
+        Query query = new Query();
+        query.setSize(Integer.parseInt(params.remove("size").toString()));
+        query.setCurrent(Integer.parseInt(params.remove("current").toString()));
+        return R.data(bizDataService.bizDataPage(Condition.getPage(query), bizDataDTO, params));
     }
 
     @GetMapping("/delete_by_env")

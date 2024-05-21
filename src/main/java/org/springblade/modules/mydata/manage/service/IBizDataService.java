@@ -23,7 +23,7 @@ public interface IBizDataService extends BaseService<BizData> {
      * @param bizDataDTO 参数
      * @return 数据列表
      */
-    IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO);
+    IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO, Map<String, Object> params);
 
     /**
      * 获取数据项的总数

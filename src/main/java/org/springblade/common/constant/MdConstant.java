@@ -97,6 +97,11 @@ public interface MdConstant {
     String DATA_NOT_EMPTY = "ne";
 
     /**
+     * 数据过滤操作：模糊匹配
+     */
+    String DATA_OP_LIKE = "like";
+
+    /**
      * 参数名：条件名
      */
     String PARAM_KEY = "k";

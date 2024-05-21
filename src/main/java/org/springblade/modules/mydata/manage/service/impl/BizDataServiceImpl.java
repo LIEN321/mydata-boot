@@ -35,7 +35,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
     private final BizDataDAO bizDataDAO;
 
     @Override
-    public IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO) {
+    public IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO, Map<String, Object> params) {
         // 校验参数
         Assert.notNull(bizDataDTO, "参数无效");
         Assert.notNull(bizDataDTO.getDataId(), "参数dataId无效");
@@ -46,7 +46,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         Assert.notNull(data, "数据项不存在，dataId={}", dataId);
 
         // 根据分页参数 查询业务数据
-        List<Map> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize());
+        List<Map> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize(), params);
         // 获取分页总数
         long total = getTotalCount(bizDataDTO);
         // 将 业务数据和分页参数 合并为分页结果

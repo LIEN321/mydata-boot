@@ -2,6 +2,7 @@ package org.springblade.modules.mydata.data;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
@@ -137,7 +138,7 @@ public class BizDataDAO {
                                 default:
                                     throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
                             }
-                            return new Document("$where", StrUtil.format("this.{} {} this.{}", key, op, value));
+                            return new Document("$where", StrUtil.format("this.{} {} this.{}", key, executeOp, value));
                         }
                     };
                 } else {
@@ -169,6 +170,9 @@ public class BizDataDAO {
                         case MdConstant.DATA_NOT_NULL:
                             criteria.ne(null).exists(true);
                             break;
+                        case MdConstant.DATA_OP_LIKE:
+                            criteria.regex(".*" + value + ".*", "i");
+                            break;
 
                         default:
                             throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
@@ -186,11 +190,21 @@ public class BizDataDAO {
         return mongoTemplate.find(query, Map.class, dataCode);
     }
 
-    public List<Map> page(String dbCode, String dataCode, int pageNo, int pageSize) {
-        Query query = new Query();
-        query.skip((pageNo - 1) * pageSize);
-        query.limit(pageSize);
-        return mongoFactory.getTemplate(dbCode).find(query, Map.class, dataCode);
+    public List<Map> page(String dbCode, String dataCode, int pageNo, int pageSize, Map<String, Object> params) {
+        Long skip = (pageNo - 1L) * pageSize;
+        Integer limit = pageSize;
+        List<BizDataFilter> bizDataFilters = CollUtil.toList();
+        if (MapUtil.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                BizDataFilter filter = new BizDataFilter();
+                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                filter.setKey(k);
+                filter.setOp(MdConstant.DATA_OP_LIKE);
+                filter.setValue(v);
+                bizDataFilters.add(filter);
+            });
+        }
+        return this.list(dbCode, dataCode, bizDataFilters, skip, limit);
     }
 
     public long total(String dbCode, String dataCode) {
