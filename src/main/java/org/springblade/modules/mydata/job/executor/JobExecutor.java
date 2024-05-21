@@ -142,14 +142,11 @@ public class JobExecutor implements ApplicationRunner {
      * @param id 任务id
      */
     public void executeOnce(Long id, Integer oldTaskStatus) {
-        TaskJob taskJob = jobCache.getTask(id.toString());
-        if (taskJob == null) {
-            Task task = taskService.getById(id);
-            if (task == null) {
-                return;
-            }
-            taskJob = this.build(task);
+        Task task = taskService.getById(id);
+        if (task == null) {
+            return;
         }
+        TaskJob taskJob = this.build(task);
         taskJob.setTimes(1);
         taskJob.setTemp(true);
         taskJob.setOldTaskStatus(oldTaskStatus);
