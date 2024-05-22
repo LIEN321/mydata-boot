@@ -373,10 +373,13 @@ public class JobExecutor implements ApplicationRunner {
         task.setLastSuccessTime(taskJob.getLastSuccessTime());
         task.setNextRunTime(null);
 
-        // 任务执行失败，且执行次数超过限制，则任务失败 并终止
+        // 任务执行失败，且执行次数超过限制，则任务失败并终止（除了订阅任务）
         if (executeResult == MdConstant.TASK_RESULT_FAILED && executeCount >= MdConstant.TASK_MAX_FAIL_COUNT) {
-            // 更新任务状态为异常
-            task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
+            // 不是订阅任务则终止
+            if (!MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed())) {
+                // 更新任务状态为异常
+                task.setTaskStatus(MdConstant.TASK_STATUS_FAILED);
+            }
 
             // 记录终止
             taskJob.appendLog("任务失败达到{}次，将终止且不再执行", executeCount);
