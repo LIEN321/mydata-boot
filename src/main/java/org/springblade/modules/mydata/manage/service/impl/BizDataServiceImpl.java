@@ -57,6 +57,18 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
     }
 
     @Override
+    public List<Map> bizDataList(BizDataDTO bizDataDTO, Map<String, Object> params) {
+        // 校验参数
+        Assert.notNull(bizDataDTO, "参数无效");
+        Assert.notNull(bizDataDTO.getDataId(), "参数dataId无效");
+
+        // 校验数据项是否有效
+        Long dataId = bizDataDTO.getDataId();
+        Data data = ManageCache.getData(dataId);
+        return bizDataDAO.list(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), params);
+    }
+
+    @Override
     public long getTotalCount(BizDataDTO bizDataDTO) {
         Data data = ManageCache.getData(bizDataDTO.getDataId());
         if (data == null) {

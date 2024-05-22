@@ -207,6 +207,21 @@ public class BizDataDAO {
         return this.list(dbCode, dataCode, bizDataFilters, skip, limit);
     }
 
+    public List<Map> list(String dbCode, String dataCode, Map<String, Object> params) {
+        List<BizDataFilter> bizDataFilters = CollUtil.toList();
+        if (MapUtil.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                BizDataFilter filter = new BizDataFilter();
+                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                filter.setKey(k);
+                filter.setOp(MdConstant.DATA_OP_LIKE);
+                filter.setValue(v);
+                bizDataFilters.add(filter);
+            });
+        }
+        return this.list(dbCode, dataCode, bizDataFilters);
+    }
+
     public long total(String dbCode, String dataCode) {
         Query query = new Query();
         return mongoFactory.getTemplate(dbCode).count(query, dataCode);
