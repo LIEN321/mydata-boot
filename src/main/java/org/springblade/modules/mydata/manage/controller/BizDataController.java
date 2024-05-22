@@ -2,7 +2,6 @@ package org.springblade.modules.mydata.manage.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -25,16 +24,17 @@ import org.springblade.modules.mydata.manage.service.IBizDataService;
 import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.vo.DataFieldVO;
 import org.springblade.modules.mydata.manage.wrapper.DataFieldWrapper;
+import org.springframework.core.io.FileUrlResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -85,11 +85,15 @@ public class BizDataController {
 
     @SneakyThrows
     @GetMapping("/export_excel")
-    public void exportExcel(@RequestParam Map<String, Object> params, HttpServletResponse response) {
+    public ResponseEntity<Resource> exportExcel(@RequestParam Map<String, Object> params) {
         BizDataDTO bizDataDTO = new BizDataDTO();
         bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
         bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
         bizDataDTO.setDataId(Long.parseLong(params.remove("dataId").toString()));
+
+        params.remove("current");
+        params.remove("size");
+        params.remove("blade-auth");
 
         Long dataId = bizDataDTO.getDataId();
         Data data = ManageCache.getData(dataId);
@@ -122,12 +126,11 @@ public class BizDataController {
         excelWriter.flush(excelFile);
         excelWriter.close();
 
-        response.setContentType("application/vnd.ms-excel");
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        Resource resource = new FileUrlResource(excelFile.getAbsolutePath());
 
-        String fileName = URLEncoder.encode(data.getDataName() + " 业务数据导出", StandardCharsets.UTF_8.name());
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
-
-        IoUtil.copy(Files.newInputStream(excelFile.toPath()), response.getOutputStream());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + excelFile.getName())
+                .body(resource);
     }
 }
