@@ -88,10 +88,6 @@ public class JobThread implements Runnable {
                     // 分批模式 记录上一次数据，用于对比两次数据，若重复 则结束，避免死循环
                     long lastJsonHash = -1L;
                     do {
-                        // 任务已经不是正在执行中，则结束（避免死循环）
-                        if (!jobExecutor.isTaskExecuting(taskJob.getId())) {
-                            break;
-                        }
                         // 若启用分批，则将分批参数加入请求参数中
                         if (taskJob.isBatch()) {
                             // 分批参数
@@ -176,6 +172,11 @@ public class JobThread implements Runnable {
                             jobExecutor.updateTaskLog(taskJob);
                             ThreadUtil.sleep(taskJob.getBatchInterval(), TimeUnit.SECONDS);
                         }
+
+                        // 任务已经不是正在执行中，则结束（避免死循环）
+                        if (!jobExecutor.isTaskExecuting(taskJob.getId())) {
+                            break;
+                        }
                     } while (taskJob.isBatch());
 
                     // 发送过滤数据通知
@@ -230,10 +231,6 @@ public class JobThread implements Runnable {
                     // 查询最大数量
                     Integer limit = taskJob.isBatch() ? taskJob.getBatchSize() : null;
                     do {
-                        // 任务已经不是正在执行中，则结束（避免死循环）
-                        if (!jobExecutor.isTaskExecuting(taskJob.getId())) {
-                            break;
-                        }
                         // 若启用分批，则计算跳过数量
                         if (taskJob.isBatch()) {
                             skip = (long) round * taskJob.getBatchSize();
@@ -306,6 +303,11 @@ public class JobThread implements Runnable {
                         if (taskJob.isBatch()) {
                             jobExecutor.updateTaskLog(taskJob);
                             ThreadUtil.sleep(taskJob.getBatchInterval(), TimeUnit.SECONDS);
+                        }
+
+                        // 任务已经不是正在执行中，则结束（避免死循环）
+                        if (!jobExecutor.isTaskExecuting(taskJob.getId())) {
+                            break;
                         }
                     } while (taskJob.isBatch());
 
