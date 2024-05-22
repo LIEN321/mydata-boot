@@ -12,6 +12,8 @@ import org.springblade.modules.mydata.manage.vo.TaskLogVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
+
 /**
  * 集成任务日志 服务实现类
  *
@@ -41,5 +43,15 @@ public class TaskLogServiceImpl extends BaseServiceImpl<TaskLogMapper, TaskLog> 
                 .eq(TaskLog::getTaskId, taskId);
 
         return remove(queryWrapper);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void deleteUnfinished(Date endTime) {
+        LambdaQueryWrapper<TaskLog> queryWrapper = Wrappers.<TaskLog>lambdaQuery()
+                .le(TaskLog::getTaskStartTime, endTime)
+                .isNull(TaskLog::getTaskResult);
+
+        remove(queryWrapper);
     }
 }

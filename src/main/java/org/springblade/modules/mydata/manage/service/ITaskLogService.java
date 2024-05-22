@@ -5,6 +5,8 @@ import org.springblade.core.mp.base.BaseService;
 import org.springblade.modules.mydata.manage.entity.TaskLog;
 import org.springblade.modules.mydata.manage.vo.TaskLogVO;
 
+import java.util.Date;
+
 /**
  * 集成任务日志 服务类
  *
@@ -38,4 +40,11 @@ public interface ITaskLogService extends BaseService<TaskLog> {
      * @return 操作结果，true-成功，false-失败
      */
     boolean deleteByTask(Long taskId);
+
+    /**
+     * 删除指定时间范围内 没有结果的日志
+     *
+     * @param endTime 结束时间
+     */
+    void deleteUnfinished(Date endTime);
 }
