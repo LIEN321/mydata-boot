@@ -300,22 +300,25 @@ public class JobExecutor implements ApplicationRunner {
 
         parentTaskJob.appendLog("共有{}个订阅任务", subTasks.size());
 
-        subTasks.forEach(task -> {
+        subTasks.forEach(subTask -> {
             // 订阅任务 是提供数据
-            if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_PRODUCER)) {
+            if (ObjectUtil.equal(subTask.getOpType(), MdConstant.DATA_PRODUCER)) {
                 // 调用API模式
-                if (ObjectUtil.equal(task.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
+                if (ObjectUtil.equal(subTask.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
                     List<Map> produceDataList = parentTaskJob.getProduceDataList();
                     // 没有业务数据 则触发子任务
                     if (CollUtil.isEmpty(produceDataList)) {
-                        TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, task);
+                        TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, subTask);
+                        // 复用数据批次编号
+                        subTaskJob.setDataBatchId(parentTaskJob.getDataBatchId());
                         // 执行订阅任务
                         executeJob(subTaskJob);
                         parentTaskJob.appendLog("触发执行订阅任务：{}", subTaskJob.getTaskName());
                     } else {
                         // 将业务数据作为 消费数据，逐个触发执行子任务
                         produceDataList.forEach(data -> {
-                            TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, task);
+                            TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, subTask);
+                            // 使用当前业务数据作为任务变量 传给子任务使用
                             subTaskJob.setTaskVar(data);
                             // 执行订阅任务
                             executeJob(subTaskJob);
@@ -325,14 +328,16 @@ public class JobExecutor implements ApplicationRunner {
                 }
                 // 接收推送
                 else {
-                    acceptData(task, parentTaskJob.getAcceptedData());
-                    parentTaskJob.appendLog("触发接收推送任务：{}", task.getTaskName());
+                    acceptData(subTask, parentTaskJob.getAcceptedData());
+                    parentTaskJob.appendLog("触发接收推送任务：{}", subTask.getTaskName());
                 }
             }
             // 订阅任务 是消费数据
-            else if (ObjectUtil.equal(task.getOpType(), MdConstant.DATA_CONSUMER)) {
+            else if (ObjectUtil.equal(subTask.getOpType(), MdConstant.DATA_CONSUMER)) {
                 // 执行订阅任务，不判断前置任务是否有produceData，可能跨多级订阅时 再之前的任务才有数据
-                TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, task);
+                TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, subTask);
+                // 复用数据批次编号
+                subTaskJob.setDataBatchId(parentTaskJob.getDataBatchId());
                 // 执行订阅任务
                 executeJob(subTaskJob);
                 parentTaskJob.appendLog("触发执行订阅任务：{}", subTaskJob.getTaskName());
@@ -593,8 +598,6 @@ public class JobExecutor implements ApplicationRunner {
         TaskJob subTaskJob = build(subTask);
         // 订阅任务 执行1次
         subTaskJob.setTimes(1);
-        // 复用数据批次编号
-        subTaskJob.setDataBatchId(parentTaskJob.getDataBatchId());
         return subTaskJob;
     }
 
