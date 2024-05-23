@@ -49,7 +49,7 @@ public class JobEmailService {
 
     public void sendFailedNotice(TaskJob taskJob, String emailAddress) {
         if (StrUtil.isNotBlank(emailAddress)) {
-            String messageId = MailSender.sendMail(emailAddress, StrUtil.format("{} 异常停止", taskJob.getTaskName()), StrUtil.format("时间：{}，任务【{}】异常停止，异常信息请详见任务日志。", DateUtil.now(), taskJob.getTaskName()));
+            String messageId = MailSender.sendMail(emailAddress, StrUtil.format("{} 异常通知", taskJob.getTaskName()), StrUtil.format("时间：{}，任务【{}】异常，异常信息请详见任务日志。", DateUtil.now(), taskJob.getTaskName()));
             log.info("email messageId = {}", messageId);
         }
     }
