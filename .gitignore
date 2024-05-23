@@ -25,3 +25,5 @@ Thumbs.db
 *.war
 *.ear
 /target
+
+src/test/
