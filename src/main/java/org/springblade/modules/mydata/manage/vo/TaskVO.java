@@ -257,4 +257,9 @@ public class TaskVO {
      * 数据处理配置
      */
     private Map<String, Map<String, String>> dataProcess;
+
+    /**
+     * 是否复用父任务批次数据，0-不复用、1-复用
+     */
+    private Integer sameBatch;
 }

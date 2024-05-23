@@ -171,4 +171,9 @@ public class TaskDTO implements Serializable {
      */
     @JsonSerialize(using = ToStringSerializer.class)
     private Long appId;
+
+    /**
+     * 是否复用父任务批次数据，0-不复用、1-复用
+     */
+    private Integer sameBatch;
 }
