@@ -544,7 +544,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         targetTask.setEnvId(targetEnvId);
         targetTask.setTaskName(targetTask.getTaskName() + " (copy)");
         // 复制时，清空其他环境信息
-        targetTask.setRefEnvId(null);
+//        targetTask.setRefEnvId(null);
 
         return submit(targetTask);
     }
