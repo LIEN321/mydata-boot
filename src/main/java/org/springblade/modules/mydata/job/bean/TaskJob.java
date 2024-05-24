@@ -23,14 +23,9 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode(of = "id")
-public class TaskInfo implements Serializable {
+public class TaskJob implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 触发任务执行的名称
-     */
-    private String starterName;
 
     // ----- 任务相关信息 -----
     private Long id;
@@ -150,6 +145,11 @@ public class TaskInfo implements Serializable {
     private Date nextRunTime = new Date();
 
     /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
      * 开始时间
      */
     private Date startTime;
@@ -180,9 +180,9 @@ public class TaskInfo implements Serializable {
     private Integer executeResult;
 
     /**
-     * 任务失败次数
+     * 任务执行次数，记录重试次数
      */
-    private int failCount = 0;
+    private int executeCount = 0;
 
     /**
      * 是否为订阅任务：0-不订阅，1-订阅
@@ -318,6 +318,16 @@ public class TaskInfo implements Serializable {
      * 请求体
      */
     private String reqBody;
+
+    /**
+     * 是否手动执行的临时任务
+     */
+    private boolean isTemp;
+
+    /**
+     * 任务原来的状态，以便手动执行后 恢复为原来状态
+     */
+    private Integer oldTaskStatus;
 
     /**
      * 追加日志

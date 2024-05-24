@@ -9,7 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.modules.mydata.data.BizDataFilter;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -47,23 +47,23 @@ public class JobDataFilterService {
     /**
      * 通过 task里的dataFitler 对datas进行过滤
      *
-     * @param taskInfo
+     * @param taskJob
      */
-    public void doFilter(TaskInfo taskInfo) {
-        Assert.notNull(taskInfo);
+    public void doFilter(TaskJob taskJob) {
+        Assert.notNull(taskJob);
 
-        List<Map> dataList = taskInfo.getProduceDataList();
-        List<BizDataFilter> dataFilters = taskInfo.getDataFilters();
+        List<Map> dataList = taskJob.getProduceDataList();
+        List<BizDataFilter> dataFilters = taskJob.getDataFilters();
 
         if (CollUtil.isEmpty(dataList) || CollUtil.isEmpty(dataFilters)) {
             return;
         }
 
         // 数据的标识字段编号，用于检测 标识字段值 是否有效
-        String dataIdCode = taskInfo.getIdFieldCode();
+        String dataIdCode = taskJob.getIdFieldCode();
         List<String> dataIdCodes = StrUtil.split(dataIdCode, StrPool.COMMA);
 
-        Map<String, String> fieldTypeMapping = taskInfo.getFieldTypeMapping();
+        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
 
         // 过滤后的有效数据
         List<Map> validDataList = ListUtil.toList();
@@ -80,15 +80,15 @@ public class JobDataFilterService {
             }
         });
 
-        taskInfo.setProduceDataList(validDataList);
-        taskInfo.getFilteredDataList().addAll(filteredDataList);
+        taskJob.setProduceDataList(validDataList);
+        taskJob.getFilteredDataList().addAll(filteredDataList);
     }
 
     /**
      * 解析过滤条件中的 自定义字符串
      */
-    public List<BizDataFilter> parseFilterValue(TaskInfo taskInfo) {
-        List<BizDataFilter> filters = taskInfo.getDataFilters();
+    public List<BizDataFilter> parseFilterValue(TaskJob taskJob) {
+        List<BizDataFilter> filters = taskJob.getDataFilters();
         if (CollUtil.isEmpty(filters)) {
             return filters;
         }
@@ -97,7 +97,7 @@ public class JobDataFilterService {
             Object value = filter.getValue();
             // 任务的最后成功时间，若没有成功过 则复用任务开始时间
             if (MdConstant.DATA_VALUE_TASK_LAST_SUCCESS_TIME.equals(value)) {
-                filter.setValue(taskInfo.getLastSuccessTime());
+                filter.setValue(taskJob.getLastSuccessTime());
             }
         });
 

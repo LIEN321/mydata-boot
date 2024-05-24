@@ -7,7 +7,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import lombok.AllArgsConstructor;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.core.log.exception.ServiceException;
 import org.springblade.core.mp.base.BaseServiceImpl;
@@ -20,9 +19,11 @@ import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.mapper.DataMapper;
 import org.springblade.modules.mydata.manage.service.*;
 import org.springblade.modules.mydata.manage.vo.DataVO;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,16 +34,19 @@ import java.util.stream.Collectors;
  * @since 2022-07-08
  */
 @Service
-@AllArgsConstructor
 public class DataServiceImpl extends BaseServiceImpl<DataMapper, Data> implements IDataService {
+    @Resource
+    private IDataFieldService dataFieldService;
 
-    private final IDataFieldService dataFieldService;
+    @Lazy
+    @Resource
+    private IBizDataService bizDataService;
 
-    private final IBizDataService bizDataService;
+    @Resource
+    private ITaskService taskService;
 
-    private final ITaskService taskService;
-
-    private final IEnvService envService;
+    @Resource
+    private IEnvService envService;
 
     @Override
     public IPage<DataVO> selectDataPage(IPage<DataVO> page, DataVO data) {

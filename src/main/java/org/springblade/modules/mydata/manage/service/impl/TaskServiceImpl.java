@@ -30,7 +30,6 @@ import org.springblade.modules.mydata.manage.service.ITaskLogService;
 import org.springblade.modules.mydata.manage.service.ITaskService;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 import org.springblade.modules.mydata.manage.wrapper.TaskWrapper;
-import org.springblade.modules.system.service.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,9 +53,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
 
     @Resource
     private final ITaskLogService taskLogService;
-
-    @Resource
-    private final IUserService userService;
 
     @Resource
     private final JobExecutor jobExecutor;
@@ -176,8 +172,6 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
             task.setApiMethod(api.getApiMethod());
             // 复制api的数据类型
             task.setDataType(api.getDataType());
-            // 复制api的所属应用
-            task.setAppId(api.getAppId());
             // 复制api的请求体
             task.setReqBody(api.getReqBody());
 
@@ -190,6 +184,9 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
                 task.setRefOpType(null);
             }
         }
+
+        // 任务所属应用
+        task.setAppId(taskDTO.getAppId());
 
         // 新建任务的初始状态为“停止”
         if (task.getId() == null) {
@@ -245,7 +242,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         // 启动任务前，校验数据是否配置标识字段
         // Assert.notEmpty(task.getIdFieldCode(), "启动失败：数据未设置标识字段！");
 
-        task.setTaskStatus(MdConstant.TASK_STATUS_RUNNING);
+        task.setTaskStatus(MdConstant.TASK_STATUS_STARTED);
         boolean result = updateById(task);
 
         // 非订阅模式、非接收推送的任务 启动定时任务
@@ -298,8 +295,20 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public boolean executeTask(Long id) {
         try {
-            jobExecutor.executeOnce(id);
-            return true;
+            // 校验参数
+            Assert.notNull(id);
+
+            // 更新任务状态为启动
+            Task task = getById(id);
+            Assert.notNull(task, "执行失败，任务无效！");
+            Integer oldTaskStatus = task.getTaskStatus();
+            task.setTaskStatus(MdConstant.TASK_STATUS_STARTED);
+            boolean result = updateById(task);
+            if (result) {
+                jobExecutor.executeOnce(id, oldTaskStatus);
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -308,7 +317,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public List<Task> listRunningTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_NOT_SUBSCRIBED)
                 .ne(Task::getProduceMode, MdConstant.TASK_PRODUCE_MODE_PUSH);
         return list(queryWrapper);
@@ -334,7 +343,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         Assert.notNull(dataId, "参数dataId无效，dataId = {}", dataId);
 
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .eq(Task::getIsSubscribed, MdConstant.TASK_IS_SUBSCRIBED)
                 .eq(Task::getDataId, dataId)
                 .eq(Task::getEnvId, envId)
@@ -347,7 +356,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     @Override
     public List<Task> listSuccessTasks() {
         LambdaQueryWrapper<Task> queryWrapper = Wrappers.<Task>lambdaQuery()
-                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_RUNNING)
+                .eq(Task::getTaskStatus, MdConstant.TASK_STATUS_STARTED)
                 .orderByDesc(Task::getLastSuccessTime);
 
         IPage<Task> page = new Page<>();
@@ -375,7 +384,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         if (task == null) {
             return true;
         }
-        if (task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING) {
+        if (task.getTaskStatus() == MdConstant.TASK_STATUS_STARTED) {
             throw new ServiceException("删除失败，任务正在运行！");
         }
 
@@ -535,7 +544,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
         targetTask.setEnvId(targetEnvId);
         targetTask.setTaskName(targetTask.getTaskName() + " (copy)");
         // 复制时，清空其他环境信息
-        targetTask.setRefEnvId(null);
+//        targetTask.setRefEnvId(null);
 
         return submit(targetTask);
     }
@@ -630,7 +639,7 @@ public class TaskServiceImpl extends BaseServiceImpl<TaskMapper, Task> implement
     private void restartRunningTasks(List<Task> tasks) {
         // 筛选运行中的任务
         List<Task> runningTasks = tasks.stream()
-                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_RUNNING)
+                .filter(task -> task.getTaskStatus() == MdConstant.TASK_STATUS_STARTED)
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(runningTasks)) {
             // 重启任务的调度

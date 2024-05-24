@@ -3,7 +3,7 @@ package org.springblade.modules.mydata.job.schedule;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springblade.modules.mydata.job.cache.JobCache;
 import org.springblade.modules.mydata.job.executor.JobExecutor;
 import org.springblade.modules.mydata.manage.entity.Task;
@@ -50,8 +50,8 @@ public class JobCheckSchedule {
             }
             String taskId = StrUtil.toString(task.getId());
             // 先检查task缓存
-            TaskInfo taskInfo = jobCache.getTask(taskId);
-            if (taskInfo == null) {
+            TaskJob taskJob = jobCache.getTask(taskId);
+            if (taskJob == null) {
                 jobExecutor.startTask(task, "检测任务存活 修复task");
                 log.info("修复Task id:{} name:{}", task.getId(), task.getTaskName());
             }

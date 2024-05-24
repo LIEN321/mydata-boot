@@ -97,6 +97,11 @@ public interface MdConstant {
     String DATA_NOT_EMPTY = "ne";
 
     /**
+     * 数据过滤操作：模糊匹配
+     */
+    String DATA_OP_LIKE = "like";
+
+    /**
      * 参数名：条件名
      */
     String PARAM_KEY = "k";
@@ -135,6 +140,27 @@ public interface MdConstant {
      * 业务数据常量值：任务最后成功时间
      */
     String DATA_VALUE_TASK_LAST_SUCCESS_TIME = "_MD_TASK_LAST_SUCCESS_";
+
+    /**
+     * 数据类型：默认，随提供放返回而定
+     */
+    String DATA_TYPE_DEFAULT = "default";
+    /**
+     * 数据类型：整数
+     */
+    String DATA_TYPE_INT = "int";
+    /**
+     * 数据类型：字符串
+     */
+    String DATA_TYPE_STRING = "string";
+    /**
+     * 数据类型：日期
+     */
+    String DATA_TYPE_DATE = "date";
+    /**
+     * 数据类型：数字，包括小数
+     */
+    String DATA_TYPE_NUMBER = "number";
 
     // ---------- 网络常量 ----------
 
@@ -189,9 +215,9 @@ public interface MdConstant {
     int TASK_STATUS_STOPPED = 3;
 
     /**
-     * 运行状态
+     * 已启动状态
      */
-    int TASK_STATUS_RUNNING = 1;
+    int TASK_STATUS_STARTED = 1;
 
     /**
      * 失败状态
@@ -276,7 +302,7 @@ public interface MdConstant {
     /**
      * 任务失败重试间隔
      */
-    String TASK_FAILED_PERIOD = "0 0/1 * * * ?";
+    String TASK_FAILED_PERIOD = "0/5 * * * * ?";
 
     /**
      * 单条记录消费模式 - 单个对象对象

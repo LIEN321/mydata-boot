@@ -165,4 +165,15 @@ public class TaskDTO implements Serializable {
      * 数据处理配置
      */
     private Map<String, Map<String, String>> dataProcess;
+
+    /**
+     * 所属应用
+     */
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long appId;
+
+    /**
+     * 是否复用父任务批次数据，0-不复用、1-复用
+     */
+    private Integer sameBatch;
 }

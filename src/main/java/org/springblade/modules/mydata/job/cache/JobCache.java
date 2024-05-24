@@ -7,7 +7,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import org.springblade.core.tool.utils.RedisUtil;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -48,20 +48,20 @@ public class JobCache {
     /**
      * 缓存任务
      *
-     * @param taskInfo 任务对象
+     * @param taskJob 任务对象
      * @throws IllegalArgumentException 缓存时长无效
      */
-    public void cacheJob(TaskInfo taskInfo) throws IllegalArgumentException {
+    public void cacheJob(TaskJob taskJob) throws IllegalArgumentException {
         // 计算任务缓存有效时长
-        long expire = DateUtil.between(taskInfo.getStartTime(), taskInfo.getNextRunTime(), DateUnit.SECOND);
+        long expire = DateUtil.between(taskJob.getCreateTime(), taskJob.getNextRunTime(), DateUnit.SECOND);
         if (expire < 1) {
             throw new IllegalArgumentException(StrUtil.format("expire < 1秒, startTime = {}, nextRunTime = {}"
-                    , DateUtil.format(taskInfo.getStartTime(), DatePattern.NORM_DATETIME_MS_PATTERN)
-                    , DateUtil.format(taskInfo.getNextRunTime(), "HH:mm:ss.SSS")));
+                    , DateUtil.format(taskJob.getCreateTime(), DatePattern.NORM_DATETIME_MS_PATTERN)
+                    , DateUtil.format(taskJob.getNextRunTime(), "HH:mm:ss.SSS")));
         }
 
-        redisUtil.set(CACHE_TASK + taskInfo.getId(), taskInfo);
-        redisUtil.set(CACHE_JOB + taskInfo.getId(), taskInfo.getId(), expire);
+        redisUtil.set(CACHE_TASK + taskJob.getId(), taskJob);
+        redisUtil.set(CACHE_JOB + taskJob.getId(), taskJob.getId(), expire);
     }
 
     /**
@@ -70,8 +70,8 @@ public class JobCache {
      * @param taskId 任务id
      * @return 任务
      */
-    public TaskInfo getTask(String taskId) {
-        return (TaskInfo) redisUtil.get(CACHE_TASK + taskId);
+    public TaskJob getTask(String taskId) {
+        return (TaskJob) redisUtil.get(CACHE_TASK + taskId);
     }
 
     /**

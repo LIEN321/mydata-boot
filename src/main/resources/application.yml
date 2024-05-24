@@ -36,7 +36,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     mongodb:
-      uri: mongodb://root:root@192.168.2.80:27017/admin
+      uri: mongodb://root:root@svc-dev:27017/admin
 
 
 #配置日志地址
@@ -186,7 +186,7 @@ blade:
 #mydata配置
 mydata:
   mongodb:
-    url: mongodb://root:root@192.168.2.80:27017/{}?authSource=admin&ssl=false
+    url: mongodb://root:root@svc-dev:27017/{}?authSource=admin&ssl=false
 #  secure:
 #    encrypt-db: false
 mail:

@@ -9,7 +9,7 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springblade.common.util.MdUtil;
-import org.springblade.modules.mydata.job.bean.TaskInfo;
+import org.springblade.modules.mydata.job.bean.TaskJob;
 import org.springblade.modules.mydata.manage.cache.EnvVarCache;
 import org.springblade.modules.mydata.manage.entity.Env;
 import org.springblade.modules.mydata.manage.entity.EnvVar;
@@ -36,27 +36,39 @@ public class JobVarService {
     @Resource
     private IEnvService envService;
 
-    // 用户自定义变量 ${} 的正则表达式
+    /**
+     * 环境变量 ${env_var}
+     */
     private static final String USER_VAR_PATTERN = "\\$\\{([^}]*)\\}";
 
-    // 系统内置变量 {$} 的正则表达式
+    /**
+     * 系统内置变量 {$sys_var}
+     */
     private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
 
+    /**
+     * 对接数据属性 {{field}}
+     */
     private static final String DATA_FIELD_PATTERN = "\\{\\{([^}]*)\\}\\}";
+
+    /**
+     * 仓库已有数据字段 {{$field}}
+     */
+    private static final String EXISTED_DATA_FIELD_PATTERN = "\\{\\{\\$([^}]*)\\}\\}";
 
     /**
      * 将json中提取指定数据 保存到任务的指定环境变量
      *
-     * @param taskInfo   任务
+     * @param taskJob    任务
      * @param jsonString json数据
      */
-    public void saveVarValue(TaskInfo taskInfo, String jsonString) {
-        if (taskInfo == null || StrUtil.isEmpty(jsonString)) {
+    public void saveVarValue(TaskJob taskJob, String jsonString) {
+        if (taskJob == null || StrUtil.isEmpty(jsonString)) {
             return;
         }
 
         // 接口字段 与 变量的映射
-        Map<String, String> fieldVarMapping = taskInfo.getFieldVarMapping();
+        Map<String, String> fieldVarMapping = taskJob.getFieldVarMapping();
         if (CollUtil.isEmpty(fieldVarMapping)) {
             return;
         }
@@ -64,16 +76,16 @@ public class JobVarService {
         JSON json = JSONUtil.parse(jsonString);
         fieldVarMapping.forEach((apiField, varName) -> {
             String varValue = json.getByPath(apiField, String.class);
-            Long envId = taskInfo.getEnvId();
+            Long envId = taskJob.getEnvId();
 
             EnvVar envVar = new EnvVar();
             envVar.setEnvId(envId);
             envVar.setVarName(varName);
             envVar.setVarValue(varValue);
-            envVar.setTenantId(taskInfo.getTenantId());
+            envVar.setTenantId(taskJob.getTenantId());
 
             envVarService.saveByNameInEnv(envVar);
-            taskInfo.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
+            taskJob.appendLog("保存环境变量，varName：{}，varValue：{}", envVar.getVarName(), envVar.getVarValue());
         });
 
     }
@@ -142,62 +154,62 @@ public class JobVarService {
     /**
      * 解析任务API header、param、body 中的系统和环境变量
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public void parseTaskVar(TaskInfo taskInfo) {
+    public void parseTaskVar(TaskJob taskJob) {
 
         // 替换 header和param 中的变量
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
-        Map<String, Object> reqParams = taskInfo.getReqParams();
+        Map<String, String> reqHeaders = taskJob.getReqHeaders();
+        Map<String, Object> reqParams = taskJob.getReqParams();
 
-        parseSysAndEnvVar(reqHeaders, taskInfo.getEnvId());
-        parseSysAndEnvVar(reqParams, taskInfo.getEnvId());
+        parseSysAndEnvVar(reqHeaders, taskJob.getEnvId());
+        parseSysAndEnvVar(reqParams, taskJob.getEnvId());
 
         // 替换 body 中的变量
-        if (StrUtil.isNotEmpty(taskInfo.getReqBody())) {
-            String reqBody = replaceSysVarValue(taskInfo.getReqBody());
-            Map<String, String> userVars = parseEnvVar(CollUtil.toList(reqBody), taskInfo.getEnvId());
+        if (StrUtil.isNotEmpty(taskJob.getReqBody())) {
+            String reqBody = replaceSysVarValue(taskJob.getReqBody());
+            Map<String, String> userVars = parseEnvVar(CollUtil.toList(reqBody), taskJob.getEnvId());
             if (MapUtil.isEmpty(userVars)) {
                 return;
             }
 
             reqBody = replaceUserVarValues(reqBody, userVars);
-            taskInfo.setReqBody(reqBody);
+            taskJob.setReqBody(reqBody);
         }
     }
 
     /**
      * 解析 url、header、param、body 中的 数据字段变量 并替换数据
      *
-     * @param taskInfo 任务
+     * @param taskJob 任务
      */
-    public static void parseTaskDataVar(TaskInfo taskInfo, Map data) {
+    public static void parseTaskDataVar(TaskJob taskJob, Map data) {
         if (MapUtil.isEmpty(data)) {
             return;
         }
         // api地址
-        String apiUrl = taskInfo.getApiUrl();
+        String apiUrl = taskJob.getApiUrl();
         // 替换属性变量值
-        taskInfo.setApiUrl(parseDataVar(apiUrl, data, taskInfo.getFieldTypeMapping()));
+        taskJob.setApiUrl(parseDataFieldVar(apiUrl, data, taskJob.getFieldTypeMapping()));
 
         // 解析param中的属性变量名
-        Map<String, Object> reqParams = taskInfo.getReqParams();
+        Map<String, Object> reqParams = taskJob.getReqParams();
         if (MapUtil.isNotEmpty(reqParams)) {
             reqParams.forEach((k, v) -> {
-                reqParams.put(k, parseDataVar(StrUtil.toString(v), data, taskInfo.getFieldTypeMapping()));
+                reqParams.put(k, parseDataFieldVar(StrUtil.toString(v), data, taskJob.getFieldTypeMapping()));
             });
         }
 
         // 解析header中的属性变量名
-        Map<String, String> reqHeaders = taskInfo.getReqHeaders();
+        Map<String, String> reqHeaders = taskJob.getReqHeaders();
         if (MapUtil.isNotEmpty(reqHeaders)) {
             reqHeaders.forEach((k, v) -> {
-                reqHeaders.put(k, parseDataVar(v, data, taskInfo.getFieldTypeMapping()));
+                reqHeaders.put(k, parseDataFieldVar(v, data, taskJob.getFieldTypeMapping()));
             });
         }
 
         // body
-        taskInfo.setReqBody(parseDataVar(taskInfo.getReqBody(), data, taskInfo.getFieldTypeMapping()));
+        taskJob.setReqBody(parseDataFieldVar(taskJob.getReqBody(), data, taskJob.getFieldTypeMapping()));
     }
 
     /**
@@ -207,12 +219,37 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+    public static String parseDataFieldVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+        return parseDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, "{{", "}}");
+    }
+
+    /**
+     * 字符串是否为 属性表达式 {{field}}
+     *
+     * @param string 字符串
+     * @return true-是属性表达式，false-不是
+     */
+    public static boolean isFieldExp(String string) {
+        return ReUtil.isMatch(DATA_FIELD_PATTERN, string);
+    }
+
+    /**
+     * 解析 字符串中 {{$field}} 格式的数据变量
+     *
+     * @param string 字符串
+     * @param data   数据
+     * @return 解析后的字符串
+     */
+    public static String parseExistedDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+        return parseDataVar(string, data, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, "{{$", "}}");
+    }
+
+    private static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
         if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
             return string;
         }
-        // 解析url中的属性变量名 {{field}}
-        List<String> fieldNames = parseVarNames(string, DATA_FIELD_PATTERN, "{{", "}}");
+        // 解析字符串中的属性变量名 {{field}}
+        List<String> fieldNames = parseVarNames(string, pattern, prefix, suffix);
         // 若解析为空，则结束
         if (CollUtil.isEmpty(fieldNames)) {
             return string;
@@ -231,20 +268,10 @@ public class JobVarService {
         }
 
         StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
-        stringSubstitutor.setVariablePrefix("{{");
-        stringSubstitutor.setVariableSuffix("}}");
+        stringSubstitutor.setVariablePrefix(prefix);
+        stringSubstitutor.setVariableSuffix(suffix);
         // 替换变量值
         return stringSubstitutor.replace(string);
-    }
-
-    /**
-     * 字符串是否为 属性表达式 {{field}}
-     *
-     * @param string 字符串
-     * @return true-是属性表达式，false-不是
-     */
-    public static boolean isFieldExp(String string) {
-        return ReUtil.isMatch(DATA_FIELD_PATTERN, string);
     }
 
     /**
@@ -290,27 +317,20 @@ public class JobVarService {
     }
 
     /**
-     * 从字符串中 解析指定表达式中的变量名
+     * 解析处理map值中的系统内置变量
      *
-     * @param string  字符串
-     * @param pattern 表达式
-     * @return 变量名列表
+     * @param map Map对象
+     * @param <V> 值类型
      */
-    public static List<String> parseVarNames(String string, String pattern, String prefix, String suffix) {
-        if (StrUtil.isEmpty(string)) {
-            return CollUtil.newArrayList();
+    private <V> void replaceSysVarValues(Map<String, V> map) {
+        if (MapUtil.isEmpty(map)) {
+            return;
         }
 
-        List<String> varNames = ReUtil.findAll(pattern, string, 0);
-        if (CollUtil.isNotEmpty(varNames)) {
-            ListIterator<String> iterator = varNames.listIterator();
-            while (iterator.hasNext()) {
-                String varName = iterator.next();
-                varName = getKey(varName, prefix.length(), suffix.length());
-                iterator.set(varName);
-            }
-        }
-        return varNames;
+        map.forEach((k, v) -> {
+            // 替换用户自定义变量
+            map.put(k, (V) replaceSysVarValue(v.toString()));
+        });
     }
 
     /**
@@ -346,15 +366,28 @@ public class JobVarService {
         return stringSubstitutor.replace(string);
     }
 
-    private <V> void replaceSysVarValues(Map<String, V> map) {
-        if (MapUtil.isEmpty(map)) {
-            return;
+    /**
+     * 从字符串中 解析指定表达式中的变量名
+     *
+     * @param string  字符串
+     * @param pattern 表达式
+     * @return 变量名列表
+     */
+    public static List<String> parseVarNames(String string, String pattern, String prefix, String suffix) {
+        if (StrUtil.isEmpty(string)) {
+            return CollUtil.newArrayList();
         }
 
-        map.forEach((k, v) -> {
-            // 替换用户自定义变量
-            map.put(k, (V) replaceSysVarValue(v.toString()));
-        });
+        List<String> varNames = ReUtil.findAll(pattern, string, 0);
+        if (CollUtil.isNotEmpty(varNames)) {
+            ListIterator<String> iterator = varNames.listIterator();
+            while (iterator.hasNext()) {
+                String varName = iterator.next();
+                varName = getKey(varName, prefix.length(), suffix.length());
+                iterator.set(varName);
+            }
+        }
+        return varNames;
     }
 
     private static String getKey(String g, int prefix, int suffix) {

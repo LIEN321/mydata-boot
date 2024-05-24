@@ -5,11 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import org.springblade.common.util.MdUtil;
 import org.springblade.core.mp.support.BaseEntityWrapper;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
-import org.springblade.modules.mydata.manage.entity.Api;
-import org.springblade.modules.mydata.manage.entity.Data;
-import org.springblade.modules.mydata.manage.entity.Env;
-import org.springblade.modules.mydata.manage.entity.Project;
-import org.springblade.modules.mydata.manage.entity.Task;
+import org.springblade.modules.mydata.manage.entity.*;
 import org.springblade.modules.mydata.manage.vo.TaskVO;
 
 /**
@@ -71,6 +67,13 @@ public class TaskWrapper extends BaseEntityWrapper<Task, TaskVO> {
             }
         }
 
+        // 查询所属应用
+        if (task.getAppId() != null) {
+            App app = ManageCache.getApp(task.getAppId());
+            if (app != null) {
+                taskVO.setAppName(app.getAppName());
+            }
+        }
         return taskVO;
     }
 

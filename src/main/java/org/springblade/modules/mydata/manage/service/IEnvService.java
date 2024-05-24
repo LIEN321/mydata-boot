@@ -56,4 +56,13 @@ public interface IEnvService extends BaseService<Env> {
      * @return 环境列表
      */
     List<Env> listByProject(Long projectId);
+
+    /**
+     * 项目下创建默认环境
+     *
+     * @param projectId   项目id
+     * @param projectName 项目名称
+     * @return 操作结果，true-成功，false-失败
+     */
+    boolean addDefaultEnv(Long projectId, String projectName);
 }

@@ -140,17 +140,21 @@ public class MdUtil {
     public static Object convertDataType(Object value, String targetType) {
         Object convertValue = value;
         if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
+            String stringValue = StrUtil.toString(value);
+            if (StrUtil.isEmpty(stringValue)) {
+                return value;
+            }
             switch (targetType) {
-                case "int":
+                case MdConstant.DATA_TYPE_INT:
                     convertValue = NumberUtil.parseInt(StrUtil.toString(value));
                     break;
-                case "string":
+                case MdConstant.DATA_TYPE_STRING:
                     convertValue = StrUtil.toString(value);
                     break;
-                case "date":
+                case MdConstant.DATA_TYPE_DATE:
                     convertValue = DateUtil.parse(StrUtil.toString(value));
                     break;
-                case "number":
+                case MdConstant.DATA_TYPE_NUMBER:
                     convertValue = NumberUtil.parseNumber(StrUtil.toString(value));
                     break;
             }
@@ -162,11 +166,11 @@ public class MdUtil {
     public static String formatData(Object value, String targetType) {
         if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
             switch (targetType) {
-                case "int":
-                case "string":
-                case "number":
+                case MdConstant.DATA_TYPE_INT:
+                case MdConstant.DATA_TYPE_STRING:
+                case MdConstant.DATA_TYPE_NUMBER:
                     return StrUtil.toString(value);
-                case "date":
+                case MdConstant.DATA_TYPE_DATE:
                     Date date = DateUtil.parse(StrUtil.toString(value));
                     return DateUtil.formatDateTime(date);
             }

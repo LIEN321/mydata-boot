@@ -85,7 +85,7 @@ public class Task extends TenantEntity {
     /**
      * 运行状态
      *
-     * @see MdConstant#TASK_STATUS_RUNNING  运行
+     * @see MdConstant#TASK_STATUS_STARTED  运行
      * @see MdConstant#TASK_STATUS_FAILED   异常
      * @see MdConstant#TASK_STATUS_STOPPED  停止
      */
@@ -262,4 +262,9 @@ public class Task extends TenantEntity {
      */
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String reqBody;
+
+    /**
+     * 是否复用父任务批次数据，0-不复用、1-复用
+     */
+    private Integer sameBatch;
 }

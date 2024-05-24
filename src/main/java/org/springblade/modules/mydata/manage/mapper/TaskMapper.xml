@@ -8,7 +8,7 @@
     <select id="selectTaskStat" resultType="org.springblade.modules.mydata.manage.dto.TaskStatDTO">
         select
             (select count(*) from md_task where is_deleted = 0) as taskCount,
-            (select count(*) from md_task where is_deleted = 0 and task_status = ${@org.springblade.common.constant.MdConstant@TASK_STATUS_RUNNING}) as runningCount,
+            (select count(*) from md_task where is_deleted = 0 and task_status = ${@org.springblade.common.constant.MdConstant@TASK_STATUS_STARTED}) as runningCount,
             (select count(*) from md_task where is_deleted = 0 and task_status = ${@org.springblade.common.constant.MdConstant@TASK_STATUS_FAILED}) as failedCount,
             (select count(*) from md_task where is_deleted = 0 and task_status = ${@org.springblade.common.constant.MdConstant@TASK_STATUS_STOPPED}) as stoppedCount
     </select>
