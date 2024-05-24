@@ -269,7 +269,7 @@ public class JobThread implements Runnable {
                                     // 解析url、header、param、body变量 并替换值
                                     JobVarService.parseTaskDataVar(taskJob, data);
                                     // 调用api传输数据
-                                    taskJob.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskJob.getApiMethod(), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), taskJob.getReqBody());
+                                    taskJob.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，消费数据={}", taskJob.getApiMethod(), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), data);
                                     ApiUtil.write(taskJob, data);
                                     // 恢复原来的url、header、param、body
                                     taskJob.setApiUrl(originApiUrl);
@@ -279,7 +279,7 @@ public class JobThread implements Runnable {
                                 });
                             } else {
                                 // 调用api传输数据
-                                taskJob.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，body={}", taskJob.getApiMethod(), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), taskJob.getReqBody());
+                                taskJob.appendLog("调用API 发送数据，method={}，url={}，headers={}，params={}，消费数据={}", taskJob.getApiMethod(), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), taskJob.getConsumeDataList());
                                 String json = ApiUtil.write(taskJob);
                                 // 更新环境变量
                                 jobVarService.saveVarValue(taskJob, json);
