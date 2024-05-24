@@ -1,12 +1,15 @@
 package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.AllArgsConstructor;
+import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.data.BizDataDAO;
@@ -14,13 +17,20 @@ import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.BizDataDTO;
 import org.springblade.modules.mydata.manage.entity.BizData;
 import org.springblade.modules.mydata.manage.entity.Data;
+import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.mapper.BizDataMapper;
 import org.springblade.modules.mydata.manage.service.IBizDataService;
+import org.springblade.modules.mydata.manage.service.IDataFieldService;
+import org.springblade.modules.mydata.manage.service.IDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 业务数据 服务实现类
@@ -29,10 +39,16 @@ import java.util.Map;
  * @since 2022-07-08
  */
 @Service
-@AllArgsConstructor
 public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> implements IBizDataService {
 
-    private final BizDataDAO bizDataDAO;
+    @Resource
+    private BizDataDAO bizDataDAO;
+
+    @Resource
+    private IDataService dataService;
+
+    @Resource
+    private IDataFieldService dataFieldService;
 
     @Override
     public IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO, Map<String, Object> params) {
@@ -114,22 +130,14 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         long total = getTotalCount(tenantId, projectId, envId, dataId);
         // 查询业务数据量记录
         BizData bizData = getOne(projectId, envId, dataId);
-        if (total > 0) {
-            // 若统计结果大于0，则更新记录
-            if (bizData == null) {
-                bizData = new BizData();
-                bizData.setProjectId(projectId);
-                bizData.setEnvId(envId);
-                bizData.setDataId(dataId);
-            }
-            bizData.setDataCount(total);
-            saveOrUpdate(bizData);
-        } else {
-            // 统计结果没有数据，则删除记录
-            if (bizData != null) {
-                removeById(bizData.getId());
-            }
+        if (bizData == null) {
+            bizData = new BizData();
+            bizData.setProjectId(projectId);
+            bizData.setEnvId(envId);
+            bizData.setDataId(dataId);
         }
+        bizData.setDataCount(total);
+        saveOrUpdate(bizData);
     }
 
     @Override
@@ -137,6 +145,92 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         LambdaQueryWrapper<BizData> queryWrapper = Wrappers.<BizData>lambdaQuery()
                 .eq(BizData::getDataId, dataId);
         return list(queryWrapper);
+    }
+
+    @Transactional
+    @Override
+    public void saveBizData(long projectId, long envId, long dataId, List<Map> bizDataList) {
+        Assert.notEmpty(bizDataList);
+        Data data = dataService.getById(dataId);
+        Assert.notNull(data);
+        List<DataField> dataFields = dataFieldService.findByData(data.getId());
+        Assert.notEmpty(dataFields);
+        List<DataField> idFields = dataFields.stream()
+                .filter(field -> MdConstant.IS_ID_FIELD.equals(field.getIsId()))
+                .collect(Collectors.toList());
+        List<String> idFieldCodes = idFields.stream().map(DataField::getFieldCode).collect(Collectors.toList());
+        // 映射 字段编号：字段类型
+        Map<String, String> fieldTypeMapping = dataFields.stream()
+                .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+        // 保存数据到数据中心
+        List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
+        List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
+
+        final Date currentTime = DateUtil.date();
+
+        bizDataList.forEach(bizData -> {
+            // 标识字段 键值对
+            Map<String, Object> idMap = MapUtil.newHashMap();
+            for (String idCode : idFieldCodes) {
+                Object idFieldValue = bizData.get(idCode);
+                idMap.put(idCode, idFieldValue);
+            }
+
+            // 根据唯一标识 查询业务数据
+            Map<String, Object> queryData = bizDataDAO.findByIds(MdUtil.getBizDbCode(data.getTenantId(), projectId, envId), data.getDataCode(), idMap);
+
+            if (queryData == null) {
+                // 未查到数据，则新增
+                queryData = bizData;
+                dataInsertList.add(queryData);
+            } else {
+                // 查到数据
+                // 检测数据 是否需要变更，若有则更新 否则不更新
+                boolean isSame = true;
+                Set<String> keys = bizData.keySet();
+                for (String key : keys) {
+                    Object produceDataValue = bizData.get(key);
+                    Object queryDataValue = queryData.get(key);
+
+                    // 将保存的数据 按最新配置的类型转换对比
+                    String targetType = fieldTypeMapping.get(key);
+                    produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
+                    queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
+                    if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
+                        isSame = false;
+                        break;
+                    }
+                }
+                if (isSame) {
+                    return;
+                }
+                queryData.putAll(bizData);
+                dataUpdateList.add(queryData);
+            }
+
+            // 设置业务数据的最后更新时间
+            queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+        });
+
+        // 新增数据 到 数据仓库
+        if (!dataInsertList.isEmpty()) {
+            bizDataDAO.insertBatch(MdUtil.getBizDbCode(data.getTenantId(), projectId, envId), data.getDataCode(), dataInsertList);
+        }
+
+        // 更新数据仓库的数据
+        if (!dataUpdateList.isEmpty()) {
+            dataUpdateList.forEach(bizData -> {
+                Map<String, Object> idMap = MapUtil.newHashMap();
+                idFieldCodes.forEach(idCode -> {
+                    Object dataIdValue = bizData.get(idCode);
+                    idMap.put(idCode, dataIdValue);
+                });
+
+                bizDataDAO.update(MdUtil.getBizDbCode(data.getTenantId(), projectId, envId), data.getDataCode(), idMap, bizData);
+            });
+        }
+
+        updateDataCount(data.getTenantId(), projectId, envId, data.getId());
     }
 
     private BizData getOne(Long projectId, Long envId, Long dataId) {
