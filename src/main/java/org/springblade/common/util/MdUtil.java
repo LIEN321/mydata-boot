@@ -140,6 +140,10 @@ public class MdUtil {
     public static Object convertDataType(Object value, String targetType) {
         Object convertValue = value;
         if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
+            String stringValue = StrUtil.toString(value);
+            if (StrUtil.isEmpty(stringValue)) {
+                return value;
+            }
             switch (targetType) {
                 case MdConstant.DATA_TYPE_INT:
                     convertValue = NumberUtil.parseInt(StrUtil.toString(value));
