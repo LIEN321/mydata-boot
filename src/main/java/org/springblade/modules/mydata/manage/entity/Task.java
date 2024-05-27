@@ -267,4 +267,9 @@ public class Task extends TenantEntity {
      * 是否复用父任务批次数据，0-不复用、1-复用
      */
     private Integer sameBatch;
+
+    /**
+     * 是否清除HTML标签，0-不清除、1-清除
+     */
+    private Integer cleanHtml;
 }
