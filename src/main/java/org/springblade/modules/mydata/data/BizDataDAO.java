@@ -138,7 +138,7 @@ public class BizDataDAO {
                                 default:
                                     throw new RuntimeException("BizDataDAO: 不支持的过滤操作");
                             }
-                            return new Document("$where", StrUtil.format("this.{} {} this.{}", key, executeOp, value));
+                            return new Document("$where", StrUtil.format("this.{}.valueOf() {} this.{}.valueOf()", key, executeOp, value));
                         }
                     };
                 } else {
