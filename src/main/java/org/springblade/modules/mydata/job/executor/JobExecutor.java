@@ -305,7 +305,7 @@ public class JobExecutor implements ApplicationRunner {
             if (ObjectUtil.equal(subTask.getOpType(), MdConstant.DATA_PRODUCER)) {
                 // 调用API模式
                 if (ObjectUtil.equal(subTask.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
-                    List<Map> produceDataList = parentTaskJob.getProduceDataList();
+                    List<Map<String, Object>> produceDataList = parentTaskJob.getProduceDataList();
                     // 没有业务数据 则触发子任务
                     if (CollUtil.isEmpty(produceDataList)) {
                         TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, subTask);

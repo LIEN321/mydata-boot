@@ -79,7 +79,7 @@ public class MdUtil {
      * 将接口参数的k-v格式 转为 表格的k列和v列
      *
      * @param map Map
-     * @return List<Map>
+     * @return map List<Map<String, Object>>
      */
     public static List<Map<String, String>> switchMapToList(Map<String, String> map) {
         List<Map<String, String>> maps = CollUtil.newArrayList();
@@ -97,7 +97,7 @@ public class MdUtil {
     /**
      * 将表格的k列和v列 转为 接口参数的k-v格式
      *
-     * @param list List<Map>
+     * @param list List<Map<String, Object>>
      * @return Map
      */
     public static LinkedHashMap<String, String> parseToKvMap(List<Map<String, String>> list) {
@@ -113,7 +113,7 @@ public class MdUtil {
     /**
      * 将表格的k列和v列 转为 接口参数的k-v格式
      *
-     * @param list List<Map>
+     * @param list List<Map<String, Object>>
      * @return Map
      */
     public static LinkedHashMap<String, Object> parseToKvMapObj(List<Map<String, Object>> list) {

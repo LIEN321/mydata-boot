@@ -70,7 +70,7 @@ public class JobDataService {
         }
 
         // 声明方法返回结果
-        List<Map> produceDataList = CollUtil.newArrayList();
+        List<Map<String, Object>> produceDataList = CollUtil.newArrayList();
 
         baseArray.forEach(json -> {
             // 保留根目录json，用于 /field 格式提取数据
@@ -143,8 +143,8 @@ public class JobDataService {
      * @param limit   限制数量
      * @return 业务数据
      */
-    public List<Map> listConsumeData(TaskJob taskJob, Long skip, Integer limit) {
-        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), taskJob.getDataFilters(), skip, limit);
+    public List<Map<String, Object>> listConsumeData(TaskJob taskJob, Long skip, Integer limit) {
+        List<Map<String, Object>> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), taskJob.getDataFilters(), skip, limit);
         if (CollUtil.isEmpty(dataList)) {
             return dataList;
         }
@@ -162,14 +162,14 @@ public class JobDataService {
      * @param taskJob 任务
      */
     public void convertConsumeData(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getConsumeDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getConsumeDataList();
         // 获取任务的数据映射
         // 映射中，key为数据中心字段名，value为api字段名
         Map<String, String> mFieldMapping = taskJob.getFieldMapping();
         Assert.notEmpty(mFieldMapping, "任务未设置数据映射");
 
         // 遍历数据中心数据，根据映射 转换为接口结构的数据
-        List<Map> apiDataList = CollUtil.newArrayList();
+        List<Map<String, Object>> apiDataList = CollUtil.newArrayList();
 
         consumeDataList.forEach(bizData -> {
             Map<String, Object> apiData = MapUtil.newHashMap();
@@ -291,7 +291,7 @@ public class JobDataService {
      * @return excel文件
      */
     public File exportConsumeDataExcel(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getConsumeDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getConsumeDataList();
         return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
@@ -302,7 +302,7 @@ public class JobDataService {
      * @return excel文件
      */
     public File exportFilteredDataExcel(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getFilteredDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getFilteredDataList();
         return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
@@ -313,7 +313,7 @@ public class JobDataService {
      * @param mFieldMapping 任务的数据映射，key为字段编号，value为字段名称
      * @return excel文件
      */
-    private File exportExcel(List<Map> datas, LinkedHashMap<String, String> mFieldMapping) {
+    private File exportExcel(List<Map<String, Object>> datas, LinkedHashMap<String, String> mFieldMapping) {
         Assert.notEmpty(mFieldMapping, "任务未选择导出字段");
 
         // 遍历业务数据，根据映射 转换为excel导出的数据

@@ -244,7 +244,7 @@ public class JobThread implements Runnable {
 
                         // 根据过滤条件 查询数据
                         taskJob.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", taskJob.getDataFilters(), skip, limit);
-                        List<Map> dataList = jobDataService.listConsumeData(taskJob, skip, limit);
+                        List<Map<String, Object>> dataList = jobDataService.listConsumeData(taskJob, skip, limit);
                         taskJob.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理

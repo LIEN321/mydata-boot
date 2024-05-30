@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -78,22 +79,24 @@ public class BizDataDAO {
         mongoFactory.getTemplate(dbCode).updateFirst(query, update, dataCode);
     }
 
-    public List<Map> listAll(String dbCode, String dataCode) {
-        return mongoFactory.getTemplate(dbCode).findAll(Map.class, dataCode);
+    public List<Map<String, Object>> listAll(String dbCode, String dataCode) {
+        List<Document> documents = mongoFactory.getTemplate(dbCode).findAll(Document.class, dataCode);
+        return new ArrayList<>(documents);
     }
 
-    public List<Map> list(String dbCode, String dataCode, int size) {
+    public List<Map<String, Object>> list(String dbCode, String dataCode, int size) {
         Assert.isTrue(size >= 0);
         Query query = new Query();
         query.limit(size);
-        return mongoFactory.getTemplate(dbCode).find(query, Map.class, dataCode);
+        List<Document> documents = mongoFactory.getTemplate(dbCode).find(query, Document.class, dataCode);
+        return new ArrayList<>(documents);
     }
 
-    public List<Map> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
         return list(dbCode, dataCode, bizDataFilters, null, null);
     }
 
-    public List<Map> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit) {
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit) {
         MongoTemplate mongoTemplate = mongoFactory.getTemplate(dbCode);
         Query query = new Query();
         if (skip != null) {
@@ -187,10 +190,11 @@ public class BizDataDAO {
         }
 
         // 执行查询
-        return mongoTemplate.find(query, Map.class, dataCode);
+        List<Document> documents = mongoTemplate.find(query, Document.class, dataCode);
+        return new ArrayList<>(documents);
     }
 
-    public List<Map> page(String dbCode, String dataCode, int pageNo, int pageSize, Map<String, Object> params) {
+    public List<Map<String, Object>> page(String dbCode, String dataCode, int pageNo, int pageSize, Map<String, Object> params) {
         Long skip = (pageNo - 1L) * pageSize;
         Integer limit = pageSize;
         List<BizDataFilter> bizDataFilters = CollUtil.toList();
@@ -207,7 +211,7 @@ public class BizDataDAO {
         return this.list(dbCode, dataCode, bizDataFilters, skip, limit);
     }
 
-    public List<Map> list(String dbCode, String dataCode, Map<String, Object> params) {
+    public List<Map<String, Object>> list(String dbCode, String dataCode, Map<String, Object> params) {
         List<BizDataFilter> bizDataFilters = CollUtil.toList();
         if (MapUtil.isNotEmpty(params)) {
             params.forEach((k, v) -> {

@@ -74,7 +74,7 @@ public class BizDataController {
     }
 
     @GetMapping("/data_list")
-    public R<IPage<Map>> list(@RequestParam Map<String, Object> params) {
+    public R<IPage<Map<String, Object>>> list(@RequestParam Map<String, Object> params) {
         BizDataDTO bizDataDTO = new BizDataDTO();
         bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
         bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
@@ -138,7 +138,7 @@ public class BizDataController {
         Data data = ManageCache.getData(dataId);
 
         List<DataField> dataFields = dataFieldService.findByData(dataId);
-        List<Map> bizDataList = bizDataService.bizDataList(bizDataDTO, params);
+        List<Map<String, Object>> bizDataList = bizDataService.bizDataList(bizDataDTO, params);
         List<Map<String, String>> excelDataList = CollUtil.newArrayList();
         bizDataList.forEach(bizData -> {
             Map<String, String> row = MapUtil.newHashMap();
@@ -214,9 +214,9 @@ public class BizDataController {
                 return R.fail("上传失败，Excel为空！");
             }
 
-            List<Map> bizDataList = CollUtil.newArrayList();
+            List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
             excelDataList.forEach(row -> {
-                Map bizData = new HashMap();
+                Map<String, Object> bizData = new HashMap<>();
                 fieldColumnIndexMapping.forEach((dataField, columnIndex) -> {
                     bizData.put(dataField, row.get(columnIndex));
                 });

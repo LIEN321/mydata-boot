@@ -51,7 +51,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
     private IDataFieldService dataFieldService;
 
     @Override
-    public IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO, Map<String, Object> params) {
+    public IPage<Map<String, Object>> bizDataPage(IPage<List<Map<String, Object>>> page, BizDataDTO bizDataDTO, Map<String, Object> params) {
         // 校验参数
         Assert.notNull(bizDataDTO, "参数无效");
         Assert.notNull(bizDataDTO.getDataId(), "参数dataId无效");
@@ -62,18 +62,18 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         Assert.notNull(data, "数据项不存在，dataId={}", dataId);
 
         // 根据分页参数 查询业务数据
-        List<Map> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize(), params);
+        List<Map<String, Object>> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize(), params);
         // 获取分页总数
         long total = getTotalCount(bizDataDTO);
         // 将 业务数据和分页参数 合并为分页结果
-        IPage<Map> bizDataPage = new Page<>(page.getCurrent(), page.getSize(), total);
+        IPage<Map<String, Object>> bizDataPage = new Page<>(page.getCurrent(), page.getSize(), total);
         bizDataPage.setRecords(dataList);
 
         return bizDataPage;
     }
 
     @Override
-    public List<Map> bizDataList(BizDataDTO bizDataDTO, Map<String, Object> params) {
+    public List<Map<String, Object>> bizDataList(BizDataDTO bizDataDTO, Map<String, Object> params) {
         // 校验参数
         Assert.notNull(bizDataDTO, "参数无效");
         Assert.notNull(bizDataDTO.getDataId(), "参数dataId无效");
@@ -149,7 +149,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
 
     @Transactional
     @Override
-    public void saveBizData(long projectId, long envId, long dataId, List<Map> bizDataList) {
+    public void saveBizData(long projectId, long envId, long dataId, List<Map<String, Object>> bizDataList) {
         Assert.notEmpty(bizDataList);
         Data data = dataService.getById(dataId);
         Assert.notNull(data);

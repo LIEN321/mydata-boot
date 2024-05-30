@@ -192,17 +192,17 @@ public class TaskJob implements Serializable {
     /**
      * 接口返回的数据
      */
-    private List<Map> produceDataList;
+    private List<Map<String, Object>> produceDataList;
 
     /**
      * 待消费的数据
      */
-    private List<Map> consumeDataList;
+    private List<Map<String, Object>> consumeDataList;
 
     /**
      * 被过滤的无效数据
      */
-    private List<Map> filteredDataList;
+    private List<Map<String, Object>> filteredDataList;
 
     /**
      * 所属项目id

@@ -41,7 +41,7 @@ public class ApiUtil {
         return write(taskJob, taskJob.getConsumeDataList());
     }
 
-    public static String write(TaskJob taskJob, List<Map> dataList) {
+    public static String write(TaskJob taskJob, List<Map<String, Object>> dataList) {
         if (CollUtil.isEmpty(dataList)) {
             return "";
         }

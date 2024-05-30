@@ -23,7 +23,7 @@ public interface IBizDataService extends BaseService<BizData> {
      * @param bizDataDTO 参数
      * @return 数据列表
      */
-    IPage<Map> bizDataPage(IPage<List<Map>> page, BizDataDTO bizDataDTO, Map<String, Object> params);
+    IPage<Map<String, Object>> bizDataPage(IPage<List<Map<String, Object>>> page, BizDataDTO bizDataDTO, Map<String, Object> params);
 
     /**
      * 查询业务数据列表
@@ -32,7 +32,7 @@ public interface IBizDataService extends BaseService<BizData> {
      * @param params     自定义过滤条件
      * @return 业务数据列表
      */
-    List<Map> bizDataList(BizDataDTO bizDataDTO, Map<String, Object> params);
+    List<Map<String, Object>> bizDataList(BizDataDTO bizDataDTO, Map<String, Object> params);
 
     /**
      * 获取数据项的总数
@@ -97,5 +97,5 @@ public interface IBizDataService extends BaseService<BizData> {
      * @param dataId      数据id
      * @param bizDataList 业务数据集合
      */
-    void saveBizData(long projectId, long envId, long dataId, List<Map> bizDataList);
+    void saveBizData(long projectId, long envId, long dataId, List<Map<String, Object>> bizDataList);
 }
