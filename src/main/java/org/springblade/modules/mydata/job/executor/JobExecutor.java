@@ -557,6 +557,8 @@ public class JobExecutor implements ApplicationRunner {
         taskJob.setSkipError(task.getSkipError());
         // 提供模式
         taskJob.setProduceMode(task.getProduceMode());
+        // 是否清除HTML标签，0-不清除、1-清除
+        taskJob.setCleanHtml(task.getCleanHtml());
 
         if (task.getDataId() != null) {
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());

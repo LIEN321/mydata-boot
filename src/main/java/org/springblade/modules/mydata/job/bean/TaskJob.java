@@ -330,6 +330,11 @@ public class TaskJob implements Serializable {
     private Integer oldTaskStatus;
 
     /**
+     * 是否清除HTML标签，0-不清除、1-清除
+     */
+    private Integer cleanHtml;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

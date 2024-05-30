@@ -9,6 +9,7 @@ import cn.hutool.core.util.HashUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HtmlUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MapUtil;
@@ -114,6 +115,10 @@ public class JobThread implements Runnable {
                         } else if (MdConstant.TASK_PRODUCE_MODE_PUSH.equals(taskJob.getProduceMode())) {
                             // 使用接收的数据
                             json = taskJob.getAcceptedData();
+                        }
+
+                        if (taskJob.getCleanHtml() == MdConstant.ENABLED) {
+                            json = HtmlUtil.cleanHtmlTag(json);
                         }
 
                         // 校验获取的数据是否有效
@@ -328,6 +333,7 @@ public class JobThread implements Runnable {
             // 记录失败日志
             taskJob.appendLog("任务第{}次失败，原因：{}", taskJob.getExecuteCount(), e.getMessage());
             log.error(e.getMessage(), e);
+            log.error(taskJob.toString());
         }
 
         jobExecutor.completeJob(taskJob);
