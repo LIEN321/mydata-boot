@@ -1,7 +1,6 @@
 package org.springblade.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,6 +126,15 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    public boolean deleteById(Long dataId, Long envId, String bizId) {
+        Data data = ManageCache.getData(dataId);
+        bizDataDAO.remove(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode(), bizId);
+        updateDataCount(data.getTenantId(), data.getProjectId(), envId, data.getId());
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void updateDataCount(String tenantId, Long projectId, Long envId, Long dataId) {
         // 从数据仓库统计最新数量
         long total = getTotalCount(tenantId, projectId, envId, dataId);
@@ -169,8 +176,6 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
 
-        final Date currentTime = DateUtil.date();
-
         bizDataList.forEach(bizData -> {
             // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
@@ -210,9 +215,6 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
                 queryData.putAll(bizData);
                 dataUpdateList.add(queryData);
             }
-
-            // 设置业务数据的最后更新时间
-            queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
         });
 
         // 新增数据 到 数据仓库

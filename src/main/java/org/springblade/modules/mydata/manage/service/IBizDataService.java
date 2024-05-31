@@ -72,6 +72,16 @@ public interface IBizDataService extends BaseService<BizData> {
     boolean deleteByEnv(Long dataId, Long envId);
 
     /**
+     * 根据 数据标识 删除业务数据
+     *
+     * @param dataId 数据项id
+     * @param envId  环境id
+     * @param bizId  数据标识
+     * @return 操作结果，true-成功，false-失败
+     */
+    boolean deleteById(Long dataId, Long envId, String bizId);
+
+    /**
      * 更新业务数据量
      *
      * @param tenantId  租户id

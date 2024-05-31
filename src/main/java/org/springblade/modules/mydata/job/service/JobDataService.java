@@ -259,10 +259,6 @@ public class JobDataService {
                 queryData.putAll(produceData);
                 dataUpdateList.add(queryData);
             }
-
-            // 设置业务数据的最后更新时间
-            queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-            queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskJob.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库

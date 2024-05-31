@@ -1,7 +1,8 @@
 package org.springblade.modules.mydata.data;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +41,7 @@ public class BizDataDAO {
      * @param data     业务数据
      */
     public void insert(String dbCode, String dataCode, Map<String, Object> data) {
-        mongoFactory.getTemplate(dbCode).insert(data, dataCode);
+        insertBatch(dbCode, dataCode, CollUtil.toList(data));
     }
 
     /**
@@ -50,14 +52,11 @@ public class BizDataDAO {
      * @param dataList 业务数据列表
      */
     public void insertBatch(String dbCode, String dataCode, List<Map<String, Object>> dataList) {
+        if (CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        dataList.forEach(this::fillData);
         mongoFactory.getTemplate(dbCode).insert(dataList, dataCode);
-    }
-
-    public void update(String dbCode, String dataCode, String idField, String idValue, Map<String, Object> data) {
-        Query query = new Query(Criteria.where(idField).is(idValue));
-        Document document = new Document(data);
-        Update update = Update.fromDocument(document);
-        mongoFactory.getTemplate(dbCode).updateFirst(query, update, dataCode);
     }
 
     /**
@@ -69,6 +68,7 @@ public class BizDataDAO {
      * @param data     业务数据
      */
     public void update(String dbCode, String dataCode, Map<String, Object> idMap, Map<String, Object> data) {
+        fillData(data);
         Query query = new Query();
         idMap.forEach((k, v) -> {
             query.addCriteria(Criteria.where(k).is(v));
@@ -79,23 +79,16 @@ public class BizDataDAO {
         mongoFactory.getTemplate(dbCode).updateFirst(query, update, dataCode);
     }
 
-    public List<Map<String, Object>> listAll(String dbCode, String dataCode) {
-        List<Document> documents = mongoFactory.getTemplate(dbCode).findAll(Document.class, dataCode);
-        return new ArrayList<>(documents);
-    }
-
-    public List<Map<String, Object>> list(String dbCode, String dataCode, int size) {
-        Assert.isTrue(size >= 0);
-        Query query = new Query();
-        query.limit(size);
-        List<Document> documents = mongoFactory.getTemplate(dbCode).find(query, Document.class, dataCode);
-        return new ArrayList<>(documents);
-    }
-
-    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
-        return list(dbCode, dataCode, bizDataFilters, null, null);
-    }
-
+    /**
+     * 从指定数据库 根据过滤条件 查询指定范围的数据
+     *
+     * @param dbCode         数据库
+     * @param dataCode       数据标识
+     * @param bizDataFilters 过滤条件
+     * @param skip           跳过数量
+     * @param limit          限制数量
+     * @return 业务数据列表
+     */
     public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit) {
         MongoTemplate mongoTemplate = mongoFactory.getTemplate(dbCode);
         Query query = new Query();
@@ -188,15 +181,24 @@ public class BizDataDAO {
             // mongodb查询条件集合 加入查询中
             query.addCriteria(new Criteria().andOperator(criteriaList));
         }
-
+        query.fields().exclude(MdConstant.MONGODB_OBJECT_ID);
         // 执行查询
         List<Document> documents = mongoTemplate.find(query, Document.class, dataCode);
         return new ArrayList<>(documents);
     }
 
-    public List<Map<String, Object>> page(String dbCode, String dataCode, int pageNo, int pageSize, Map<String, Object> params) {
+    /**
+     * 分页查询业务数据
+     *
+     * @param dbCode   数据库
+     * @param dataCode 数据标识
+     * @param pageNo   当前页数
+     * @param pageSize 分页数量
+     * @param params   过滤参数
+     * @return 业务数据列表
+     */
+    public List<Map<String, Object>> page(String dbCode, String dataCode, Integer pageNo, Integer pageSize, Map<String, Object> params) {
         Long skip = (pageNo - 1L) * pageSize;
-        Integer limit = pageSize;
         List<BizDataFilter> bizDataFilters = CollUtil.toList();
         if (MapUtil.isNotEmpty(params)) {
             params.forEach((k, v) -> {
@@ -208,7 +210,7 @@ public class BizDataDAO {
                 bizDataFilters.add(filter);
             });
         }
-        return this.list(dbCode, dataCode, bizDataFilters, skip, limit);
+        return this.list(dbCode, dataCode, bizDataFilters, skip, pageSize);
     }
 
     public List<Map<String, Object>> list(String dbCode, String dataCode, Map<String, Object> params) {
@@ -223,17 +225,12 @@ public class BizDataDAO {
                 bizDataFilters.add(filter);
             });
         }
-        return this.list(dbCode, dataCode, bizDataFilters);
+        return this.list(dbCode, dataCode, bizDataFilters, null, null);
     }
 
     public long total(String dbCode, String dataCode) {
         Query query = new Query();
         return mongoFactory.getTemplate(dbCode).count(query, dataCode);
-    }
-
-    public Map<String, Object> findById(String dbCode, String dataCode, String idCode, Object idValue) {
-        Query query = new Query(Criteria.where(idCode).is(idValue));
-        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
     }
 
     /**
@@ -256,4 +253,29 @@ public class BizDataDAO {
         mongoFactory.getTemplate(dbCode).dropCollection(dataCode);
     }
 
+    /**
+     * 根据 多个唯一标识的组合 删除业务数据
+     *
+     * @param dbCode   数据库编号
+     * @param dataCode 业务数据编号
+     * @param bizId    数据标识
+     */
+    public void remove(String dbCode, String dataCode, String bizId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(MdConstant.DATA_COLUMN_DATA_ID).is(bizId));
+        mongoFactory.getTemplate(dbCode).remove(query, dataCode);
+    }
+
+    /**
+     * 补充数据的 系统字段值
+     *
+     * @param bizData
+     */
+    private void fillData(Map<String, Object> bizData) {
+        Date currentTime = DateUtil.date();
+        // 设置业务数据的最后更新时间
+        bizData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+        // 设置数据的唯一标识
+        bizData.put(MdConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
+    }
 }

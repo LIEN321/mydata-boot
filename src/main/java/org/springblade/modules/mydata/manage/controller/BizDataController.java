@@ -91,6 +91,11 @@ public class BizDataController {
         return R.status(bizDataService.deleteByEnv(bizDataDTO.getDataId(), bizDataDTO.getEnvId()));
     }
 
+    @GetMapping("/delete_biz_data")
+    public R deleteBizData(@RequestParam("dataId") Long dataId, @RequestParam("envId") Long envId, @RequestParam("bizId") String bizId) {
+        return R.status(bizDataService.deleteById(dataId, envId, bizId));
+    }
+
     @PostMapping("/upload_excel")
     public R<UploadExcelVO> uploadExcel(@RequestParam("file") MultipartFile uploadFile) {
         try {
