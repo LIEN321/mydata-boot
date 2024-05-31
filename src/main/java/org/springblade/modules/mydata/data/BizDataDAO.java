@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
@@ -275,7 +276,9 @@ public class BizDataDAO {
         Date currentTime = DateUtil.date();
         // 设置业务数据的最后更新时间
         bizData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-        // 设置数据的唯一标识
-        bizData.put(MdConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
+        if (ObjectUtil.isEmpty(bizData.get(MdConstant.DATA_COLUMN_DATA_ID))) {
+            // 设置数据的唯一标识
+            bizData.put(MdConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
+        }
     }
 }
