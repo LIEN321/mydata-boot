@@ -377,4 +377,9 @@ public interface MdConstant {
      * 字段映射的根目录
      */
     String FIELD_MAPPING_ROOT = "/";
+
+    /**
+     *
+     */
+    String MONGODB_OBJECT_ID = "_id";
 }

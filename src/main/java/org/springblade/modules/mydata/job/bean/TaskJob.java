@@ -335,6 +335,11 @@ public class TaskJob implements Serializable {
     private Integer cleanHtml;
 
     /**
+     * 是否启用历史记录：0-不启用、1-启用
+     */
+    private Integer enableHistory;
+
+    /**
      * 追加日志
      */
     public void appendLog(String log, Object... params) {

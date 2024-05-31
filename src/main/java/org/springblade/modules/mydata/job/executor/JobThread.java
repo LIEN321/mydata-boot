@@ -164,6 +164,8 @@ public class JobThread implements Runnable {
                         } else {
                             // 保存业务数据
                             jobDataService.saveProduceData(taskJob);
+                            // 保存业务数据历史记录（若启用）
+                            jobDataService.saveProduceDataHistory(taskJob);
                         }
 
                         // 更新环境变量

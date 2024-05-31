@@ -16,6 +16,8 @@ import org.springblade.modules.mydata.job.cache.JobCache;
 import org.springblade.modules.mydata.job.service.JobBatchService;
 import org.springblade.modules.mydata.job.service.JobDataFilterService;
 import org.springblade.modules.mydata.job.service.JobEmailService;
+import org.springblade.modules.mydata.manage.cache.ManageCache;
+import org.springblade.modules.mydata.manage.entity.Data;
 import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.entity.TaskLog;
@@ -561,6 +563,11 @@ public class JobExecutor implements ApplicationRunner {
         taskJob.setCleanHtml(task.getCleanHtml());
 
         if (task.getDataId() != null) {
+            // 是否启用历史记录：0-不启用、1-启用
+            Data data = ManageCache.getData(task.getDataId());
+            if (data != null) {
+                taskJob.setEnableHistory(data.getEnableHistory());
+            }
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
             // 获取配置映射的数据字段的类型
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {

@@ -212,6 +212,10 @@ public class JobDataService {
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
+
+        // 实际入库的业务数据
+        List<Map<String, Object>> savedDataList = CollUtil.newArrayList();
+
         taskJob.getProduceDataList().forEach(produceData -> {
 
             // 标识字段 键值对
@@ -264,6 +268,7 @@ public class JobDataService {
         // 新增数据 到 数据仓库
         if (!dataInsertList.isEmpty()) {
             bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, dataInsertList);
+            savedDataList.addAll(dataInsertList);
         }
 
         // 更新数据仓库的数据
@@ -277,11 +282,35 @@ public class JobDataService {
 
                 bizDataDAO.update(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, idMap, data);
             });
+            savedDataList.addAll(dataUpdateList);
         }
 
+        taskJob.setProduceDataList(savedDataList);
         taskJob.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
         taskJob.setInsertCount(taskJob.getInsertCount() + dataInsertList.size());
         taskJob.setUpdateCount(taskJob.getUpdateCount() + dataUpdateList.size());
+    }
+
+    /**
+     * 保存业务数据的历史记录
+     *
+     * @param taskJob 任务job
+     */
+    public void saveProduceDataHistory(TaskJob taskJob) {
+        if (taskJob.getEnableHistory() != MdConstant.ENABLED) {
+            return;
+        }
+
+        List<Map<String, Object>> produceDataList = taskJob.getProduceDataList();
+        if (CollUtil.isEmpty(produceDataList)) {
+            return;
+        }
+
+        produceDataList.forEach(data -> {
+            data.remove(MdConstant.MONGODB_OBJECT_ID);
+        });
+
+        bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode() + "_MD_HISTORY", produceDataList);
     }
 
     /**

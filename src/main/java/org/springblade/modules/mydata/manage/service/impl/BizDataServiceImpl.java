@@ -63,6 +63,9 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
 
         // 根据分页参数 查询业务数据
         List<Map<String, Object>> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize(), params);
+        dataList.forEach(bizData -> {
+            bizData.remove(MdConstant.MONGODB_OBJECT_ID);
+        });
         // 获取分页总数
         long total = getTotalCount(bizDataDTO);
         // 将 业务数据和分页参数 合并为分页结果
