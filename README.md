@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://www.mydata.work/images/mydata_logo.png" alt="mydata" width="300px"/>
+    <img src="./doc/image/mydata_logo.png" alt="mydata" width="300px"/>
 </p>
 <p align="center">
     <strong>你的数据融合新助手</strong>
@@ -29,7 +29,7 @@
 
 基于Web API、Excel实现数据集成，简化跨系统之间的数据对接；
 
-![对接结构](https://www.mydata.work/images/mydata_structure_v0.8.jpg)
+![对接结构](./doc/image/mydata_structure_v0.8.jpg)
 
 ### 适用场景
 
@@ -66,11 +66,11 @@
 
 ## 系统结构
 
-![系统结构](http://www.mydata.work/images/mydata_frame_0.7.0.jpg)
+![系统结构](./doc/image//mydata_frame_0.7.0.jpg)
 
 ## 功能模块
 
-![功能模块](https://www.mydata.work/images/mydata_funtion_v0.7.0.jpg)
+![功能模块](./doc/image/mydata_funtion_v0.7.0.jpg)
 
 ## 体验
 
