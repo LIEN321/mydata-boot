@@ -130,6 +130,10 @@ public class MdUtil {
         return tenantId + ":" + projectId + ":" + envId;
     }
 
+    public static String getBizHistoryCollection(String dataCode) {
+        return dataCode + MdConstant.DATA_COLUMN_HISTORY;
+    }
+
     /**
      * 根据字段类型配置，将接口数据 转为指定类型
      *

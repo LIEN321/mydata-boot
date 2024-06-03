@@ -12,6 +12,8 @@ import org.springblade.common.constant.MdConstant;
 import org.springblade.common.util.MdUtil;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import org.springblade.modules.mydata.data.BizDataDAO;
+import org.springblade.modules.mydata.data.BizDataFilter;
+import org.springblade.modules.mydata.data.BizDataSort;
 import org.springblade.modules.mydata.manage.cache.ManageCache;
 import org.springblade.modules.mydata.manage.dto.BizDataDTO;
 import org.springblade.modules.mydata.manage.entity.BizData;
@@ -21,6 +23,7 @@ import org.springblade.modules.mydata.manage.mapper.BizDataMapper;
 import org.springblade.modules.mydata.manage.service.IBizDataService;
 import org.springblade.modules.mydata.manage.service.IDataFieldService;
 import org.springblade.modules.mydata.manage.service.IDataService;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,12 +63,64 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         Assert.notNull(data, "数据项不存在，dataId={}", dataId);
 
         // 根据分页参数 查询业务数据
-        List<Map<String, Object>> dataList = bizDataDAO.page(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), (int) page.getCurrent(), (int) page.getSize(), params);
+        String dbCode = MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId());
+        String dataCode = data.getDataCode();
+        List<BizDataFilter> bizDataFilters = CollUtil.toList();
+        if (MapUtil.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                BizDataFilter filter = new BizDataFilter();
+                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                filter.setKey(k);
+                filter.setOp(MdConstant.DATA_OP_LIKE);
+                filter.setValue(v);
+                bizDataFilters.add(filter);
+            });
+        }
+        List<Map<String, Object>> dataList = bizDataDAO.page(dbCode, dataCode, (int) page.getCurrent(), (int) page.getSize(), bizDataFilters);
         dataList.forEach(bizData -> {
             bizData.remove(MdConstant.MONGODB_OBJECT_ID);
         });
         // 获取分页总数
-        long total = getTotalCount(bizDataDTO);
+        long total = getTotalCount(dbCode, dataCode, bizDataFilters);
+        // 将 业务数据和分页参数 合并为分页结果
+        IPage<Map<String, Object>> bizDataPage = new Page<>(page.getCurrent(), page.getSize(), total);
+        bizDataPage.setRecords(dataList);
+
+        return bizDataPage;
+    }
+
+    @Override
+    public IPage<Map<String, Object>> bizDataHistoryPage(IPage<List<Map<String, Object>>> page, BizDataDTO bizDataDTO, Map<String, Object> params) {
+        // 校验参数
+        Assert.notNull(bizDataDTO, "参数无效");
+        Assert.notNull(bizDataDTO.getDataId(), "参数dataId无效");
+
+        // 校验数据项是否有效
+        Long dataId = bizDataDTO.getDataId();
+        Data data = ManageCache.getData(dataId);
+        Assert.notNull(data, "数据项不存在，dataId={}", dataId);
+
+        // 根据分页参数 查询业务数据
+        String dbCode = MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId());
+        String dataCode = MdUtil.getBizHistoryCollection(data.getDataCode());
+        List<BizDataFilter> bizDataFilters = CollUtil.toList();
+        if (MapUtil.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                BizDataFilter filter = new BizDataFilter();
+                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                filter.setKey(k);
+                filter.setOp(MdConstant.DATA_OP_LIKE);
+                filter.setValue(v);
+                bizDataFilters.add(filter);
+            });
+        }
+        BizDataSort bizDataSort = new BizDataSort(MdConstant.DATA_COLUMN_UPDATE_TIME, Sort.Direction.DESC);
+        List<Map<String, Object>> dataList = bizDataDAO.page(dbCode, dataCode, (int) page.getCurrent(), (int) page.getSize(), bizDataFilters, bizDataSort);
+        dataList.forEach(bizData -> {
+            bizData.remove(MdConstant.MONGODB_OBJECT_ID);
+        });
+        // 获取分页总数
+        long total = getTotalCount(dbCode, dataCode, bizDataFilters);
         // 将 业务数据和分页参数 合并为分页结果
         IPage<Map<String, Object>> bizDataPage = new Page<>(page.getCurrent(), page.getSize(), total);
         bizDataPage.setRecords(dataList);
@@ -82,16 +137,23 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         // 校验数据项是否有效
         Long dataId = bizDataDTO.getDataId();
         Data data = ManageCache.getData(dataId);
-        return bizDataDAO.list(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), params);
+        List<BizDataFilter> bizDataFilters = CollUtil.toList();
+        if (MapUtil.isNotEmpty(params)) {
+            params.forEach((k, v) -> {
+                BizDataFilter filter = new BizDataFilter();
+                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
+                filter.setKey(k);
+                filter.setOp(MdConstant.DATA_OP_LIKE);
+                filter.setValue(v);
+                bizDataFilters.add(filter);
+            });
+        }
+        return bizDataDAO.list(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode(), bizDataFilters);
     }
 
     @Override
-    public long getTotalCount(BizDataDTO bizDataDTO) {
-        Data data = ManageCache.getData(bizDataDTO.getDataId());
-        if (data == null) {
-            return 0L;
-        }
-        return bizDataDAO.total(MdUtil.getBizDbCode(data.getTenantId(), bizDataDTO.getProjectId(), bizDataDTO.getEnvId()), data.getDataCode());
+    public long getTotalCount(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
+        return bizDataDAO.total(dbCode, dataCode, bizDataFilters);
     }
 
     @Override
@@ -100,7 +162,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         if (data == null) {
             return 0L;
         }
-        return bizDataDAO.total(MdUtil.getBizDbCode(tenantId, projectId, envId), data.getDataCode());
+        return bizDataDAO.total(MdUtil.getBizDbCode(tenantId, projectId, envId), data.getDataCode(), null);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -130,6 +192,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
         Data data = ManageCache.getData(dataId);
         bizDataDAO.remove(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode(), bizId);
         updateDataCount(data.getTenantId(), data.getProjectId(), envId, data.getId());
+        bizDataDAO.remove(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), MdUtil.getBizHistoryCollection(data.getDataCode()), bizId);
         return true;
     }
 
@@ -152,8 +215,7 @@ public class BizDataServiceImpl extends BaseServiceImpl<BizDataMapper, BizData> 
 
     @Override
     public List<BizData> listByData(Long dataId) {
-        LambdaQueryWrapper<BizData> queryWrapper = Wrappers.<BizData>lambdaQuery()
-                .eq(BizData::getDataId, dataId);
+        LambdaQueryWrapper<BizData> queryWrapper = Wrappers.<BizData>lambdaQuery().eq(BizData::getDataId, dataId);
         return list(queryWrapper);
     }
 

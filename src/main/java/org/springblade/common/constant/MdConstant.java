@@ -142,6 +142,11 @@ public interface MdConstant {
     String DATA_COLUMN_DATA_ID = "_MD_DATA_ID_";
 
     /**
+     * 业务数据字段名称：唯一标识
+     */
+    String DATA_COLUMN_HISTORY = "_MD_HISTORY";
+
+    /**
      * 业务数据常量值：任务最后成功时间
      */
     String DATA_VALUE_TASK_LAST_SUCCESS_TIME = "_MD_TASK_LAST_SUCCESS_";

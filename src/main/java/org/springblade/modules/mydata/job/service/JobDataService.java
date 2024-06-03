@@ -306,7 +306,7 @@ public class JobDataService {
             data.remove(MdConstant.MONGODB_OBJECT_ID);
         });
 
-        bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode() + "_MD_HISTORY", produceDataList);
+        bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode() + MdConstant.DATA_COLUMN_HISTORY, produceDataList);
     }
 
     /**

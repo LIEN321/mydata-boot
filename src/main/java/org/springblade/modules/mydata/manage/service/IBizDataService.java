@@ -2,6 +2,7 @@ package org.springblade.modules.mydata.manage.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springblade.core.mp.base.BaseService;
+import org.springblade.modules.mydata.data.BizDataFilter;
 import org.springblade.modules.mydata.manage.dto.BizDataDTO;
 import org.springblade.modules.mydata.manage.entity.BizData;
 
@@ -26,6 +27,15 @@ public interface IBizDataService extends BaseService<BizData> {
     IPage<Map<String, Object>> bizDataPage(IPage<List<Map<String, Object>>> page, BizDataDTO bizDataDTO, Map<String, Object> params);
 
     /**
+     * 自定义分页
+     *
+     * @param page       分页
+     * @param bizDataDTO 参数
+     * @return 数据列表
+     */
+    IPage<Map<String, Object>> bizDataHistoryPage(IPage<List<Map<String, Object>>> page, BizDataDTO bizDataDTO, Map<String, Object> params);
+
+    /**
      * 查询业务数据列表
      *
      * @param bizDataDTO 固定参数
@@ -37,10 +47,11 @@ public interface IBizDataService extends BaseService<BizData> {
     /**
      * 获取数据项的总数
      *
-     * @param bizDataDTO 数据项参数
+     * @param dbCode   业务数据库名
+     * @param dataCode 业务数据表名
      * @return 总数
      */
-    long getTotalCount(BizDataDTO bizDataDTO);
+    long getTotalCount(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters);
 
     /**
      * 后台服务 更新数据项的总数

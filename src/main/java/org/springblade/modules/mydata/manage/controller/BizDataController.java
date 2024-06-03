@@ -86,13 +86,26 @@ public class BizDataController {
         return R.data(bizDataService.bizDataPage(Condition.getPage(query), bizDataDTO, params));
     }
 
+    @GetMapping("/data_history_page")
+    public R<IPage<Map<String, Object>>> dataHistoryPage(@RequestParam Map<String, Object> params) {
+        BizDataDTO bizDataDTO = new BizDataDTO();
+        bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
+        bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
+        bizDataDTO.setDataId(Long.parseLong(params.remove("dataId").toString()));
+
+        Query query = new Query();
+        query.setSize(Integer.parseInt(params.remove("size").toString()));
+        query.setCurrent(Integer.parseInt(params.remove("current").toString()));
+        return R.data(bizDataService.bizDataHistoryPage(Condition.getPage(query), bizDataDTO, params));
+    }
+
     @GetMapping("/delete_by_env")
     public R deleteByEnv(BizDataDTO bizDataDTO) {
         return R.status(bizDataService.deleteByEnv(bizDataDTO.getDataId(), bizDataDTO.getEnvId()));
     }
 
     @GetMapping("/delete_biz_data")
-    public R deleteBizData(@RequestParam("dataId") Long dataId, @RequestParam("envId") Long envId, @RequestParam("bizId") String bizId) {
+    public R deleteBizData(@RequestParam Long dataId, @RequestParam Long envId, @RequestParam String bizId) {
         return R.status(bizDataService.deleteById(dataId, envId, bizId));
     }
 
