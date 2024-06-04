@@ -103,7 +103,13 @@ public class JobThread implements Runnable {
 
                         String json = null;
                         if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskJob.getProduceMode())) {
-                            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed()) && CollUtil.isNotEmpty(taskJob.getTaskVar())) {
+                            // 是否为订阅任务
+                            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed())) {
+                                // 若不服用任务批号，则TaskVar必须有效 否则无法调用接口
+                                if (CollUtil.isEmpty(taskJob.getTaskVar())) {
+                                    taskJob.appendLog("当前任务的Task Var为空，结束任务");
+                                    break;
+                                }
                                 // 订阅的提供数据任务 从父任务获取数据并解析到当前任务中
                                 JobVarService.parseTaskDataVar(taskJob, taskJob.getTaskVar());
                             }
