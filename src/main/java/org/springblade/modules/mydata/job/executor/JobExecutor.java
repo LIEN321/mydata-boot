@@ -322,7 +322,7 @@ public class JobExecutor implements ApplicationRunner {
                             subTaskJob.setTaskVar(data);
                             // 执行订阅任务
                             executeJob(subTaskJob);
-                            parentTaskJob.appendLog("触发执行订阅任务：{}", subTaskJob.getTaskName());
+                            parentTaskJob.appendLog("触发执行订阅任务：{}，任务数据：{}", subTaskJob.getTaskName(), data);
                         });
                     }
                 }
