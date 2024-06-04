@@ -307,7 +307,7 @@ public class TaskJob implements Serializable {
     /**
      * 任务内置变量
      */
-    private Map taskVar = MapUtil.newHashMap();
+    private Map<String, Object> taskVar = MapUtil.newHashMap();
 
     /**
      * 数据处理配置

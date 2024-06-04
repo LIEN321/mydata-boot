@@ -60,7 +60,7 @@ public class ApiUtil {
         return HttpUtils.send(Method.valueOf(taskJob.getApiMethod()), taskJob.getApiUrl(), taskJob.getReqHeaders(), taskJob.getReqParams(), json.toString());
     }
 
-    public static void write(TaskJob taskJob, Map data) {
+    public static void write(TaskJob taskJob, Map<String, Object> data) {
         if (CollUtil.isEmpty(data)) {
             return;
         }

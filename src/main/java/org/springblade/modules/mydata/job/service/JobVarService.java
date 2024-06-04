@@ -183,7 +183,7 @@ public class JobVarService {
      *
      * @param taskJob 任务
      */
-    public static void parseTaskDataVar(TaskJob taskJob, Map data) {
+    public static void parseTaskDataVar(TaskJob taskJob, Map<String, Object> data) {
         if (MapUtil.isEmpty(data)) {
             return;
         }
@@ -219,7 +219,7 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseDataFieldVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+    public static String parseDataFieldVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
         return parseDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, "{{", "}}");
     }
 
@@ -240,11 +240,11 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseExistedDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+    public static String parseExistedDataVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
         return parseDataVar(string, data, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, "{{$", "}}");
     }
 
-    private static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
+    private static String parseDataVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
         if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
             return string;
         }

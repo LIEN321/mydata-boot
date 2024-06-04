@@ -104,7 +104,7 @@ public class JobDataFilterService {
         return filters;
     }
 
-    private boolean checkIdValue(Map data, List<String> idCodes) {
+    private boolean checkIdValue(Map<String, Object> data, List<String> idCodes) {
         // 检测 标识字段值 是否有效
         for (String idCode : idCodes) {
             Object idFieldValue = data.get(idCode);
@@ -115,7 +115,7 @@ public class JobDataFilterService {
         return true;
     }
 
-    private boolean filterDataValues(Map data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {
+    private boolean filterDataValues(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {
         boolean isCorrect = false;
 
         for (BizDataFilter filter : dataFilters) {
