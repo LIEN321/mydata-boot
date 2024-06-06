@@ -70,7 +70,7 @@ public class BizDataController {
      */
     @GetMapping("/field_list")
     public R<List<DataFieldVO>> listDataFields(Long dataId) {
-        return R.data(DataFieldWrapper.build().listVO(dataFieldService.findByData(dataId)));
+        return R.data(DataFieldWrapper.build().listVO(dataFieldService.findDisplayedFields(dataId)));
     }
 
     @GetMapping("/data_list")

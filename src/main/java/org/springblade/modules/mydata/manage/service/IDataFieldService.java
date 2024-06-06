@@ -43,6 +43,14 @@ public interface IDataFieldService extends BaseService<DataField> {
     List<DataField> findByData(Long dataId);
 
     /**
+     * 根据数据项 查询可显示的字段列表
+     *
+     * @param dataId 数据项id
+     * @return 字段列表
+     */
+    List<DataField> findDisplayedFields(Long dataId);
+
+    /**
      * 删除数据项字段列表
      *
      * @param dataId 数据项id
