@@ -110,7 +110,7 @@ public class JobDataProcessService {
                     // 存入业务数据
                     processedData.put(fieldCode, newValue);
                 } catch (Exception e) {
-                    ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} 业务数据={}，错误：{}", fieldCode, originValue, op, opValue, processedData, e.getMessage()));
+                    ExceptionUtil.wrapRuntimeAndThrow(StrUtil.format("处理字段值出错，字段名={} 字段值={} 操作={} 操作值={} originData={}  processedData={}，错误：{}", fieldCode, originValue, op, opValue, originData, processedData, e.getMessage()));
                 }
             }
         }
