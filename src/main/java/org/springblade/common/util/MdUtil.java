@@ -188,10 +188,11 @@ public class MdUtil {
             case MdConstant.DATA_TYPE_INT:
             case MdConstant.DATA_TYPE_NUMBER:
                 return "0";
-            case MdConstant.DATA_TYPE_STRING:
-                return "";
+//            case MdConstant.DATA_TYPE_STRING:
             case MdConstant.DATA_TYPE_DATE:
                 return DateUtil.formatDateTime(new Date());
+            default:
+                return "";
         }
     }
 }
