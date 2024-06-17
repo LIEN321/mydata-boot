@@ -8,6 +8,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.executor.CronExpression;
 import org.springblade.common.constant.MdConstant;
@@ -576,6 +577,12 @@ public class JobExecutor implements ApplicationRunner {
                         .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
                 // 映射字段的类型
                 taskJob.setFieldTypeMapping(fieldTypeMapping);
+
+                // 数据字段默认值
+                Map<String, String> fieldDefaultValues = dataFields.stream()
+                        .filter(dataField -> StrUtil.isNotEmpty(dataField.getDefaultValue()))
+                        .collect(Collectors.toMap(DataField::getFieldCode, DataField::getDefaultValue));
+                taskJob.setFieldDefaultValues(fieldDefaultValues);
             }
         }
         taskJob.setProduceDataList(CollUtil.toList());

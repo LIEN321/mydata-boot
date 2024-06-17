@@ -240,6 +240,11 @@ public class TaskJob implements Serializable {
     private Map<String, String> fieldTypeMapping;
 
     /**
+     * 字段默认值
+     */
+    private Map<String, String> fieldDefaultValues;
+
+    /**
      * 提供数据模式，默认1，1-API、2-接收推送
      */
     private Integer produceMode;

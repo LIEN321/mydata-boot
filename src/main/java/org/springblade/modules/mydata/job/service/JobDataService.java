@@ -49,12 +49,15 @@ public class JobDataService {
     public void parseProduceData(TaskJob taskJob, String jsonString) {
         // 获取任务中的字段映射配置
         Map<String, String> fieldMapping = taskJob.getFieldMapping();
-        // 映射字段的类型
-        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
         if (CollUtil.isEmpty(fieldMapping)) {
             taskJob.appendLog("任务没有配置字段映射，跳过解析业务数据");
             return;
         }
+
+        // 映射字段的类型
+        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
+        // 数据字段默认值
+        Map<String, String> fieldDefaultValues = taskJob.getFieldDefaultValues();
 
         // 字段层级前缀
         String apiFieldPrefix = taskJob.getApiFieldPrefix();
@@ -127,6 +130,18 @@ public class JobDataService {
                         taskJob.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
                     }
                 });
+
+                // 补充默认字段值
+                if (CollUtil.isNotEmpty(fieldDefaultValues)) {
+                    fieldDefaultValues.forEach((fieldCode, fieldDefaultValue) -> {
+                        if (produceData.containsKey(fieldCode)) {
+                            return;
+                        }
+
+                        String targetType = fieldTypeMapping.get(fieldCode);
+                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
+                    });
+                }
 
                 produceDataList.add(produceData);
             });

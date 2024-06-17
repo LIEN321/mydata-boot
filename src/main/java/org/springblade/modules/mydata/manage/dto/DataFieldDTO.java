@@ -40,4 +40,9 @@ public class DataFieldDTO implements Serializable {
      * 字段显示模式：0-不显示、1-显示
      */
     private Integer displayMode;
+
+    /**
+     * 字段默认值
+     */
+    private String defaultValue;
 }
