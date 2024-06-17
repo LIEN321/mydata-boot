@@ -182,4 +182,16 @@ public class MdUtil {
 
         return StrUtil.toString(value);
     }
+
+    public static String defaultValue(String targetType) {
+        switch (targetType) {
+            case MdConstant.DATA_TYPE_INT:
+            case MdConstant.DATA_TYPE_NUMBER:
+                return "0";
+            case MdConstant.DATA_TYPE_STRING:
+                return "";
+            case MdConstant.DATA_TYPE_DATE:
+                return DateUtil.formatDateTime(new Date());
+        }
+    }
 }
