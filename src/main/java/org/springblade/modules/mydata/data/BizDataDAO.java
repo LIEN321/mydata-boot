@@ -1,13 +1,16 @@
 package org.springblade.modules.mydata.data;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.springblade.common.constant.MdConstant;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -15,6 +18,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +43,7 @@ public class BizDataDAO {
      * @param data     业务数据
      */
     public void insert(String dbCode, String dataCode, Map<String, Object> data) {
-        mongoFactory.getTemplate(dbCode).insert(data, dataCode);
+        insertBatch(dbCode, dataCode, CollUtil.toList(data));
     }
 
     /**
@@ -49,14 +54,11 @@ public class BizDataDAO {
      * @param dataList 业务数据列表
      */
     public void insertBatch(String dbCode, String dataCode, List<Map<String, Object>> dataList) {
+        if (CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        dataList.forEach(this::fillData);
         mongoFactory.getTemplate(dbCode).insert(dataList, dataCode);
-    }
-
-    public void update(String dbCode, String dataCode, String idField, String idValue, Map<String, Object> data) {
-        Query query = new Query(Criteria.where(idField).is(idValue));
-        Document document = new Document(data);
-        Update update = Update.fromDocument(document);
-        mongoFactory.getTemplate(dbCode).updateFirst(query, update, dataCode);
     }
 
     /**
@@ -68,6 +70,7 @@ public class BizDataDAO {
      * @param data     业务数据
      */
     public void update(String dbCode, String dataCode, Map<String, Object> idMap, Map<String, Object> data) {
+        fillData(data);
         Query query = new Query();
         idMap.forEach((k, v) -> {
             query.addCriteria(Criteria.where(k).is(v));
@@ -78,22 +81,17 @@ public class BizDataDAO {
         mongoFactory.getTemplate(dbCode).updateFirst(query, update, dataCode);
     }
 
-    public List<Map> listAll(String dbCode, String dataCode) {
-        return mongoFactory.getTemplate(dbCode).findAll(Map.class, dataCode);
-    }
-
-    public List<Map> list(String dbCode, String dataCode, int size) {
-        Assert.isTrue(size >= 0);
-        Query query = new Query();
-        query.limit(size);
-        return mongoFactory.getTemplate(dbCode).find(query, Map.class, dataCode);
-    }
-
-    public List<Map> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
-        return list(dbCode, dataCode, bizDataFilters, null, null);
-    }
-
-    public List<Map> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit) {
+    /**
+     * 从指定数据库 根据过滤条件 查询指定范围的数据
+     *
+     * @param dbCode         数据库
+     * @param dataCode       数据标识
+     * @param bizDataFilters 过滤条件
+     * @param skip           跳过数量
+     * @param limit          限制数量
+     * @return 业务数据列表
+     */
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit, BizDataSort... bizDataSorts) {
         MongoTemplate mongoTemplate = mongoFactory.getTemplate(dbCode);
         Query query = new Query();
         if (skip != null) {
@@ -102,10 +100,113 @@ public class BizDataDAO {
         if (limit != null) {
             query.limit(limit);
         }
+
+        // mongodb查询条件集合 加入查询中
+        List<Criteria> criteriaList = parseFilters(bizDataFilters);
+        if (CollUtil.isNotEmpty(criteriaList)) {
+            query.addCriteria(new Criteria().andOperator(criteriaList));
+        }
+        // 排序
+        if (ArrayUtil.isNotEmpty(bizDataSorts)) {
+            Sort sort = null;
+            for (BizDataSort bizDataSort : bizDataSorts) {
+                if (sort == null) {
+                    sort = Sort.by(bizDataSort.getDirection(), bizDataSort.getName());
+                } else {
+                    sort = sort.and(Sort.by(bizDataSort.getDirection(), bizDataSort.getName()));
+                }
+            }
+            if (sort != null) {
+                query.with(sort);
+            }
+        }
+        query.fields().exclude(MdConstant.MONGODB_OBJECT_ID);
+        // 执行查询
+        List<Document> documents = mongoTemplate.find(query, Document.class, dataCode);
+        return new ArrayList<>(documents);
+    }
+
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
+        return this.list(dbCode, dataCode, bizDataFilters, null, null, bizDataSorts);
+    }
+
+    /**
+     * 分页查询业务数据
+     *
+     * @param dbCode         数据库
+     * @param dataCode       数据标识
+     * @param pageNo         当前页数
+     * @param pageSize       分页数量
+     * @param bizDataFilters 过滤参数
+     * @return 业务数据列表
+     */
+    public List<Map<String, Object>> page(String dbCode, String dataCode, Integer pageNo, Integer pageSize, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
+        Long skip = (pageNo - 1L) * pageSize;
+        return this.list(dbCode, dataCode, bizDataFilters, skip, pageSize, bizDataSorts);
+    }
+
+    public long total(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
+        Query query = new Query();
+        List<Criteria> criteriaList = parseFilters(bizDataFilters);
+        if (CollUtil.isNotEmpty(criteriaList)) {
+            query.addCriteria(new Criteria().andOperator(criteriaList));
+        }
+        return mongoFactory.getTemplate(dbCode).count(query, dataCode);
+    }
+
+    /**
+     * 根据 多个唯一标识的组合 查询业务数据
+     *
+     * @param dbCode   数据库编号
+     * @param dataCode 业务数据编号
+     * @param idMap    唯一标识组合
+     * @return 业务数据
+     */
+    public Map<String, Object> findByIds(String dbCode, String dataCode, Map<String, Object> idMap) {
+        Query query = new Query();
+        idMap.forEach((k, v) -> {
+            query.addCriteria(Criteria.where(k).is(v));
+        });
+        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
+    }
+
+    public void drop(String dbCode, String dataCode) {
+        mongoFactory.getTemplate(dbCode).dropCollection(dataCode);
+    }
+
+    /**
+     * 根据 多个唯一标识的组合 删除业务数据
+     *
+     * @param dbCode   数据库编号
+     * @param dataCode 业务数据编号
+     * @param bizId    数据标识
+     */
+    public void remove(String dbCode, String dataCode, String bizId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(MdConstant.DATA_COLUMN_DATA_ID).is(bizId));
+        mongoFactory.getTemplate(dbCode).remove(query, dataCode);
+    }
+
+    /**
+     * 补充数据的 系统字段值
+     *
+     * @param bizData
+     */
+    private void fillData(Map<String, Object> bizData) {
+        Date currentTime = DateUtil.date();
+        // 设置业务数据的最后更新时间
+        bizData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+        if (ObjectUtil.isEmpty(bizData.get(MdConstant.DATA_COLUMN_DATA_ID))) {
+            // 设置数据的唯一标识
+            bizData.put(MdConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
+        }
+    }
+
+    private List<Criteria> parseFilters(List<BizDataFilter> bizDataFilters) {
+        List<Criteria> criteriaList = CollUtil.newArrayList();
         // 遍历数据过滤条件
         if (CollUtil.isNotEmpty(bizDataFilters)) {
             // mongodb的查询条件集合
-            List<Criteria> criteriaList = CollUtil.newArrayList();
             for (BizDataFilter bizDataFilter : bizDataFilters) {
                 // 条件key
                 final String key = bizDataFilter.getKey();
@@ -181,75 +282,7 @@ public class BizDataDAO {
                 // 存入mongodb的查询条件集合
                 criteriaList.add(criteria);
             }
-
-            // mongodb查询条件集合 加入查询中
-            query.addCriteria(new Criteria().andOperator(criteriaList));
         }
-
-        // 执行查询
-        return mongoTemplate.find(query, Map.class, dataCode);
+        return criteriaList;
     }
-
-    public List<Map> page(String dbCode, String dataCode, int pageNo, int pageSize, Map<String, Object> params) {
-        Long skip = (pageNo - 1L) * pageSize;
-        Integer limit = pageSize;
-        List<BizDataFilter> bizDataFilters = CollUtil.toList();
-        if (MapUtil.isNotEmpty(params)) {
-            params.forEach((k, v) -> {
-                BizDataFilter filter = new BizDataFilter();
-                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
-                filter.setKey(k);
-                filter.setOp(MdConstant.DATA_OP_LIKE);
-                filter.setValue(v);
-                bizDataFilters.add(filter);
-            });
-        }
-        return this.list(dbCode, dataCode, bizDataFilters, skip, limit);
-    }
-
-    public List<Map> list(String dbCode, String dataCode, Map<String, Object> params) {
-        List<BizDataFilter> bizDataFilters = CollUtil.toList();
-        if (MapUtil.isNotEmpty(params)) {
-            params.forEach((k, v) -> {
-                BizDataFilter filter = new BizDataFilter();
-                filter.setType(MdConstant.TASK_FILTER_TYPE_VALUE);
-                filter.setKey(k);
-                filter.setOp(MdConstant.DATA_OP_LIKE);
-                filter.setValue(v);
-                bizDataFilters.add(filter);
-            });
-        }
-        return this.list(dbCode, dataCode, bizDataFilters);
-    }
-
-    public long total(String dbCode, String dataCode) {
-        Query query = new Query();
-        return mongoFactory.getTemplate(dbCode).count(query, dataCode);
-    }
-
-    public Map<String, Object> findById(String dbCode, String dataCode, String idCode, Object idValue) {
-        Query query = new Query(Criteria.where(idCode).is(idValue));
-        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
-    }
-
-    /**
-     * 根据 多个唯一标识的组合 查询业务数据
-     *
-     * @param dbCode   数据库编号
-     * @param dataCode 业务数据编号
-     * @param idMap    唯一标识组合
-     * @return 业务数据
-     */
-    public Map<String, Object> findByIds(String dbCode, String dataCode, Map<String, Object> idMap) {
-        Query query = new Query();
-        idMap.forEach((k, v) -> {
-            query.addCriteria(Criteria.where(k).is(v));
-        });
-        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
-    }
-
-    public void drop(String dbCode, String dataCode) {
-        mongoFactory.getTemplate(dbCode).dropCollection(dataCode);
-    }
-
 }

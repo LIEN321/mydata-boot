@@ -103,7 +103,13 @@ public class JobThread implements Runnable {
 
                         String json = null;
                         if (MdConstant.TASK_PRODUCE_MODE_API.equals(taskJob.getProduceMode())) {
-                            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed()) && CollUtil.isNotEmpty(taskJob.getTaskVar())) {
+                            // 是否为订阅任务
+                            if (MdConstant.TASK_IS_SUBSCRIBED.equals(taskJob.getIsSubscribed())) {
+                                // 若不服用任务批号，则TaskVar必须有效 否则无法调用接口
+                                if (CollUtil.isEmpty(taskJob.getTaskVar())) {
+                                    taskJob.appendLog("当前任务的Task Var为空，结束任务");
+                                    break;
+                                }
                                 // 订阅的提供数据任务 从父任务获取数据并解析到当前任务中
                                 JobVarService.parseTaskDataVar(taskJob, taskJob.getTaskVar());
                             }
@@ -164,6 +170,8 @@ public class JobThread implements Runnable {
                         } else {
                             // 保存业务数据
                             jobDataService.saveProduceData(taskJob);
+                            // 保存业务数据历史记录（若启用）
+                            jobDataService.saveProduceDataHistory(taskJob);
                         }
 
                         // 更新环境变量
@@ -244,7 +252,7 @@ public class JobThread implements Runnable {
 
                         // 根据过滤条件 查询数据
                         taskJob.appendLog("查询业务数据，过滤条件是：{}，分批参数skip={} limit={}", taskJob.getDataFilters(), skip, limit);
-                        List<Map> dataList = jobDataService.listConsumeData(taskJob, skip, limit);
+                        List<Map<String, Object>> dataList = jobDataService.listConsumeData(taskJob, skip, limit);
                         taskJob.appendLog("查询业务数据的数量是 {}", dataList.size());
 
                         // 没有业务数据，则跳过后续处理

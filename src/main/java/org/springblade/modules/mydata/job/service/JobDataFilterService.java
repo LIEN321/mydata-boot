@@ -52,7 +52,7 @@ public class JobDataFilterService {
     public void doFilter(TaskJob taskJob) {
         Assert.notNull(taskJob);
 
-        List<Map> dataList = taskJob.getProduceDataList();
+        List<Map<String, Object>> dataList = taskJob.getProduceDataList();
         List<BizDataFilter> dataFilters = taskJob.getDataFilters();
 
         if (CollUtil.isEmpty(dataList) || CollUtil.isEmpty(dataFilters)) {
@@ -66,9 +66,9 @@ public class JobDataFilterService {
         Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
 
         // 过滤后的有效数据
-        List<Map> validDataList = ListUtil.toList();
+        List<Map<String, Object>> validDataList = ListUtil.toList();
         // 过滤被拦截的无效数据
-        List<Map> filteredDataList = ListUtil.toList();
+        List<Map<String, Object>> filteredDataList = ListUtil.toList();
         // 遍历数据，并进行过滤
         dataList.forEach(data -> {
 
@@ -104,7 +104,7 @@ public class JobDataFilterService {
         return filters;
     }
 
-    private boolean checkIdValue(Map data, List<String> idCodes) {
+    private boolean checkIdValue(Map<String, Object> data, List<String> idCodes) {
         // 检测 标识字段值 是否有效
         for (String idCode : idCodes) {
             Object idFieldValue = data.get(idCode);
@@ -115,7 +115,7 @@ public class JobDataFilterService {
         return true;
     }
 
-    private boolean filterDataValues(Map data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {
+    private boolean filterDataValues(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {
         boolean isCorrect = false;
 
         for (BizDataFilter filter : dataFilters) {

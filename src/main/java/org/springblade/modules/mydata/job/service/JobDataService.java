@@ -49,12 +49,15 @@ public class JobDataService {
     public void parseProduceData(TaskJob taskJob, String jsonString) {
         // 获取任务中的字段映射配置
         Map<String, String> fieldMapping = taskJob.getFieldMapping();
-        // 映射字段的类型
-        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
         if (CollUtil.isEmpty(fieldMapping)) {
             taskJob.appendLog("任务没有配置字段映射，跳过解析业务数据");
             return;
         }
+
+        // 映射字段的类型
+        Map<String, String> fieldTypeMapping = taskJob.getFieldTypeMapping();
+        // 数据字段默认值
+        Map<String, String> fieldDefaultValues = taskJob.getFieldDefaultValues();
 
         // 字段层级前缀
         String apiFieldPrefix = taskJob.getApiFieldPrefix();
@@ -70,7 +73,7 @@ public class JobDataService {
         }
 
         // 声明方法返回结果
-        List<Map> produceDataList = CollUtil.newArrayList();
+        List<Map<String, Object>> produceDataList = CollUtil.newArrayList();
 
         baseArray.forEach(json -> {
             // 保留根目录json，用于 /field 格式提取数据
@@ -128,6 +131,18 @@ public class JobDataService {
                     }
                 });
 
+                // 补充默认字段值
+                if (CollUtil.isNotEmpty(fieldDefaultValues)) {
+                    fieldDefaultValues.forEach((fieldCode, fieldDefaultValue) -> {
+                        if (produceData.containsKey(fieldCode)) {
+                            return;
+                        }
+
+                        String targetType = fieldTypeMapping.get(fieldCode);
+                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
+                    });
+                }
+
                 produceDataList.add(produceData);
             });
         });
@@ -143,8 +158,8 @@ public class JobDataService {
      * @param limit   限制数量
      * @return 业务数据
      */
-    public List<Map> listConsumeData(TaskJob taskJob, Long skip, Integer limit) {
-        List<Map> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), taskJob.getDataFilters(), skip, limit);
+    public List<Map<String, Object>> listConsumeData(TaskJob taskJob, Long skip, Integer limit) {
+        List<Map<String, Object>> dataList = bizDataDAO.list(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode(), taskJob.getDataFilters(), skip, limit);
         if (CollUtil.isEmpty(dataList)) {
             return dataList;
         }
@@ -162,14 +177,14 @@ public class JobDataService {
      * @param taskJob 任务
      */
     public void convertConsumeData(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getConsumeDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getConsumeDataList();
         // 获取任务的数据映射
         // 映射中，key为数据中心字段名，value为api字段名
         Map<String, String> mFieldMapping = taskJob.getFieldMapping();
         Assert.notEmpty(mFieldMapping, "任务未设置数据映射");
 
         // 遍历数据中心数据，根据映射 转换为接口结构的数据
-        List<Map> apiDataList = CollUtil.newArrayList();
+        List<Map<String, Object>> apiDataList = CollUtil.newArrayList();
 
         consumeDataList.forEach(bizData -> {
             Map<String, Object> apiData = MapUtil.newHashMap();
@@ -212,6 +227,10 @@ public class JobDataService {
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollUtil.newArrayList();
+
+        // 实际入库的业务数据
+        List<Map<String, Object>> savedDataList = CollUtil.newArrayList();
+
         taskJob.getProduceDataList().forEach(produceData -> {
 
             // 标识字段 键值对
@@ -256,14 +275,13 @@ public class JobDataService {
                 dataUpdateList.add(queryData);
             }
 
-            // 设置业务数据的最后更新时间
-            queryData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
             queryData.put(MdConstant.DATA_COLUMN_BATCH_ID, taskJob.getDataBatchId());
         });
 
         // 新增数据 到 数据仓库
         if (!dataInsertList.isEmpty()) {
             bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, dataInsertList);
+            savedDataList.addAll(dataInsertList);
         }
 
         // 更新数据仓库的数据
@@ -277,11 +295,35 @@ public class JobDataService {
 
                 bizDataDAO.update(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), dataCode, idMap, data);
             });
+            savedDataList.addAll(dataUpdateList);
         }
 
+        taskJob.setProduceDataList(savedDataList);
         taskJob.appendLog("保存业务数据，新增：{} 更新：{}", dataInsertList.size(), dataUpdateList.size());
         taskJob.setInsertCount(taskJob.getInsertCount() + dataInsertList.size());
         taskJob.setUpdateCount(taskJob.getUpdateCount() + dataUpdateList.size());
+    }
+
+    /**
+     * 保存业务数据的历史记录
+     *
+     * @param taskJob 任务job
+     */
+    public void saveProduceDataHistory(TaskJob taskJob) {
+        if (taskJob.getEnableHistory() != MdConstant.ENABLED) {
+            return;
+        }
+
+        List<Map<String, Object>> produceDataList = taskJob.getProduceDataList();
+        if (CollUtil.isEmpty(produceDataList)) {
+            return;
+        }
+
+        produceDataList.forEach(data -> {
+            data.remove(MdConstant.MONGODB_OBJECT_ID);
+        });
+
+        bizDataDAO.insertBatch(MdUtil.getBizDbCode(taskJob.getTenantId(), taskJob.getProjectId(), taskJob.getEnvId()), taskJob.getDataCode() + MdConstant.DATA_COLUMN_HISTORY, produceDataList);
     }
 
     /**
@@ -291,7 +333,7 @@ public class JobDataService {
      * @return excel文件
      */
     public File exportConsumeDataExcel(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getConsumeDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getConsumeDataList();
         return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
@@ -302,7 +344,7 @@ public class JobDataService {
      * @return excel文件
      */
     public File exportFilteredDataExcel(TaskJob taskJob) {
-        List<Map> consumeDataList = taskJob.getFilteredDataList();
+        List<Map<String, Object>> consumeDataList = taskJob.getFilteredDataList();
         return exportExcel(consumeDataList, taskJob.getFieldMapping());
     }
 
@@ -313,7 +355,7 @@ public class JobDataService {
      * @param mFieldMapping 任务的数据映射，key为字段编号，value为字段名称
      * @return excel文件
      */
-    private File exportExcel(List<Map> datas, LinkedHashMap<String, String> mFieldMapping) {
+    private File exportExcel(List<Map<String, Object>> datas, LinkedHashMap<String, String> mFieldMapping) {
         Assert.notEmpty(mFieldMapping, "任务未选择导出字段");
 
         // 遍历业务数据，根据映射 转换为excel导出的数据

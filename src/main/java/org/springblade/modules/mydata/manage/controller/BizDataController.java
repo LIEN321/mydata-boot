@@ -70,11 +70,11 @@ public class BizDataController {
      */
     @GetMapping("/field_list")
     public R<List<DataFieldVO>> listDataFields(Long dataId) {
-        return R.data(DataFieldWrapper.build().listVO(dataFieldService.findByData(dataId)));
+        return R.data(DataFieldWrapper.build().listVO(dataFieldService.findDisplayedFields(dataId)));
     }
 
     @GetMapping("/data_list")
-    public R<IPage<Map>> list(@RequestParam Map<String, Object> params) {
+    public R<IPage<Map<String, Object>>> list(@RequestParam Map<String, Object> params) {
         BizDataDTO bizDataDTO = new BizDataDTO();
         bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
         bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
@@ -86,9 +86,27 @@ public class BizDataController {
         return R.data(bizDataService.bizDataPage(Condition.getPage(query), bizDataDTO, params));
     }
 
+    @GetMapping("/data_history_page")
+    public R<IPage<Map<String, Object>>> dataHistoryPage(@RequestParam Map<String, Object> params) {
+        BizDataDTO bizDataDTO = new BizDataDTO();
+        bizDataDTO.setProjectId(Long.parseLong(params.remove("projectId").toString()));
+        bizDataDTO.setEnvId(Long.parseLong(params.remove("envId").toString()));
+        bizDataDTO.setDataId(Long.parseLong(params.remove("dataId").toString()));
+
+        Query query = new Query();
+        query.setSize(Integer.parseInt(params.remove("size").toString()));
+        query.setCurrent(Integer.parseInt(params.remove("current").toString()));
+        return R.data(bizDataService.bizDataHistoryPage(Condition.getPage(query), bizDataDTO, params));
+    }
+
     @GetMapping("/delete_by_env")
     public R deleteByEnv(BizDataDTO bizDataDTO) {
         return R.status(bizDataService.deleteByEnv(bizDataDTO.getDataId(), bizDataDTO.getEnvId()));
+    }
+
+    @GetMapping("/delete_biz_data")
+    public R deleteBizData(@RequestParam Long dataId, @RequestParam Long envId, @RequestParam String bizId) {
+        return R.status(bizDataService.deleteById(dataId, envId, bizId));
     }
 
     @PostMapping("/upload_excel")
@@ -138,7 +156,7 @@ public class BizDataController {
         Data data = ManageCache.getData(dataId);
 
         List<DataField> dataFields = dataFieldService.findByData(dataId);
-        List<Map> bizDataList = bizDataService.bizDataList(bizDataDTO, params);
+        List<Map<String, Object>> bizDataList = bizDataService.bizDataList(bizDataDTO, params);
         List<Map<String, String>> excelDataList = CollUtil.newArrayList();
         bizDataList.forEach(bizData -> {
             Map<String, String> row = MapUtil.newHashMap();
@@ -214,9 +232,9 @@ public class BizDataController {
                 return R.fail("上传失败，Excel为空！");
             }
 
-            List<Map> bizDataList = CollUtil.newArrayList();
+            List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
             excelDataList.forEach(row -> {
-                Map bizData = new HashMap();
+                Map<String, Object> bizData = new HashMap<>();
                 fieldColumnIndexMapping.forEach((dataField, columnIndex) -> {
                     bizData.put(dataField, row.get(columnIndex));
                 });

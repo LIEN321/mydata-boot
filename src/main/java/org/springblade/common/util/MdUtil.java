@@ -79,7 +79,7 @@ public class MdUtil {
      * 将接口参数的k-v格式 转为 表格的k列和v列
      *
      * @param map Map
-     * @return List<Map>
+     * @return map List<Map<String, Object>>
      */
     public static List<Map<String, String>> switchMapToList(Map<String, String> map) {
         List<Map<String, String>> maps = CollUtil.newArrayList();
@@ -97,7 +97,7 @@ public class MdUtil {
     /**
      * 将表格的k列和v列 转为 接口参数的k-v格式
      *
-     * @param list List<Map>
+     * @param list List<Map<String, Object>>
      * @return Map
      */
     public static LinkedHashMap<String, String> parseToKvMap(List<Map<String, String>> list) {
@@ -113,7 +113,7 @@ public class MdUtil {
     /**
      * 将表格的k列和v列 转为 接口参数的k-v格式
      *
-     * @param list List<Map>
+     * @param list List<Map<String, Object>>
      * @return Map
      */
     public static LinkedHashMap<String, Object> parseToKvMapObj(List<Map<String, Object>> list) {
@@ -128,6 +128,10 @@ public class MdUtil {
 
     public static String getBizDbCode(String tenantId, Long projectId, Long envId) {
         return tenantId + ":" + projectId + ":" + envId;
+    }
+
+    public static String getBizHistoryCollection(String dataCode) {
+        return dataCode + MdConstant.DATA_COLUMN_HISTORY;
     }
 
     /**
@@ -177,5 +181,18 @@ public class MdUtil {
         }
 
         return StrUtil.toString(value);
+    }
+
+    public static String defaultValue(String targetType) {
+        switch (targetType) {
+            case MdConstant.DATA_TYPE_INT:
+            case MdConstant.DATA_TYPE_NUMBER:
+                return "0";
+//            case MdConstant.DATA_TYPE_STRING:
+            case MdConstant.DATA_TYPE_DATE:
+                return DateUtil.formatDateTime(new Date());
+            default:
+                return "";
+        }
     }
 }

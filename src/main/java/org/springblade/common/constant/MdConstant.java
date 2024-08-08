@@ -137,6 +137,16 @@ public interface MdConstant {
     String DATA_COLUMN_BATCH_ID = "_MD_BATCH_ID_";
 
     /**
+     * 业务数据字段名称：唯一标识
+     */
+    String DATA_COLUMN_DATA_ID = "_MD_DATA_ID_";
+
+    /**
+     * 业务数据字段名称：唯一标识
+     */
+    String DATA_COLUMN_HISTORY = "_MD_HISTORY";
+
+    /**
      * 业务数据常量值：任务最后成功时间
      */
     String DATA_VALUE_TASK_LAST_SUCCESS_TIME = "_MD_TASK_LAST_SUCCESS_";
@@ -302,7 +312,7 @@ public interface MdConstant {
     /**
      * 任务失败重试间隔
      */
-    String TASK_FAILED_PERIOD = "0/5 * * * * ?";
+    String[] TASK_FAILED_PERIOD = {"0 0/1 * * * ?", "0 0/15 * * * ?", "0 0 0/1 * * ?", "0 0 0/3 * * ?"};
 
     /**
      * 单条记录消费模式 - 单个对象对象
@@ -377,4 +387,9 @@ public interface MdConstant {
      * 字段映射的根目录
      */
     String FIELD_MAPPING_ROOT = "/";
+
+    /**
+     *
+     */
+    String MONGODB_OBJECT_ID = "_id";
 }

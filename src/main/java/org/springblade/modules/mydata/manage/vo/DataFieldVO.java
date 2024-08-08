@@ -33,4 +33,14 @@ public class DataFieldVO {
      * 字段类型
      */
     private String fieldType;
+
+    /**
+     * 字段显示模式：0-不显示、1-显示
+     */
+    private Integer displayMode;
+
+    /**
+     * 字段默认值
+     */
+    private String defaultValue;
 }

@@ -8,6 +8,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.executor.CronExpression;
 import org.springblade.common.constant.MdConstant;
@@ -16,6 +17,8 @@ import org.springblade.modules.mydata.job.cache.JobCache;
 import org.springblade.modules.mydata.job.service.JobBatchService;
 import org.springblade.modules.mydata.job.service.JobDataFilterService;
 import org.springblade.modules.mydata.job.service.JobEmailService;
+import org.springblade.modules.mydata.manage.cache.ManageCache;
+import org.springblade.modules.mydata.manage.entity.Data;
 import org.springblade.modules.mydata.manage.entity.DataField;
 import org.springblade.modules.mydata.manage.entity.Task;
 import org.springblade.modules.mydata.manage.entity.TaskLog;
@@ -240,7 +243,7 @@ public class JobExecutor implements ApplicationRunner {
                 taskJob.setCreateTime(new Date());
 
                 // 任务周期，若是任务重试 则使用系统默认重试间隔
-                String period = isRetry ? MdConstant.TASK_FAILED_PERIOD : taskJob.getTaskPeriod();
+                String period = isRetry ? MdConstant.TASK_FAILED_PERIOD[taskJob.getExecuteCount() - 1] : taskJob.getTaskPeriod();
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskJob, period);
 
@@ -305,7 +308,7 @@ public class JobExecutor implements ApplicationRunner {
             if (ObjectUtil.equal(subTask.getOpType(), MdConstant.DATA_PRODUCER)) {
                 // 调用API模式
                 if (ObjectUtil.equal(subTask.getProduceMode(), MdConstant.TASK_PRODUCE_MODE_API)) {
-                    List<Map> produceDataList = parentTaskJob.getProduceDataList();
+                    List<Map<String, Object>> produceDataList = parentTaskJob.getProduceDataList();
                     // 没有业务数据 则触发子任务
                     if (CollUtil.isEmpty(produceDataList)) {
                         TaskJob subTaskJob = buildSubTaskJob(parentTaskJob, subTask);
@@ -320,7 +323,7 @@ public class JobExecutor implements ApplicationRunner {
                             subTaskJob.setTaskVar(data);
                             // 执行订阅任务
                             executeJob(subTaskJob);
-                            parentTaskJob.appendLog("触发执行订阅任务：{}", subTaskJob.getTaskName());
+                            parentTaskJob.appendLog("触发执行订阅任务：{}，任务数据：{}", subTaskJob.getTaskName(), data);
                         });
                     }
                 }
@@ -561,6 +564,11 @@ public class JobExecutor implements ApplicationRunner {
         taskJob.setCleanHtml(task.getCleanHtml());
 
         if (task.getDataId() != null) {
+            // 是否启用历史记录：0-不启用、1-启用
+            Data data = ManageCache.getData(task.getDataId());
+            if (data != null) {
+                taskJob.setEnableHistory(data.getEnableHistory());
+            }
             List<DataField> dataFields = dataFieldService.findByData(task.getDataId());
             // 获取配置映射的数据字段的类型
             if (CollUtil.isNotEmpty(dataFields) || CollUtil.isNotEmpty(task.getFieldMapping())) {
@@ -569,6 +577,12 @@ public class JobExecutor implements ApplicationRunner {
                         .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
                 // 映射字段的类型
                 taskJob.setFieldTypeMapping(fieldTypeMapping);
+
+                // 数据字段默认值
+                Map<String, String> fieldDefaultValues = dataFields.stream()
+                        .filter(dataField -> StrUtil.isNotEmpty(dataField.getDefaultValue()))
+                        .collect(Collectors.toMap(DataField::getFieldCode, DataField::getDefaultValue));
+                taskJob.setFieldDefaultValues(fieldDefaultValues);
             }
         }
         taskJob.setProduceDataList(CollUtil.toList());

@@ -59,6 +59,14 @@ public class DataFieldServiceImpl extends BaseServiceImpl<DataFieldMapper, DataF
         return this.list(Wrappers.<DataField>lambdaQuery().eq(DataField::getDataId, dataId));
     }
 
+    @Override
+    public List<DataField> findDisplayedFields(Long dataId) {
+        Assert.notNull(dataId);
+        return this.list(Wrappers.<DataField>lambdaQuery()
+                .eq(DataField::getDataId, dataId)
+                .eq(DataField::getDisplayMode, MdConstant.ENABLED));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void deleteByStandardData(Long dataId) {
@@ -70,7 +78,7 @@ public class DataFieldServiceImpl extends BaseServiceImpl<DataFieldMapper, DataF
         Assert.notNull(dataId);
 
         return this.list(Wrappers.<DataField>lambdaQuery()
-                                 .eq(DataField::getDataId, dataId).eq(DataField::getIsId, MdConstant.IS_ID_FIELD));
-
+                .eq(DataField::getDataId, dataId)
+                .eq(DataField::getIsId, MdConstant.IS_ID_FIELD));
     }
 }

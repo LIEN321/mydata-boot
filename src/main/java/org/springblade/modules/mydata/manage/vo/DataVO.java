@@ -54,4 +54,9 @@ public class DataVO extends Data {
 
     @JsonSerialize(using = ToStringSerializer.class)
     private Long projectId;
+
+    /**
+     * 是否启用历史记录：0-不启用、1-启用
+     */
+    private Integer enableHistory;
 }

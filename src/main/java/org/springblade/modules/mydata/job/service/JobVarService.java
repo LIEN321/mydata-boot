@@ -183,7 +183,7 @@ public class JobVarService {
      *
      * @param taskJob 任务
      */
-    public static void parseTaskDataVar(TaskJob taskJob, Map data) {
+    public static void parseTaskDataVar(TaskJob taskJob, Map<String, Object> data) {
         if (MapUtil.isEmpty(data)) {
             return;
         }
@@ -219,7 +219,7 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseDataFieldVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+    public static String parseDataFieldVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
         return parseDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, "{{", "}}");
     }
 
@@ -240,12 +240,12 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseExistedDataVar(String string, Map data, Map<String, String> fieldTypeMapping) {
+    public static String parseExistedDataVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
         return parseDataVar(string, data, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, "{{$", "}}");
     }
 
-    private static String parseDataVar(String string, Map data, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
-        if (StrUtil.isEmpty(string) || MapUtil.isEmpty(data)) {
+    private static String parseDataVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
+        if (StrUtil.isEmpty(string)) {
             return string;
         }
         // 解析字符串中的属性变量名 {{field}}
@@ -257,13 +257,16 @@ public class JobVarService {
         // 替换映射
         Map<String, String> replaceMap = MapUtil.newHashMap();
         for (String field : fieldNames) {
-            if (!data.containsKey(field)) {
-                continue;
-            }
             // 尝试获取数据的类型，若没有则默认为字符串
             String targetType = fieldTypeMapping.get(field);
-            // 从数据中 取出数据 并存入替换映射
-            String value = MdUtil.formatData(data.get(field), targetType);
+
+            String value = "";
+            if (MapUtil.isEmpty(data) || !data.containsKey(field)) {
+                value = MdUtil.defaultValue(targetType);
+            } else {
+                // 从数据中 取出数据 并存入替换映射
+                value = MdUtil.formatData(data.get(field), targetType);
+            }
             replaceMap.put(field, value);
         }
 

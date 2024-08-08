@@ -192,17 +192,17 @@ public class TaskJob implements Serializable {
     /**
      * 接口返回的数据
      */
-    private List<Map> produceDataList;
+    private List<Map<String, Object>> produceDataList;
 
     /**
      * 待消费的数据
      */
-    private List<Map> consumeDataList;
+    private List<Map<String, Object>> consumeDataList;
 
     /**
      * 被过滤的无效数据
      */
-    private List<Map> filteredDataList;
+    private List<Map<String, Object>> filteredDataList;
 
     /**
      * 所属项目id
@@ -238,6 +238,11 @@ public class TaskJob implements Serializable {
      * 配置映射的数据字段的类型
      */
     private Map<String, String> fieldTypeMapping;
+
+    /**
+     * 字段默认值
+     */
+    private Map<String, String> fieldDefaultValues;
 
     /**
      * 提供数据模式，默认1，1-API、2-接收推送
@@ -307,7 +312,7 @@ public class TaskJob implements Serializable {
     /**
      * 任务内置变量
      */
-    private Map taskVar = MapUtil.newHashMap();
+    private Map<String, Object> taskVar = MapUtil.newHashMap();
 
     /**
      * 数据处理配置
@@ -333,6 +338,11 @@ public class TaskJob implements Serializable {
      * 是否清除HTML标签，0-不清除、1-清除
      */
     private Integer cleanHtml;
+
+    /**
+     * 是否启用历史记录：0-不启用、1-启用
+     */
+    private Integer enableHistory;
 
     /**
      * 追加日志

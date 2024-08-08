@@ -46,7 +46,7 @@ public class ProjectDataWrapper extends BaseEntityWrapper<Data, ProjectDataVO> {
 
         List<Task> tasks = taskService.listEnvTaskByData(data.getId(), envId);
         if (envId != null) {
-            long totalCount = bizDataDAO.total(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode());
+            long totalCount = bizDataDAO.total(MdUtil.getBizDbCode(data.getTenantId(), data.getProjectId(), envId), data.getDataCode(), null);
             projectDataVO.setDataCount(totalCount);
 
             long provideAppCount = tasks.stream()
