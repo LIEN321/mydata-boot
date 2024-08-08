@@ -243,7 +243,7 @@ public class JobExecutor implements ApplicationRunner {
                 taskJob.setCreateTime(new Date());
 
                 // 任务周期，若是任务重试 则使用系统默认重试间隔
-                String period = isRetry ? MdConstant.TASK_FAILED_PERIOD : taskJob.getTaskPeriod();
+                String period = isRetry ? MdConstant.TASK_FAILED_PERIOD[taskJob.getExecuteCount() - 1] : taskJob.getTaskPeriod();
                 // 计算Job的下次执行时间
                 calculateNextRunTime(taskJob, period);
 
