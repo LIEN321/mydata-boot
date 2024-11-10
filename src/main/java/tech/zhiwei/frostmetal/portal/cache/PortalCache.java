@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class PortalCache {
 
-    // 系统模块的缓存统一前缀
+    // Portal模块的缓存统一前缀
     private static final String PORTAL_CACHE_PREFIX = SysConstant.CACHE_PREFIX + "portal";
     // 角色课件菜单的缓存前缀
     private static final String CACHE_ROLE_MENUS = "menu:role:id:";
