@@ -2,7 +2,7 @@
 DROP TABLE if exists `${tableName}`;
 CREATE TABLE `${tableName}`(
   `id` BIGINT(20) NOT NULL comment '主键，自增',
-<#if extendMode == "base" || extendMode == "tree">
+<#if extendMode == "base" || extendMode == "tree" || extendMode == "tenant" || extendMode == "tree_tenant">
   `create_user` BIGINT(20) comment '创建人id',
   `create_time` DATETIME comment '创建时间',
   `update_user` BIGINT(20) comment '更新人',
@@ -17,7 +17,7 @@ CREATE TABLE `${tableName}`(
   `id_tree_path` VARCHAR(2000) comment 'id层级路径',
   `is_leaf` INT DEFAULT 1 comment '是否叶子节点',
 </#if>
-<#if extendMode == "base" || extendMode == "tree">
+<#if extendMode == "tenant" || extendMode == "tree_tenant">
   `tenant_id` varchar(20) comment '租户id',
 </#if>
 <#list properties as p>
