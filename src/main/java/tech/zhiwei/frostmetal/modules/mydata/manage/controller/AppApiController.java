@@ -23,7 +23,6 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppApiService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.AppApiVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.AppApiWrapper;
-import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 
 import java.util.Collection;
@@ -44,8 +43,8 @@ public class AppApiController {
 
     @PostMapping
     @Operation(summary = "新增或更新应用接口", operationId = "saveAppApi")
-    public R<Long> save(@RequestBody AppApiDTO AppApiDTO) {
-        return R.data(appApiService.saveAppApi(AppApiDTO));
+    public R<Long> save(@RequestBody AppApiDTO appApiDTO) {
+        return R.data(appApiService.saveAppApi(appApiDTO));
     }
 
     @GetMapping("/page")

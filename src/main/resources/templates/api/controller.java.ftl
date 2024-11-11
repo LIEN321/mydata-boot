@@ -48,8 +48,8 @@ public class ${entityClassName}Controller {
 
     @PostMapping
     @Operation(summary = "新增或更新${entityName}", operationId = "save${entityClassName}")
-    public R<Long> save(@RequestBody ${entityClassName}DTO ${entityClassName}DTO) {
-        return R.data(${entityCode}Service.save${entityClassName}(${entityClassName}DTO));
+    public R<Long> save(@RequestBody ${entityClassName}DTO ${entityCode}DTO) {
+        return R.data(${entityCode}Service.save${entityClassName}(${entityCode}DTO));
     }
 
     @GetMapping("/page")
