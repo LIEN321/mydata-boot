@@ -17,14 +17,14 @@ public class Entity {
 
     public Entity(String entityCode, String entityName, String packageName, String extendMode, String tableName,
                   List<Property> properties) {
-        this.entityCode = entityCode;
+        this.entityCode = StringUtil.toCamelCase(entityCode);
         this.entityName = entityName;
         this.packageName = packageName;
         this.extendMode = extendMode;
         this.tableName = tableName;
         this.properties = properties;
 
-        this.entityClassName = StringUtil.upperFirst(StringUtil.toCamelCase(entityCode));
+        this.entityClassName = StringUtil.upperFirst(this.entityCode);
 
         switch (extendMode) {
             case DevConstant.EXTEND_MODE_ID -> {
