@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.ProjectDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IProjectService;
-import tech.zhiwei.frostmetal.modules.mydata.manage.vo.ProjectSelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.ProjectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.ProjectWrapper;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -94,7 +94,7 @@ public class ProjectController {
 
     @GetMapping("/select")
     @Operation(summary = "查询所有项目", operationId = "projectSelect")
-    public List<ProjectSelectVO> select() {
+    public List<SelectVO> select() {
         return ProjectWrapper.getInstance().selectVOList(projectService.list());
     }
 }

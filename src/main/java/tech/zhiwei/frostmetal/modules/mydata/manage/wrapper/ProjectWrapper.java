@@ -1,8 +1,8 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.wrapper;
 
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.core.base.wrapper.BaseWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
-import tech.zhiwei.frostmetal.modules.mydata.manage.vo.ProjectSelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.ProjectVO;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -29,14 +29,14 @@ public class ProjectWrapper extends BaseWrapper<Project, ProjectVO> {
 		return BeanUtil.copyProperties(entity, ProjectVO.class);
 	}
 
-	public List<ProjectSelectVO> selectVOList(List<Project> entityList) {
-		List<ProjectSelectVO> selectVOList = new ArrayList<>();
+	public List<SelectVO> selectVOList(List<Project> entityList) {
+		List<SelectVO> selectVOList = new ArrayList<>();
 		if (CollectionUtil.isNotEmpty(entityList)) {
 			for (Project project : entityList) {
-				ProjectSelectVO projectSelectVO = new ProjectSelectVO();
-				projectSelectVO.setLabel(project.getProjectName());
-				projectSelectVO.setValue(project.getId());
-				selectVOList.add(projectSelectVO);
+				SelectVO selectVO = new SelectVO();
+				selectVO.setLabel(project.getProjectName());
+				selectVO.setValue(project.getId());
+				selectVOList.add(selectVO);
 			}
 		}
 		return selectVOList;
