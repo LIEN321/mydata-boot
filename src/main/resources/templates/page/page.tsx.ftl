@@ -5,8 +5,8 @@ import { useRef } from "react";
 
 const ${entityClassName}: React.FC = () => {
 
-// 表格列
-const columns: ProColumns<API.${entityClassName}VO>[] = [
+    // 表格列
+    const columns: ProColumns<API.${entityClassName}VO>[] = [
 <#list properties as p>
     <#if p.isList>
         {
