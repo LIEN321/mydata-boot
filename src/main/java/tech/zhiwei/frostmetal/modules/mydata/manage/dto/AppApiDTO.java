@@ -45,8 +45,14 @@ public class AppApiDTO extends BaseDTO {
     @Schema(description = "请求参数")
     private List<Map<String, Object>> reqParams;
 
-    @Schema(description = "请求体")
-    private String reqBody;
+    @Schema(description = "请求体类型")
+    private String reqBodyType;
+
+    @Schema(description = "请求体，form格式")
+    private List<Map<String, Object>> reqBodyForm;
+
+    @Schema(description = "请求体，raw格式")
+    private String reqBodyRaw;
 
     @Schema(description = "响应示例")
     private String respExample;

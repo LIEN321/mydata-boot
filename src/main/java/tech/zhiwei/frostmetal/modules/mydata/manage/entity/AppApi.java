@@ -72,9 +72,20 @@ public class AppApi extends TenantEntity {
     private List<Map<String, Object>> reqParams;
 
     /**
-     * 请求体
+     * 请求体类型
      */
-    private String reqBody;
+    private String reqBodyType;
+
+    /**
+     * 请求体，form格式
+     */
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private List<Map<String, Object>> reqBodyForm;
+
+    /**
+     * 请求体，raw格式
+     */
+    private String reqBodyRaw;
 
     /**
      * 响应示例
