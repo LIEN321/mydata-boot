@@ -10,21 +10,21 @@ import java.io.Serial;
 
 
 /**
- * 项目 VO
+ * 下拉选项 VO
  *
  * @author LIEN
  * @since 2024/11/09
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "项目 下拉选项VO")
+@Schema(description = "下拉选项VO")
 public class SelectVO extends BaseVO {
-	@Serial
-	private static final long serialVersionUID = 1934671613029991165L;
-	@Schema(description = "项目名称")
-	private String label;
+    @Serial
+    private static final long serialVersionUID = 1934671613029991165L;
+    @Schema(description = "选项名称")
+    private String label;
 
-	@Schema(description = "项目id")
-	@JsonSerialize(using = ToStringSerializer.class)
-	private Long value;
+    @Schema(description = "选项值")
+    @JsonSerialize(using = ToStringSerializer.class)
+    private String value;
 }

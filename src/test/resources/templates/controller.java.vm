@@ -62,120 +62,120 @@ public class $!{table.controllerName} extends $!{superControllerClass} {
 public class $!{table.controllerName} {
 #end
 
-	private $!{table.serviceName} $!{table.entityPath}Service;
+    private $!{table.serviceName} $!{table.entityPath}Service;
 
 #if($!{cfg.hasWrapper})
-	/**
-	 * 详情
-	 */
-	@GetMapping("/detail")
-	@ApiOperationSupport(order = 1)
-	@ApiOperation(value = "详情", notes = "传入$!{table.entityPath}")
-	public R<$!{entity}VO> detail($!{entity} $!{table.entityPath}) {
-		$!{entity} detail = $!{table.entityPath}Service.getOne(Condition.getQueryWrapper($!{table.entityPath}));
-		return R.data($!{entity}Wrapper.build().entityVO(detail));
-	}
+    /**
+     * 详情
+     */
+    @GetMapping("/detail")
+    @ApiOperationSupport(order = 1)
+    @ApiOperation(value = "详情", notes = "传入$!{table.entityPath}")
+    public R<$!{entity}VO> detail($!{entity} $!{table.entityPath}) {
+        $!{entity} detail = $!{table.entityPath}Service.getOne(Condition.getQueryWrapper($!{table.entityPath}));
+        return R.data($!{entity}Wrapper.build().entityVO(detail));
+    }
 
-	/**
-	 * 分页 $!{table.comment}
-	 */
-	@GetMapping("/list")
-	@ApiOperationSupport(order = 2)
-	@ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
-	public R<IPage<$!{entity}VO>> list($!{entity} $!{table.entityPath}, Query query) {
-		IPage<$!{entity}> pages = $!{table.entityPath}Service.page(Condition.getPage(query), Condition.getQueryWrapper($!{table.entityPath}));
-		return R.data($!{entity}Wrapper.build().pageVO(pages));
-	}
+    /**
+     * 分页 $!{table.comment}
+     */
+    @GetMapping("/list")
+    @ApiOperationSupport(order = 2)
+    @ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
+    public R<IPage<$!{entity}VO>> list($!{entity} $!{table.entityPath}, Query query) {
+        IPage<$!{entity}> pages = $!{table.entityPath}Service.page(Condition.getPage(query), Condition.getQueryWrapper($!{table.entityPath}));
+        return R.data($!{entity}Wrapper.build().pageVO(pages));
+    }
 
 #else
-	/**
-	 * 详情
-	 */
-	@GetMapping("/detail")
-	@ApiOperationSupport(order = 1)
-	@ApiOperation(value = "详情", notes = "传入$!{table.entityPath}")
-	public R<$!{entity}> detail($!{entity} $!{table.entityPath}) {
-		$!{entity} detail = $!{table.entityPath}Service.getOne(Condition.getQueryWrapper($!{table.entityPath}));
-		return R.data(detail);
-	}
+    /**
+     * 详情
+     */
+    @GetMapping("/detail")
+    @ApiOperationSupport(order = 1)
+    @ApiOperation(value = "详情", notes = "传入$!{table.entityPath}")
+    public R<$!{entity}> detail($!{entity} $!{table.entityPath}) {
+        $!{entity} detail = $!{table.entityPath}Service.getOne(Condition.getQueryWrapper($!{table.entityPath}));
+        return R.data(detail);
+    }
 
-	/**
-	 * 分页 $!{table.comment}
-	 */
-	@GetMapping("/list")
-	@ApiOperationSupport(order = 2)
-	@ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
-	public R<IPage<$!{entity}>> list($!{entity} $!{table.entityPath}, Query query) {
-		IPage<$!{entity}> pages = $!{table.entityPath}Service.page(Condition.getPage(query), Condition.getQueryWrapper($!{table.entityPath}));
-		return R.data(pages);
-	}
+    /**
+     * 分页 $!{table.comment}
+     */
+    @GetMapping("/list")
+    @ApiOperationSupport(order = 2)
+    @ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
+    public R<IPage<$!{entity}>> list($!{entity} $!{table.entityPath}, Query query) {
+        IPage<$!{entity}> pages = $!{table.entityPath}Service.page(Condition.getPage(query), Condition.getQueryWrapper($!{table.entityPath}));
+        return R.data(pages);
+    }
 #end
 
-	/**
-	 * 自定义分页 $!{table.comment}
-	 */
-	@GetMapping("/page")
-	@ApiOperationSupport(order = 3)
-	@ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
-	public R<IPage<$!{entity}VO>> page($!{entity}VO $!{table.entityPath}, Query query) {
-		IPage<$!{entity}VO> pages = $!{table.entityPath}Service.select$!{entity}Page(Condition.getPage(query), $!{table.entityPath});
-		return R.data(pages);
-	}
+    /**
+     * 自定义分页 $!{table.comment}
+     */
+    @GetMapping("/page")
+    @ApiOperationSupport(order = 3)
+    @ApiOperation(value = "分页", notes = "传入$!{table.entityPath}")
+    public R<IPage<$!{entity}VO>> page($!{entity}VO $!{table.entityPath}, Query query) {
+        IPage<$!{entity}VO> pages = $!{table.entityPath}Service.select$!{entity}Page(Condition.getPage(query), $!{table.entityPath});
+        return R.data(pages);
+    }
 
-	/**
-	 * 新增 $!{table.comment}
-	 */
-	@PostMapping("/save")
-	@ApiOperationSupport(order = 4)
-	@ApiOperation(value = "新增", notes = "传入$!{table.entityPath}")
-	public R save(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
-		return R.status($!{table.entityPath}Service.save($!{table.entityPath}));
-	}
+    /**
+     * 新增 $!{table.comment}
+     */
+    @PostMapping("/save")
+    @ApiOperationSupport(order = 4)
+    @ApiOperation(value = "新增", notes = "传入$!{table.entityPath}")
+    public R save(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
+        return R.status($!{table.entityPath}Service.save($!{table.entityPath}));
+    }
 
-	/**
-	 * 修改 $!{table.comment}
-	 */
-	@PostMapping("/update")
-	@ApiOperationSupport(order = 5)
-	@ApiOperation(value = "修改", notes = "传入$!{table.entityPath}")
-	public R update(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
-		return R.status($!{table.entityPath}Service.updateById($!{table.entityPath}));
-	}
+    /**
+     * 修改 $!{table.comment}
+     */
+    @PostMapping("/update")
+    @ApiOperationSupport(order = 5)
+    @ApiOperation(value = "修改", notes = "传入$!{table.entityPath}")
+    public R update(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
+        return R.status($!{table.entityPath}Service.updateById($!{table.entityPath}));
+    }
 
-	/**
-	 * 新增或修改 $!{table.comment}
-	 */
-	@PostMapping("/submit")
-	@ApiOperationSupport(order = 6)
-	@ApiOperation(value = "新增或修改", notes = "传入$!{table.entityPath}")
-	public R submit(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
-		return R.status($!{table.entityPath}Service.saveOrUpdate($!{table.entityPath}));
-	}
+    /**
+     * 新增或修改 $!{table.comment}
+     */
+    @PostMapping("/submit")
+    @ApiOperationSupport(order = 6)
+    @ApiOperation(value = "新增或修改", notes = "传入$!{table.entityPath}")
+    public R submit(@Valid @RequestBody $!{entity} $!{table.entityPath}) {
+        return R.status($!{table.entityPath}Service.saveOrUpdate($!{table.entityPath}));
+    }
 
-	#if($!{superEntityClass})
+    #if($!{superEntityClass})
 
-	/**
-	 * 删除 $!{table.comment}
-	 */
-	@PostMapping("/remove")
-	@ApiOperationSupport(order = 7)
-	@ApiOperation(value = "逻辑删除", notes = "传入ids")
-	public R remove(@ApiParam(value = "主键集合", required = true) @RequestParam String ids) {
-		return R.status($!{table.entityPath}Service.deleteLogic(Func.toLongList(ids)));
-	}
+    /**
+     * 删除 $!{table.comment}
+     */
+    @PostMapping("/remove")
+    @ApiOperationSupport(order = 7)
+    @ApiOperation(value = "逻辑删除", notes = "传入ids")
+    public R remove(@ApiParam(value = "主键集合", required = true) @RequestParam String ids) {
+        return R.status($!{table.entityPath}Service.deleteLogic(Func.toLongList(ids)));
+    }
 
-	#else
+    #else
 
-	/**
-	 * 删除 $!{table.comment}
-	 */
-	@PostMapping("/remove")
-	@ApiOperationSupport(order = 8)
-	@ApiOperation(value = "删除", notes = "传入ids")
-	public R remove(@ApiParam(value = "主键集合", required = true) @RequestParam String ids) {
-		return R.status($!{table.entityPath}Service.removeByIds(Func.toLongList(ids)));
-	}
+    /**
+     * 删除 $!{table.comment}
+     */
+    @PostMapping("/remove")
+    @ApiOperationSupport(order = 8)
+    @ApiOperation(value = "删除", notes = "传入ids")
+    public R remove(@ApiParam(value = "主键集合", required = true) @RequestParam String ids) {
+        return R.status($!{table.entityPath}Service.removeByIds(Func.toLongList(ids)));
+    }
 
-	#end
+    #end
 
 }

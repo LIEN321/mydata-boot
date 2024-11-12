@@ -14,23 +14,23 @@ import tech.zhiwei.tool.bean.BeanUtil;
  * @since 2024/11/11
  */
 public class AppApiWrapper extends BaseWrapper<AppApi, AppApiVO> {
-	public AppApiWrapper() {
-	}
+    public AppApiWrapper() {
+    }
 
-	public static AppApiWrapper getInstance() {
-		return new AppApiWrapper();
-	}
+    public static AppApiWrapper getInstance() {
+        return new AppApiWrapper();
+    }
 
-	@Override
-	public AppApiVO entityVO(AppApi entity) {
-		AppApiVO appApiVO = BeanUtil.copyProperties(entity, AppApiVO.class);
+    @Override
+    public AppApiVO entityVO(AppApi entity) {
+        AppApiVO appApiVO = BeanUtil.copyProperties(entity, AppApiVO.class);
 
-		// 查询所属应用
-		App app = MyDataCache.getApp(entity.getAppId());
-		if (app != null) {
-			appApiVO.setAppName(app.getAppName());
-		}
+        // 查询所属应用
+        App app = MyDataCache.getApp(entity.getAppId());
+        if (app != null) {
+            appApiVO.setAppName(app.getAppName());
+        }
 
-		return appApiVO;
-	}
+        return appApiVO;
+    }
 }

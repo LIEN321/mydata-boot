@@ -17,28 +17,28 @@ import java.util.List;
  * @since 2024/11/11
  */
 public class AppWrapper extends BaseWrapper<App, AppVO> {
-	public AppWrapper() {
-	}
+    public AppWrapper() {
+    }
 
-	public static AppWrapper getInstance() {
-		return new AppWrapper();
-	}
+    public static AppWrapper getInstance() {
+        return new AppWrapper();
+    }
 
-	@Override
-	public AppVO entityVO(App entity) {
-		return BeanUtil.copyProperties(entity, AppVO.class);
-	}
+    @Override
+    public AppVO entityVO(App entity) {
+        return BeanUtil.copyProperties(entity, AppVO.class);
+    }
 
-	public List<SelectVO> selectVOList(List<App> entityList) {
-		List<SelectVO> selectVOList = new ArrayList<>();
-		if (CollectionUtil.isNotEmpty(entityList)) {
-			for (App app : entityList) {
-				SelectVO selectVO = new SelectVO();
-				selectVO.setLabel(app.getAppName());
-				selectVO.setValue(app.getId());
-				selectVOList.add(selectVO);
-			}
-		}
-		return selectVOList;
-	}
+    public List<SelectVO> selectVOList(List<App> entityList) {
+        List<SelectVO> selectVOList = new ArrayList<>();
+        if (CollectionUtil.isNotEmpty(entityList)) {
+            for (App app : entityList) {
+                SelectVO selectVO = new SelectVO();
+                selectVO.setLabel(app.getAppName());
+                selectVO.setValue(String.valueOf(app.getId()));
+                selectVOList.add(selectVO);
+            }
+        }
+        return selectVOList;
+    }
 }

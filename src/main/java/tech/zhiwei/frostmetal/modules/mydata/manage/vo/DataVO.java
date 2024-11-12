@@ -23,7 +23,7 @@ import java.util.List;
 public class DataVO extends BaseVO {
     @Serial
     private static final long serialVersionUID = -488148377797940325L;
-	
+
     @Schema(description = "所属项目id")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long projectId;
