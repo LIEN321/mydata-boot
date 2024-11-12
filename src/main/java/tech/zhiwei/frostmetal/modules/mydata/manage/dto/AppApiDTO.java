@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
 
+import java.util.List;
+import java.util.Map;
 
 /**
  * 应用接口 DTO
@@ -38,10 +40,10 @@ public class AppApiDTO extends BaseDTO {
     private String fieldPrefix;
 
     @Schema(description = "请求Header")
-    private String reqHeaders;
+    private List<Map<String, Object>> reqHeaders;
 
     @Schema(description = "请求参数")
-    private String reqParams;
+    private List<Map<String, Object>> reqParams;
 
     @Schema(description = "请求体")
     private String reqBody;

@@ -1,10 +1,15 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.Fastjson2TypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 应用接口 entity
@@ -14,8 +19,11 @@ import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "md_api")
+@TableName(value = "md_api", autoResultMap = true)
 public class AppApi extends TenantEntity {
+    @Serial
+    private static final long serialVersionUID = 2438675416943172825L;
+
     /**
      * 所属应用
      */
@@ -54,12 +62,14 @@ public class AppApi extends TenantEntity {
     /**
      * 请求Header
      */
-    private String reqHeaders;
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private List<Map<String, Object>> reqHeaders;
 
     /**
      * 请求参数
      */
-    private String reqParams;
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private List<Map<String, Object>> reqParams;
 
     /**
      * 请求体

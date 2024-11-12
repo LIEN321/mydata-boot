@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 应用接口 VO
@@ -18,41 +21,44 @@ import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 @EqualsAndHashCode(callSuper = true)
 @Schema(description = "应用接口")
 public class AppApiVO extends BaseVO {
-	@Schema(description = "所属应用")
-	@JsonSerialize(using = ToStringSerializer.class)
-	private Long appId;
+    @Serial
+    private static final long serialVersionUID = -4123748090378512319L;
 
-	@Schema(description = "所属应用名称")
-	private String appName;
+    @Schema(description = "所属应用")
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long appId;
 
-	@Schema(description = "接口名称")
-	private String apiName;
+    @Schema(description = "所属应用名称")
+    private String appName;
 
-	@Schema(description = "操作类型")
-	private Integer opType;
+    @Schema(description = "接口名称")
+    private String apiName;
 
-	@Schema(description = "请求方法")
-	private String apiMethod;
+    @Schema(description = "操作类型")
+    private Integer opType;
 
-	@Schema(description = "接口路径")
-	private String apiUri;
+    @Schema(description = "请求方法")
+    private String apiMethod;
 
-	@Schema(description = "数据类型")
-	private String dataType;
+    @Schema(description = "接口路径")
+    private String apiUri;
 
-	@Schema(description = "数据层级")
-	private String fieldPrefix;
+    @Schema(description = "数据类型")
+    private String dataType;
 
-	@Schema(description = "请求Header")
-	private String reqHeaders;
+    @Schema(description = "数据层级")
+    private String fieldPrefix;
 
-	@Schema(description = "请求参数")
-	private String reqParams;
+    @Schema(description = "请求Header")
+    private List<Map<String, Object>> reqHeaders;
 
-	@Schema(description = "请求体")
-	private String reqBody;
+    @Schema(description = "请求参数")
+    private List<Map<String, Object>> reqParams;
 
-	@Schema(description = "响应示例")
-	private String respExample;
+    @Schema(description = "请求体")
+    private String reqBody;
+
+    @Schema(description = "响应示例")
+    private String respExample;
 
 }
