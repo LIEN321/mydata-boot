@@ -56,10 +56,12 @@ public class DataController {
     public P<List<DataVO>> page(@ParameterObject PageParam pageParam
             , @RequestParam(required = false) String dataCode
             , @RequestParam(required = false) String dataName
+            , @RequestParam(required = false) Long projectId
     ) {
         LambdaQueryWrapper<Data> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.like(ObjectUtil.isNotNull(dataCode), Data::getDataCode, dataCode);
         queryWrapper.like(ObjectUtil.isNotNull(dataName), Data::getDataName, dataName);
+        queryWrapper.like(ObjectUtil.isNotNull(projectId), Data::getProjectId, projectId);
 
         return P.page(DataWrapper.getInstance().pageVO(dataService.page(queryWrapper, pageParam)));
     }
