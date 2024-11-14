@@ -1,0 +1,79 @@
+package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
+
+
+/**
+ * 流水线 entity
+ *
+ * @author LIEN
+ * @since 2024/11/14
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName(value = "md_pipeline")
+public class Pipeline extends TenantEntity {
+    /**
+     * 所属项目
+     */
+    private Long projectId;
+
+    /**
+     * 所属分组
+     */
+    private Long groupId;
+
+    /**
+     * 流水线名称
+     */
+    private String pipelineName;
+
+    /**
+     * 流水线描述
+     */
+    private String pipelineDesc;
+
+    /**
+     * 是否启用定时
+     */
+    private Integer isSchedule;
+
+    /**
+     * 定时周期（cron）
+     */
+    private String schedulePeriod;
+
+    /**
+     * 是否启用webhook
+     */
+    private Integer isWebhook;
+
+    /**
+     * webhook认证方式
+     */
+    private String webhookAuthType;
+
+    /**
+     * webhook认证参数
+     */
+    private String webhookAuthParams;
+
+    /**
+     * 是否启用邮件
+     */
+    private Integer isEmail;
+
+    /**
+     * 邮件通知策略
+     */
+    private Integer[] emailStrategy;
+
+    /**
+     * 接收人
+     */
+    private String emailReceiver;
+
+}

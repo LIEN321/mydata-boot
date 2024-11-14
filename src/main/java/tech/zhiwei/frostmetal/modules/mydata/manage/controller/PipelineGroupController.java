@@ -21,8 +21,11 @@ import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineGroupDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineGroup;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineGroupService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineGroupVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineGroupWrapper;
+import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineWrapper;
+import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 
 import java.util.Collection;
@@ -40,6 +43,7 @@ import java.util.List;
 @Tag(name = "pipelineGroup", description = "流水线分组API")
 public class PipelineGroupController {
     private IPipelineGroupService pipelineGroupService;
+    private IPipelineService pipelineService;
 
     @PostMapping
     @Operation(summary = "新增或更新流水线分组", operationId = "savePipelineGroup")
@@ -62,7 +66,14 @@ public class PipelineGroupController {
         LambdaQueryWrapper<PipelineGroup> queryWrapper = Wrappers.<PipelineGroup>lambdaQuery()
                 .eq(ObjectUtil.isNotNull(projectId), PipelineGroup::getProjectId, projectId);
 
-        return R.data(PipelineGroupWrapper.getInstance().listVO(pipelineGroupService.list(queryWrapper)));
+        List<PipelineGroupVO> pipelineGroupVOList = PipelineGroupWrapper.getInstance().listVO(pipelineGroupService.list(queryWrapper));
+        if (CollectionUtil.isNotEmpty(pipelineGroupVOList)) {
+            PipelineWrapper pipelineWrapper = PipelineWrapper.getInstance();
+            pipelineGroupVOList.forEach(group -> {
+                group.setPipelines(pipelineWrapper.listVO(pipelineService.listByGroup(group.getId())));
+            });
+        }
+        return R.data(pipelineGroupVOList);
     }
 
     @GetMapping("/{id}")

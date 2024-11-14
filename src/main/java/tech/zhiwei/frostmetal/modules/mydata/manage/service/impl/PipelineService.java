@@ -1,0 +1,41 @@
+package tech.zhiwei.frostmetal.modules.mydata.manage.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tech.zhiwei.frostmetal.core.base.service.BaseService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
+import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
+import tech.zhiwei.tool.bean.BeanUtil;
+
+import java.util.List;
+
+/**
+ * 流水线 Service实现类
+ *
+ * @author LIEN
+ * @since 2024/11/14
+ */
+@Service
+@AllArgsConstructor
+public class PipelineService extends BaseService<PipelineMapper, Pipeline> implements IPipelineService {
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Long savePipeline(PipelineDTO pipelineDTO) {
+        Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
+        saveOrUpdate(pipeline);
+        return pipeline.getId();
+    }
+
+    @Override
+    public List<Pipeline> listByGroup(Long groupId) {
+        LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Pipeline::getGroupId, groupId);
+        return list(queryWrapper);
+    }
+}
