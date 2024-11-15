@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.${parentDTOClass};
-
 <#list classes as c>
  <#if !c?starts_with("java.lang")>
 import ${c};

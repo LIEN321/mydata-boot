@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.${parentEntityPackage}.entity.${parentEntityClass};
-
 <#list classes as c>
  <#if !c?starts_with("java.lang")>
 import ${c};
