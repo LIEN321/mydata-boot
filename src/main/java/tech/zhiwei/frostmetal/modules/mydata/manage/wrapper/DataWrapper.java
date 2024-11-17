@@ -1,11 +1,16 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.wrapper;
 
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.core.base.wrapper.BaseWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.DataVO;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.collection.CollectionUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 标准数据 Wrapper
@@ -30,7 +35,20 @@ public class DataWrapper extends BaseWrapper<Data, DataVO> {
         if (project != null) {
             dataVO.setProjectName(project.getProjectName());
         }
-        
+
         return dataVO;
+    }
+
+    public List<SelectVO> selectVOList(List<Data> entityList) {
+        List<SelectVO> selectVOList = new ArrayList<>();
+        if (CollectionUtil.isNotEmpty(entityList)) {
+            for (Data data : entityList) {
+                SelectVO selectVO = new SelectVO();
+                selectVO.setLabel(data.getDataName());
+                selectVO.setValue(String.valueOf(data.getId()));
+                selectVOList.add(selectVO);
+            }
+        }
+        return selectVOList;
     }
 }

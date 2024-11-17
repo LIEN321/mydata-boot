@@ -15,6 +15,8 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataService;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
 
+import java.util.List;
+
 /**
  * 标准数据 Service实现类
  *
@@ -39,6 +41,13 @@ public class DataService extends BaseService<DataMapper, Data> implements IDataS
         dataFieldService.saveByStandardData(data.getId(), dataDTO.getDataFields());
 
         return data.getId();
+    }
+
+    @Override
+    public List<Data> listByProject(Long projectId) {
+        LambdaQueryWrapper<Data> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Data::getProjectId, projectId);
+        return list(queryWrapper);
     }
 
     private void check(DataDTO dataDTO) {

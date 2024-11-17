@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.DataDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
@@ -100,5 +101,11 @@ public class DataController {
     @Operation(summary = "批量删除标准数据", operationId = "deleteDatas")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
         return R.status(dataService.remove(ids));
+    }
+
+    @GetMapping("/select")
+    @Operation(summary = "查询标准数据", operationId = "dataSelect")
+    public List<SelectVO> select(@RequestParam Long projectId) {
+        return DataWrapper.getInstance().selectVOList(dataService.listByProject(projectId));
     }
 }
