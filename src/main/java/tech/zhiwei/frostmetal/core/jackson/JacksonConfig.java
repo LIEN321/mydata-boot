@@ -1,16 +1,20 @@
 package tech.zhiwei.frostmetal.core.jackson;
 
 import cn.hutool.core.date.DatePattern;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.Date;
@@ -48,6 +52,13 @@ public class JacksonConfig {
         objectMapper.configure(MapperFeature.IGNORE_DUPLICATE_MODULE_REGISTRATIONS, false);
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Date.class, new CustomDateDeserializer());
+        // Long默认转String
+        module.addSerializer(Long.class, new JsonSerializer<Long>() {
+            @Override
+            public void serialize(Long value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                gen.writeString(String.valueOf(value));
+            }
+        });
         objectMapper.registerModule(module);
         objectMapper.configure(MapperFeature.IGNORE_DUPLICATE_MODULE_REGISTRATIONS, true);
         objectMapper.findAndRegisterModules();
