@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
@@ -21,10 +20,11 @@ import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineTaskVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineVO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineTaskWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineWrapper;
-import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.lang.ObjectUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,6 +41,7 @@ import java.util.List;
 @Tag(name = "pipeline", description = "流水线API")
 public class PipelineController {
     private IPipelineService pipelineService;
+    private IPipelineTaskService pipelineTaskService;
 
     @PostMapping
     @Operation(summary = "新增或更新流水线", operationId = "savePipeline")
@@ -67,7 +68,12 @@ public class PipelineController {
     @Operation(summary = "流水线详情", operationId = "pipelineDetail")
     @Parameter(name = "id", description = "记录id")
     public R<PipelineVO> detail(@PathVariable Long id) {
-        return R.data(PipelineWrapper.getInstance().entityVO(pipelineService.getById(id)));
+        PipelineVO pipelineVO = PipelineWrapper.getInstance().entityVO(pipelineService.getById(id));
+
+        List<PipelineTaskVO> pipelineTaskVOList = PipelineTaskWrapper.getInstance().listVO(pipelineTaskService.listByPipeline(id));
+        pipelineVO.setTasks(pipelineTaskVOList);
+        
+        return R.data(pipelineVO);
     }
 
     @DeleteMapping("/{id}")

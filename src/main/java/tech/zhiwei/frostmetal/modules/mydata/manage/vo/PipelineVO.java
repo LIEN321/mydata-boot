@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 
+import java.io.Serial;
+import java.util.List;
+
 
 /**
  * 流水线 VO
@@ -15,9 +18,11 @@ import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
  * @since 2024/11/14
  */
 @Data
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "流水线")
 public class PipelineVO extends BaseVO {
+    @Serial
+    private static final long serialVersionUID = -6039282082043520610L;
     @Schema(description = "所属项目")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long projectId;
@@ -56,4 +61,6 @@ public class PipelineVO extends BaseVO {
     @Schema(description = "接收人")
     private String emailReceiver;
 
+    @Schema(description = "流水线任务列表")
+    private List<PipelineTaskVO> tasks;
 }
