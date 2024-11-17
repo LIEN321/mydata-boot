@@ -4,6 +4,8 @@ import tech.zhiwei.frostmetal.core.base.service.IBaseService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppApiDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 
+import java.util.List;
+
 /**
  * 应用接口 Service接口
  *
@@ -13,8 +15,17 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 public interface IAppApiService extends IBaseService<AppApi> {
     /**
      * 保存应用接口
+     *
      * @param appApiDTO 应用接口
      * @return id
      */
     Long saveAppApi(AppApiDTO appApiDTO);
+
+    /**
+     * 根据应用 查询接口列表
+     *
+     * @param appId 应用id
+     * @return 接口列表
+     */
+    List<AppApi> listByApp(Long appId);
 }

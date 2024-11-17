@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppApiDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppApiService;
@@ -84,5 +85,14 @@ public class AppApiController {
     @Operation(summary = "批量删除应用接口", operationId = "deleteAppApis")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
         return R.status(appApiService.remove(ids));
+    }
+
+    @GetMapping("/select")
+    @Operation(summary = "查询接口", operationId = "apiSelect")
+    public List<SelectVO> select(@RequestParam(required = false) Long appId) {
+        if (ObjectUtil.isNull(appId)) {
+            return List.of();
+        }
+        return AppApiWrapper.getInstance().selectVOList(appApiService.listByApp(appId));
     }
 }

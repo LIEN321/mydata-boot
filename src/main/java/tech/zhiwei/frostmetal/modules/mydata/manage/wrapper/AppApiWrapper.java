@@ -1,11 +1,16 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.wrapper;
 
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.core.base.wrapper.BaseWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.AppApiVO;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.collection.CollectionUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 应用接口 Wrapper
@@ -32,5 +37,18 @@ public class AppApiWrapper extends BaseWrapper<AppApi, AppApiVO> {
         }
 
         return appApiVO;
+    }
+
+    public List<SelectVO> selectVOList(List<AppApi> entityList) {
+        List<SelectVO> selectVOList = new ArrayList<>();
+        if (CollectionUtil.isNotEmpty(entityList)) {
+            for (AppApi api : entityList) {
+                SelectVO selectVO = new SelectVO();
+                selectVO.setLabel(api.getApiName());
+                selectVO.setValue(String.valueOf(api.getId()));
+                selectVOList.add(selectVO);
+            }
+        }
+        return selectVOList;
     }
 }
