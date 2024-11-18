@@ -108,4 +108,10 @@ public class DataController {
     public List<SelectVO> select(@RequestParam Long projectId) {
         return DataWrapper.getInstance().selectVOList(dataService.listByProject(projectId));
     }
+
+    @GetMapping("/fieldList")
+    @Operation(summary = "查询标准数据", operationId = "fieldList")
+    public R<List<DataFieldVO>> fieldList(@RequestParam Long dataId) {
+        return R.data(DataFieldWrapper.getInstance().listVO(dataFieldService.listByData(dataId)));
+    }
 }
