@@ -27,7 +27,7 @@ public interface IDataFieldService extends IIdService<DataField> {
      * @param dataId 数据项id
      * @return 字段列表
      */
-    List<DataField> findByData(Long dataId);
+    List<DataField> listByData(Long dataId);
 
     /**
      * 保存数据项字段列表

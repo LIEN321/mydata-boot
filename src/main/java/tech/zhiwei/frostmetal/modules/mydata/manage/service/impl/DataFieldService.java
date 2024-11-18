@@ -35,7 +35,7 @@ public class DataFieldService extends IdService<DataFieldMapper, DataField> impl
     }
 
     @Override
-    public List<DataField> findByData(Long dataId) {
+    public List<DataField> listByData(Long dataId) {
         AssertUtil.notNull(dataId);
         return this.list(Wrappers.<DataField>lambdaQuery().eq(DataField::getDataId, dataId));
     }

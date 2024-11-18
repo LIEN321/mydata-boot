@@ -84,7 +84,7 @@ public class DataController {
 
         DataVO dataVO = DataWrapper.getInstance().entityVO(data);
 
-        List<DataFieldVO> dataFieldVOList = DataFieldWrapper.getInstance().listVO(dataFieldService.findByData(id));
+        List<DataFieldVO> dataFieldVOList = DataFieldWrapper.getInstance().listVO(dataFieldService.listByData(id));
         dataVO.setDataFields(dataFieldVOList);
 
         return R.data(dataVO);
