@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
+import java.io.Serial;
+
 
 /**
  * 流水线 entity
@@ -16,6 +18,8 @@ import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 @EqualsAndHashCode(callSuper = true)
 @TableName(value = "md_pipeline")
 public class Pipeline extends TenantEntity {
+    @Serial
+    private static final long serialVersionUID = 7478639346585117850L;
     /**
      * 所属项目
      */
@@ -39,7 +43,7 @@ public class Pipeline extends TenantEntity {
     /**
      * 是否启用定时
      */
-    private Integer isSchedule;
+    private Boolean isSchedule;
 
     /**
      * 定时周期（cron）

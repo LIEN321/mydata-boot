@@ -31,7 +31,7 @@ public class PipelineDTO extends BaseDTO {
     private String pipelineDesc;
 
     @Schema(description = "是否启用定时")
-    private Integer isSchedule;
+    private Boolean isSchedule;
 
     @Schema(description = "定时周期（cron）")
     private String schedulePeriod;
