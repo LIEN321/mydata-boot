@@ -28,4 +28,12 @@ public interface IPipelineTaskService extends IBaseService<PipelineTask> {
      * @return 任务列表
      */
     List<PipelineTask> listByPipeline(Long pipelineId);
+
+    /**
+     * 保存流水线的任务列表
+     *
+     * @param pipelineId 流水线id
+     * @param tasks      任务列表
+     */
+    void saveTasksByPipeline(Long pipelineId, List<PipelineTaskDTO> tasks);
 }

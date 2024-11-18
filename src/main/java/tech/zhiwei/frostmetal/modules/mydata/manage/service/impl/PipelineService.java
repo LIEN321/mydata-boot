@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.tool.bean.BeanUtil;
 
 import java.util.List;
@@ -24,11 +25,18 @@ import java.util.List;
 @AllArgsConstructor
 public class PipelineService extends BaseService<PipelineMapper, Pipeline> implements IPipelineService {
 
+    private IPipelineTaskService pipelineTaskService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long savePipeline(PipelineDTO pipelineDTO) {
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
+        // 保存流水线基本信息
         saveOrUpdate(pipeline);
+
+        // 保存编排任务列表
+        pipelineTaskService.saveTasksByPipeline(pipeline.getId(), pipelineDTO.getTasks());
+
         return pipeline.getId();
     }
 

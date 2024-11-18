@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
 
+import java.util.List;
+
 
 /**
  * 流水线 DTO
@@ -52,4 +54,6 @@ public class PipelineDTO extends BaseDTO {
     @Schema(description = "接收人")
     private String emailReceiver;
 
+    @Schema(description = "任务编排列表")
+    private List<PipelineTaskDTO> tasks;
 }
