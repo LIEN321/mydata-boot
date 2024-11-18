@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 
 import java.io.Serial;
+import java.util.Map;
 
 /**
  * 流水线任务 VO
@@ -21,7 +22,7 @@ import java.io.Serial;
 public class PipelineTaskVO extends BaseVO {
     @Serial
     private static final long serialVersionUID = -8071599184776939188L;
-    
+
     @Schema(description = "所属流水线")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long pipelineId;
@@ -45,6 +46,6 @@ public class PipelineTaskVO extends BaseVO {
     private Long dataId;
 
     @Schema(description = "任务配置")
-    private String taskConfig;
+    private Map<String, Object> taskConfig;
 
 }

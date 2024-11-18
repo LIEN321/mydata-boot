@@ -1,11 +1,14 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.Fastjson2TypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
 import java.io.Serial;
+import java.util.Map;
 
 /**
  * 流水线任务 entity
@@ -15,11 +18,11 @@ import java.io.Serial;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "md_pipeline_task")
+@TableName(value = "md_pipeline_task", autoResultMap = true)
 public class PipelineTask extends TenantEntity {
     @Serial
     private static final long serialVersionUID = 5167132195306450765L;
-    
+
     /**
      * 所属流水线
      */
@@ -53,6 +56,7 @@ public class PipelineTask extends TenantEntity {
     /**
      * 任务配置
      */
-    private String taskConfig;
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> taskConfig;
 
 }

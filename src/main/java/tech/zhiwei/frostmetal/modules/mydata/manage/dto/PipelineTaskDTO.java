@@ -2,8 +2,8 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
+
+import java.util.Map;
 
 /**
  * 流水线任务 DTO
@@ -12,9 +12,8 @@ import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
  * @since 2024/11/16
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Schema(description = "流水线任务")
-public class PipelineTaskDTO extends BaseDTO {
+public class PipelineTaskDTO {
     @Schema(description = "所属流水线")
     private Long pipelineId;
 
@@ -34,6 +33,6 @@ public class PipelineTaskDTO extends BaseDTO {
     private Long dataId;
 
     @Schema(description = "任务配置")
-    private String taskConfig;
+    private Map<String, Object> taskConfig;
 
 }
