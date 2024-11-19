@@ -40,8 +40,20 @@ public class PipelineVO extends BaseVO {
     @Schema(description = "是否启用定时")
     private Boolean isSchedule;
 
-    @Schema(description = "定时周期（cron）")
-    private String schedulePeriod;
+    @Schema(description = "执行日")
+    private Integer[] dayOfWeek;
+
+    @Schema(description = "开始时间，HH:mm")
+    private String startTime;
+
+    @Schema(description = "结束时间，HH:mm")
+    private String endTime;
+
+    @Schema(description = "时间间隔（秒）")
+    private Integer interval;
+
+    @Schema(description = "时区")
+    private String timeZone;
 
     @Schema(description = "是否启用webhook")
     private Integer isWebhook;

@@ -46,6 +46,31 @@ public class Pipeline extends TenantEntity {
     private Boolean isSchedule;
 
     /**
+     * 执行日
+     */
+    private Integer[] dayOfWeek;
+
+    /**
+     * 开始时间，HH:mm
+     */
+    private String startTime;
+
+    /**
+     * 结束时间，HH:mm
+     */
+    private String endTime;
+
+    /**
+     * 时间间隔（秒）
+     */
+    private Integer interval;
+
+    /**
+     * 时区
+     */
+    private String timeZone;
+
+    /**
      * 定时周期（cron）
      */
     private String schedulePeriod;
