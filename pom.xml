@@ -132,6 +132,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- spring quartz -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
+        </dependency>
         <!-- undertow 替换tomcat -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
