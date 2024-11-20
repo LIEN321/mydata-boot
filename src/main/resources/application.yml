@@ -21,6 +21,8 @@ spring:
       port: 6379
       database: 0
       password:
+  quartz:
+    job-store-type: memory
 
 # frostmetal
 frostmetal:
