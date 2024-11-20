@@ -61,19 +61,14 @@ public class Pipeline extends TenantEntity {
     private String endTime;
 
     /**
-     * 时间间隔（秒）
+     * 时间间隔，HH:mm:ss
      */
-    private Integer interval;
+    private String intervalTime;
 
     /**
      * 时区
      */
     private String timeZone;
-
-    /**
-     * 定时周期（cron）
-     */
-    private String schedulePeriod;
 
     /**
      * 是否启用webhook

@@ -49,8 +49,8 @@ public class PipelineVO extends BaseVO {
     @Schema(description = "结束时间，HH:mm")
     private String endTime;
 
-    @Schema(description = "时间间隔（秒）")
-    private Integer interval;
+    @Schema(description = "时间间隔，HH:mm:ss")
+    private String intervalTime;
 
     @Schema(description = "时区")
     private String timeZone;
