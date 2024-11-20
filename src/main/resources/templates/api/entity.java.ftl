@@ -4,7 +4,12 @@ package ${packageName}.entity;
   <#if p.typeClassName == "String" && p.isArray>
 import com.baomidou.mybatisplus.annotation.TableField;
 import tech.zhiwei.frostmetal.core.jackson.StringArrayTypeHandler;
-   <#break>
+    <#break>
+  </#if>
+  <#if p.typeClassName == "Integer" && p.isArray>
+import com.baomidou.mybatisplus.annotation.TableField;
+import tech.zhiwei.frostmetal.core.jackson.IntegerArrayTypeHandler;
+    <#break>
   </#if>
 </#list>
 import com.baomidou.mybatisplus.annotation.TableName;
