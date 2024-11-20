@@ -45,4 +45,28 @@ public class DateUtil extends cn.hutool.core.date.DateUtil {
         }
         return calendar.getTime();
     }
+
+    /**
+     * 调整时间
+     *
+     * @param time   原时间
+     * @param hour   小时增量
+     * @param minute 分钟增量
+     * @param second 秒钟增量
+     * @return 调整后的时间
+     */
+    public static Date add(Date time, Integer hour, Integer minute, Integer second) {
+        Calendar calendar = CalendarUtil.calendar(time);
+        if (hour != null) {
+            calendar.set(Calendar.HOUR_OF_DAY, calendar.get(Calendar.HOUR_OF_DAY) + hour);
+        }
+        if (minute != null) {
+            calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + minute);
+        }
+        if (second != null) {
+            calendar.set(Calendar.SECOND, calendar.get(Calendar.SECOND) + second);
+        }
+
+        return calendar.getTime();
+    }
 }
