@@ -1,12 +1,15 @@
 package tech.zhiwei.frostmetal.core.mybatis;
 
 import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tech.zhiwei.frostmetal.core.jackson.IntegerArrayTypeHandler;
+import tech.zhiwei.frostmetal.core.jackson.StringArrayTypeHandler;
 import tech.zhiwei.frostmetal.core.tenant.handler.TenantHandler;
 
 /**
@@ -28,5 +31,13 @@ public class MybatisPlusConfiguration {
         tenantInterceptor.setTenantLineHandler(tenantHandler);
         interceptor.addInnerInterceptor(tenantInterceptor);
         return interceptor;
+    }
+
+    @Bean
+    public ConfigurationCustomizer configurationCustomizer() {
+        return configuration -> {
+            configuration.getTypeHandlerRegistry().register(StringArrayTypeHandler.class);
+            configuration.getTypeHandlerRegistry().register(IntegerArrayTypeHandler.class);
+        };
     }
 }

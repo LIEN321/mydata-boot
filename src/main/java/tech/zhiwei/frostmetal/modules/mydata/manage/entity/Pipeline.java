@@ -1,8 +1,10 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import tech.zhiwei.frostmetal.core.jackson.IntegerArrayTypeHandler;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
 import java.io.Serial;
@@ -48,6 +50,7 @@ public class Pipeline extends TenantEntity {
     /**
      * 执行日
      */
+    @TableField(typeHandler = IntegerArrayTypeHandler.class)
     private Integer[] dayOfWeek;
 
     /**
