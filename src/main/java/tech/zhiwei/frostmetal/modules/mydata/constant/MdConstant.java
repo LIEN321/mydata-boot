@@ -27,4 +27,59 @@ public interface MdConstant {
      * 描述 长度
      */
     int MAX_DESC_LENGTH = 1024;
+
+    // ---------- 任务常量 ----------
+    /**
+     * 调度任务执行次数：无限次
+     */
+    int JOB_REPEAT_FOREVER = -1;
+    /**
+     * 调度任务执行次数：仅1次
+     */
+    int JOB_REPEAT_ONCE = 1;
+    /**
+     * 调度任务的数据标识：流水线id
+     */
+    String JOB_DATA_KEY_PIPELINE_ID = "PIPELINE_ID";
+
+    /**
+     * 任务类型：从API获取数据
+     */
+    String TASK_TYPE_API_GET_DATA = "API_GET_DATA";
+    /**
+     * 任务类型：向API发送数据
+     */
+    String TASK_TYPE_API_SEND_DATA = "API_SEND_DATA";
+    /**
+     * 任务类型：解析webhook数据
+     */
+    String TASK_TYPE_WEBHOOK_GET_DATA = "WEBHOOK_GET_DATA";
+    /**
+     * 任务类型：从API获取参数
+     */
+    String TASK_TYPE_API_GET_VAR = "API_GET_VAR";
+    /**
+     * 任务类型：保存数据到数仓
+     */
+    String TASK_TYPE_SAVE_DATA = "SAVE_DATA";
+    /**
+     * 任务类型：从数仓查询数据
+     */
+    String TASK_TYPE_QUERY_DATA = "QUERY_DATA";
+    /**
+     * 任务类型：过滤数据
+     */
+    String TASK_TYPE_FILTER_DATA = "FILTER_DATA";
+    /**
+     * 任务类型：处理数据
+     */
+    String TASK_TYPE_OPERATE_DATA = "OPERATE_DATA";
+    /**
+     * 任务类型：写入Excel文件
+     */
+    String TASK_TYPE_WRITE_EXCEL = "WRITE_EXCEL";
+    /**
+     * 任务类型：发送邮件
+     */
+    String TASK_TYPE_SEND_EMAIL = "SEND_EMAIL";
 }
