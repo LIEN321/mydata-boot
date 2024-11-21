@@ -19,6 +19,7 @@ import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,15 +29,15 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/11/21
  */
-public class LoadDataFromApi extends TaskExecutor {
-    private static final Logger log = LoggerFactory.getLogger(LoadDataFromApi.class);
+public class PullDataFromApi extends TaskExecutor {
+    private static final Logger log = LoggerFactory.getLogger(PullDataFromApi.class);
 
-    public LoadDataFromApi(PipelineTask pipelineTask) {
+    public PullDataFromApi(PipelineTask pipelineTask) {
         super(pipelineTask);
     }
 
     @Override
-    public Object execute() {
+    public Map<String, Object> execute() {
         log.info("从API获取数据 开始");
 
         PipelineTask pipelineTask = getPipelineTask();
@@ -158,6 +159,8 @@ public class LoadDataFromApi extends TaskExecutor {
             });
         });
 
-        return produceDataList;
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("BIZ_DATA", produceDataList);
+        return resultMap;
     }
 }
