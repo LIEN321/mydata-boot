@@ -28,4 +28,11 @@ public interface IPipelineService extends IBaseService<Pipeline> {
      * @return 流水线列表
      */
     List<Pipeline> listByGroup(Long groupId);
+
+    /**
+     * 查询所有启用定时的流水线
+     *
+     * @return 启用定时的流水线列表
+     */
+    List<Pipeline> listScheduledPipelines();
 }

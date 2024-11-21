@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
@@ -44,6 +45,13 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
     public List<Pipeline> listByGroup(Long groupId) {
         LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Pipeline::getGroupId, groupId);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public List<Pipeline> listScheduledPipelines() {
+        LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Pipeline::getIsSchedule, SysConstant.STATUS_ENABLED);
         return list(queryWrapper);
     }
 }
