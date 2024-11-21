@@ -68,5 +68,5 @@ public abstract class TaskExecutor {
     /**
      * 执行流水线任务
      */
-    public abstract void execute();
+    public abstract Object execute();
 }

@@ -10,7 +10,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/8/27
  */
-public class JsonUtil {
+public class JsonUtil extends JSONUtil {
     /**
      * 对象转为json字符串
      *

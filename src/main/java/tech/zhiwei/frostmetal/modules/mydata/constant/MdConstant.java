@@ -82,4 +82,10 @@ public interface MdConstant {
      * 任务类型：发送邮件
      */
     String TASK_TYPE_SEND_EMAIL = "SEND_EMAIL";
+
+
+    /**
+     * 字段映射的根目录
+     */
+    String FIELD_MAPPING_ROOT = "/";
 }

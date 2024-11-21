@@ -14,7 +14,9 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 流水线Job
@@ -26,6 +28,9 @@ import java.util.List;
 public class PipelineJob implements Job {
     private final IPipelineService pipelineService = SpringUtil.getBean(IPipelineService.class);
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
+
+    // Job执行过程中的变量
+    private Map<String, Object> jobData = new HashMap<String, Object>();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -49,7 +54,10 @@ public class PipelineJob implements Job {
         tasks.forEach(task -> {
             // TODO 记录执行过程log
             // 执行任务
-            TaskExecutor.getExecutor(task).execute();
+            Object taskResult = TaskExecutor.getExecutor(task).execute();
+            // TODO 临时用task的type作为key
+            jobData.put(task.getTaskType(), taskResult);
+            log.info(jobData.toString());
         });
     }
 }
