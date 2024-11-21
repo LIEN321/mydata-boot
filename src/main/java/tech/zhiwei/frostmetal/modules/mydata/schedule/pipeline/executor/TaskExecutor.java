@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.LoadDataFromApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
+
+import java.util.Map;
 
 /**
  * 流水线任务执行器
@@ -28,7 +30,7 @@ public abstract class TaskExecutor {
         switch (pipelineTask.getTaskType()) {
             case MdConstant.TASK_TYPE_API_GET_DATA -> {
                 log.info("TASK_TYPE_API_GET_DATA");
-                return new LoadDataFromApi(pipelineTask);
+                return new PullDataFromApi(pipelineTask);
             }
             case MdConstant.TASK_TYPE_API_SEND_DATA -> {
                 log.info("TASK_TYPE_API_SEND_DATA");
@@ -68,5 +70,5 @@ public abstract class TaskExecutor {
     /**
      * 执行流水线任务
      */
-    public abstract Object execute();
+    public abstract Map<String, Object> execute();
 }
