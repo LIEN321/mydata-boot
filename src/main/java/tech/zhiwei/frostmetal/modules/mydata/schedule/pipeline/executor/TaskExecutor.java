@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.Map;
 
@@ -34,6 +36,7 @@ public abstract class TaskExecutor {
             }
             case MdConstant.TASK_TYPE_API_SEND_DATA -> {
                 log.info("TASK_TYPE_API_SEND_DATA");
+                return new PushDataToApi(pipelineTask);
             }
             case MdConstant.TASK_TYPE_WEBHOOK_GET_DATA -> {
                 log.info("TASK_TYPE_WEBHOOK_GET_DATA");
@@ -71,4 +74,19 @@ public abstract class TaskExecutor {
      * 执行流水线任务
      */
     public abstract void execute(Map<String, Object> jobContextData);
+
+    /**
+     * 获取任务配置中的字段映射
+     *
+     * @return 数据字段与接口字段的映射
+     */
+    public Map<String, String> getFieldMapping() {
+        if (pipelineTask == null) {
+            return null;
+        }
+        if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
+            return null;
+        }
+        return (Map<String, String>) pipelineTask.getTaskConfig().get(MdConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
+    }
 }

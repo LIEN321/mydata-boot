@@ -19,7 +19,6 @@ import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,13 +57,8 @@ public class PullDataFromApi extends TaskExecutor {
         String responseJson = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
         log.info("API获取结果：{}", responseJson);
 
-        List<Map<String, Object>> fieldMappings = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("fieldMappings");
         // 字段映射
-        Map<String, String> fieldMapping = MapUtil.newHashMap();
-        fieldMappings.forEach(map -> {
-            fieldMapping.put(map.get("fieldCode").toString(), map.get("apiField").toString());
-        });
-
+        Map<String, String> fieldMapping = getFieldMapping();
         if (CollectionUtil.isEmpty(fieldMapping)) {
             throw new IllegalArgumentException("字段映射为空！");
         }
@@ -126,7 +120,7 @@ public class PullDataFromApi extends TaskExecutor {
                     } else {
                         value = jsonObject.getByPath(apiFieldCode);
                     }
-                    // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
+                    // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
 //                    if (value == null && JobVarService.isFieldExp(apiCode)) {
 //                        value = JobVarService.parseDataFieldVar(apiCode, taskJob.getTaskVar(), taskJob.getFieldTypeMapping());
 //                    }
@@ -144,7 +138,7 @@ public class PullDataFromApi extends TaskExecutor {
                     produceData.put(dataFieldCode, value);
                 });
 
-                // 补充默认字段值
+                // TODO 补充默认字段值
 //                if (CollUtil.isNotEmpty(fieldDefaultValues)) {
 //                    fieldDefaultValues.forEach((fieldCode, fieldDefaultValue) -> {
 //                        if (produceData.containsKey(fieldCode)) {
