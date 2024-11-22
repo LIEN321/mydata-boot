@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,6 +26,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineTaskVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineTaskWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineWrapper;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,10 +45,18 @@ public class PipelineController {
     private IPipelineService pipelineService;
     private IPipelineTaskService pipelineTaskService;
 
+    @Resource
+    private PipelineScheduler pipelineScheduler;
+
     @PostMapping
     @Operation(summary = "新增或更新流水线", operationId = "savePipeline")
     public R<Long> save(@RequestBody PipelineDTO pipelineDTO) {
-        return R.data(pipelineService.savePipeline(pipelineDTO));
+        Long id = pipelineService.savePipeline(pipelineDTO);
+
+        // 调整调度
+        pipelineScheduler.update(id);
+
+        return R.data(id);
     }
 
     @GetMapping("/page")
@@ -72,7 +82,7 @@ public class PipelineController {
 
         List<PipelineTaskVO> pipelineTaskVOList = PipelineTaskWrapper.getInstance().listVO(pipelineTaskService.listByPipeline(id));
         pipelineVO.setTasks(pipelineTaskVOList);
-        
+
         return R.data(pipelineVO);
     }
 

@@ -2,12 +2,14 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.quartz;
 
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
@@ -55,7 +57,10 @@ public class QuartzService {
         Scheduler currentScheduler = getScheduler();
 
         // 构建Job Detail对象，带有流水线id值
-        JobDetail jobDetail = JobBuilder.newJob(PipelineJob.class).withIdentity(sPipelineId).usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId).build();
+        JobDetail jobDetail = JobBuilder.newJob(PipelineJob.class)
+                .withIdentity(sPipelineId)
+                .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
+                .build();
 
         // 设置执行日 weeklyCalendar
         WeeklyCalendar weeklyCalendar = new WeeklyCalendar();
@@ -69,7 +74,12 @@ public class QuartzService {
         currentScheduler.addCalendar(sPipelineId, weeklyCalendar, true, true);
 
         // 配置Trigger Builder
-        TriggerBuilder<SimpleTrigger> triggerBuilder = TriggerBuilder.newTrigger().withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(intervalSeconds).withRepeatCount(repeatCount)).modifiedByCalendar(sPipelineId);
+        TriggerBuilder<SimpleTrigger> triggerBuilder = TriggerBuilder.newTrigger()
+                .withIdentity(sPipelineId)
+                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInSeconds(intervalSeconds)
+                        .withRepeatCount(repeatCount))
+                .modifiedByCalendar(sPipelineId);
         if (startTime != null) {
             triggerBuilder.startAt(startTime);
         }
@@ -78,6 +88,22 @@ public class QuartzService {
         Trigger trigger = triggerBuilder.build();
 
         // 通知 quartz 调度
-        currentScheduler.scheduleJob(jobDetail, trigger);
+        boolean isJobExist = currentScheduler.checkExists(new JobKey(sPipelineId));
+        if (isJobExist) {
+            currentScheduler.rescheduleJob(new TriggerKey(sPipelineId), trigger);
+        } else {
+            currentScheduler.scheduleJob(jobDetail, trigger);
+        }
     }
-}
+
+    public void deleteJob(Long pipelineId) {
+        // 流水线id的字符串值
+        String sPipelineId = pipelineId.toString();
+        // 获取当前用户可用的调度器
+        Scheduler currentScheduler = getScheduler();
+        try {
+            currentScheduler.deleteJob(new JobKey(sPipelineId));
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+    }

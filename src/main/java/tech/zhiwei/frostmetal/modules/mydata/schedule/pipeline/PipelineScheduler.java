@@ -22,6 +22,30 @@ import java.util.Date;
 public class PipelineScheduler {
     @Resource
     private QuartzService quartzService;
+    @Resource
+    private IPipelineService pipelineService;
+
+    /**
+     * 更新流水线的调度
+     *
+     * @param pipelineId 流水线id
+     */
+    public void update(Long pipelineId) {
+        Pipeline pipeline = pipelineService.getById(pipelineId);
+        if (pipeline == null) {
+            stopPipeline(pipelineId);
+            return;
+        }
+        // 获取定时执行的状态
+        boolean isSchedule = pipeline.getIsSchedule();
+        if (isSchedule) {
+            // 若启用，则加入调度
+            schedulePipeline(pipeline);
+        } else {
+            // 若未启用，则移出调度
+            stopPipeline(pipelineId);
+        }
+    }
 
     /**
      * 调度多个流水线
@@ -61,5 +85,14 @@ public class PipelineScheduler {
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 停止流水线的调度
+     *
+     * @param pipelineId 流水线id
+     */
+    public void stopPipeline(Long pipelineId) {
+        quartzService.deleteJob(pipelineId);
     }
 }
