@@ -70,5 +70,5 @@ public abstract class TaskExecutor {
     /**
      * 执行流水线任务
      */
-    public abstract Map<String, Object> execute();
+    public abstract void execute(Map<String, Object> jobContextData);
 }

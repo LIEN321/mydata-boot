@@ -37,7 +37,7 @@ public class PullDataFromApi extends TaskExecutor {
     }
 
     @Override
-    public Map<String, Object> execute() {
+    public void execute(Map<String, Object> jobContextData) {
         log.info("从API获取数据 开始");
 
         PipelineTask pipelineTask = getPipelineTask();
@@ -85,7 +85,7 @@ public class PullDataFromApi extends TaskExecutor {
         }
 
         // 业务数据集合
-        List<Map<String, Object>> produceDataList = CollUtil.newArrayList();
+        List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
 
         baseArray.forEach(json -> {
             // 保留根目录json，用于 /field 格式提取数据
@@ -112,19 +112,19 @@ public class PullDataFromApi extends TaskExecutor {
             jsonArray.forEach(obj -> {
                 JSONObject jsonObject = (JSONObject) obj;
                 Map<String, Object> produceData = MapUtil.newHashMap();
-                fieldMapping.forEach((standardCode, apiCode) -> {
+                fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
                     // 若字段映射中 未设置api参数名，则跳过处理；
-                    if (StrUtil.isEmpty(apiCode)) {
+                    if (StrUtil.isEmpty(apiFieldCode)) {
                         return;
                     }
 
                     // 获取业务数据值
                     Object value;
                     // /field 根目录格式
-                    if (StringUtil.startWith(apiCode, MdConstant.FIELD_MAPPING_ROOT)) {
-                        value = baseJson.getByPath(apiCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
+                    if (StringUtil.startWith(apiFieldCode, MdConstant.FIELD_MAPPING_ROOT)) {
+                        value = baseJson.getByPath(apiFieldCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
                     } else {
-                        value = jsonObject.getByPath(apiCode);
+                        value = jsonObject.getByPath(apiFieldCode);
                     }
                     // 未获取到值，再解析属性表达式 从任务变量尝试获取数据
 //                    if (value == null && JobVarService.isFieldExp(apiCode)) {
@@ -141,7 +141,7 @@ public class PullDataFromApi extends TaskExecutor {
 //                    } catch (Exception e) {
 //                        taskJob.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
 //                    }
-                    produceData.put(standardCode, value);
+                    produceData.put(dataFieldCode, value);
                 });
 
                 // 补充默认字段值
@@ -155,12 +155,12 @@ public class PullDataFromApi extends TaskExecutor {
 //                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
 //                    });
 //                }
-                produceDataList.add(produceData);
+                bizDataList.add(produceData);
             });
         });
 
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("BIZ_DATA", produceDataList);
-        return resultMap;
+        // 数据存入任务上下文数据中
+        jobContextData.put(MdConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+        log.info("存入job上下文的业务数据：{}", bizDataList);
     }
 }
