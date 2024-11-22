@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 
 import java.io.Serial;
+import java.util.Date;
 import java.util.List;
 
 
@@ -75,4 +76,7 @@ public class PipelineVO extends BaseVO {
 
     @Schema(description = "流水线任务列表")
     private List<PipelineTaskVO> tasks;
+
+    @Schema(description = "下次执行时间")
+    private Date nextFireTime;
 }

@@ -107,3 +107,26 @@ public class QuartzService {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * 获取Trigger的下次执行时间
+     *
+     * @param pipelineId Trigger标识
+     * @return 下次执行时间
+     */
+    public Date getNextFireTime(Long pipelineId) {
+        // 流水线id的字符串值
+        String sPipelineId = pipelineId.toString();
+        // 获取当前用户可用的调度器
+        Scheduler currentScheduler = getScheduler();
+        try {
+            Trigger trigger = currentScheduler.getTrigger(new TriggerKey(sPipelineId));
+            if (trigger != null) {
+                return trigger.getNextFireTime();
+            }
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+}

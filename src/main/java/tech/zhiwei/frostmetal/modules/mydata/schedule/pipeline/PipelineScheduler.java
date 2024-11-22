@@ -5,6 +5,7 @@ import org.quartz.SchedulerException;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.quartz.QuartzService;
 
 import java.time.LocalTime;
@@ -94,5 +95,15 @@ public class PipelineScheduler {
      */
     public void stopPipeline(Long pipelineId) {
         quartzService.deleteJob(pipelineId);
+    }
+
+    /**
+     * 获取流水线的下次执行时间
+     *
+     * @param pipelineId 流水线id
+     * @return 下次执行时间
+     */
+    public Date getNextFireTime(Long pipelineId) {
+        return quartzService.getNextFireTime(pipelineId);
     }
 }
