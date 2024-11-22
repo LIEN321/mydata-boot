@@ -57,4 +57,6 @@ public class AppApiDTO extends BaseDTO {
     @Schema(description = "响应示例")
     private String respExample;
 
+    @Schema(description = "数据结构模式，1-对象、2-集合")
+    private Integer dataMode;
 }
