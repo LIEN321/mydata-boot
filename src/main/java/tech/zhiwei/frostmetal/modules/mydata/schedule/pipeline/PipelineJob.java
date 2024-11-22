@@ -30,7 +30,7 @@ public class PipelineJob implements Job {
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
 
     // Job执行过程中的变量
-    private Map<String, Object> jobData = new HashMap<String, Object>();
+    private Map<String, Object> jobContextData = new HashMap<String, Object>();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -54,10 +54,9 @@ public class PipelineJob implements Job {
         tasks.forEach(task -> {
             // TODO 记录执行过程log
             // 执行任务
-            Object taskResult = TaskExecutor.getExecutor(task).execute();
+            TaskExecutor.getExecutor(task).execute(jobContextData);
             // TODO 临时用task的type作为key
-            jobData.put(task.getTaskType(), taskResult);
-            log.info(jobData.toString());
+            log.info(jobContextData.toString());
         });
     }
 }
