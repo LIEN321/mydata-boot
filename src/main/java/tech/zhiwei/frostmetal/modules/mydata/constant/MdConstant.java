@@ -96,6 +96,11 @@ public interface MdConstant {
     String TASK_CONFIG_KEY_FIELD_MAPPING = "FIELD_MAPPING";
 
     /**
+     * 任务的定时起始时间的格式
+     */
+    String TASK_TIME_FORMAT = "HH:mm";
+
+    /**
      * 字段映射的根目录
      */
     String FIELD_MAPPING_ROOT = "/";
@@ -126,4 +131,40 @@ public interface MdConstant {
      * Job上下文共享数据的标识：API 消费数据
      */
     String JOB_DATA_KEY_API_CONSUME_DATA = "API_CONSUME_DATA";
+
+    /**
+     * 调度任务的数据标识：触发类型
+     */
+    String JOB_DATA_KEY_TRIGGER_TYPE = "TRIGGER_TYPE";
+    /**
+     * Job触发类型：1-手动
+     */
+    Integer JOB_TRIGGER_TYPE_MANUAL = 1;
+    /**
+     * Job触发类型：2-定时
+     */
+    Integer JOB_TRIGGER_TYPE_SCHEDULE = 2;
+    /**
+     * Job触发类型：3-webhook
+     */
+    Integer JOB_TRIGGER_TYPE_WEBHOOK = 3;
+
+    // ------------------------------ 流水线历史记录常量 ------------------------------
+
+    /**
+     * 流水线历史记录的执行状态：1-运行中
+     */
+    int PIPELINE_HISTORY_STATUS_RUNNING = 1;
+    /**
+     * 流水线历史记录的执行状态：2-中止
+     */
+    int PIPELINE_HISTORY_STATUS_STOPPED = 2;
+    /**
+     * 流水线历史记录的执行状态：3-成功
+     */
+    int PIPELINE_HISTORY_STATUS_SUCCESS = 3;
+    /**
+     * 流水线历史记录的执行状态：4-失败
+     */
+    int PIPELINE_HISTORY_STATUS_FAILED = 4;
 }
