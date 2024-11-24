@@ -89,7 +89,7 @@ public class PushDataToApi extends TaskExecutor {
                 reqBody = api.getReqBodyRaw();
 
                 // 将json字符串 替换${data}占位符
-                reqBody = StringUtil.replace(reqBody, MdConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
+                reqBody = StringUtil.substitute(reqBody, MdConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
             }
             HttpUtil.send(api.getApiMethod(), apiUrl, null, null, reqForms, reqBody);
             log.info("向接口发送数据：{}", reqBody);
