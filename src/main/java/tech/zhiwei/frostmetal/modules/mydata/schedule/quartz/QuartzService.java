@@ -1,5 +1,8 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.quartz;
 
+import org.quartz.DailyTimeIntervalScheduleBuilder;
+import org.quartz.DailyTimeIntervalTrigger;
+import org.quartz.DateBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -7,16 +10,21 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.SimpleTrigger;
+import org.quartz.TimeOfDay;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.calendar.DailyCalendar;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
+import tech.zhiwei.tool.date.CalendarUtil;
+import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.util.ArrayUtil;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -49,7 +57,7 @@ public class QuartzService {
      *
      * @throws SchedulerException
      */
-    public void scheduleJob(Long pipelineId, Integer[] dayOfWeek, int intervalSeconds, Date startTime, int repeatCount) throws SchedulerException {
+    public void scheduleJob(Long pipelineId, Integer[] dayOfWeek, int intervalSeconds, Date startTime, Date endTime, int repeatCount) throws SchedulerException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
@@ -60,6 +68,7 @@ public class QuartzService {
         JobDetail jobDetail = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(sPipelineId)
                 .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
+                .usingJobData(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE, MdConstant.JOB_TRIGGER_TYPE_SCHEDULE)
                 .build();
 
         // 设置执行日 weeklyCalendar
@@ -74,15 +83,17 @@ public class QuartzService {
         currentScheduler.addCalendar(sPipelineId, weeklyCalendar, true, true);
 
         // 配置Trigger Builder
-        TriggerBuilder<SimpleTrigger> triggerBuilder = TriggerBuilder.newTrigger()
+        TriggerBuilder<DailyTimeIntervalTrigger> triggerBuilder = TriggerBuilder.newTrigger()
                 .withIdentity(sPipelineId)
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                .withSchedule(DailyTimeIntervalScheduleBuilder.dailyTimeIntervalSchedule()
+                        .startingDailyAt(TimeOfDay.hourAndMinuteFromDate(startTime))
+                        .endingDailyAt(TimeOfDay.hourAndMinuteFromDate(endTime))
                         .withIntervalInSeconds(intervalSeconds)
                         .withRepeatCount(repeatCount))
+//                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+//                        .withIntervalInSeconds(intervalSeconds)
+//                        .withRepeatCount(repeatCount))
                 .modifiedByCalendar(sPipelineId);
-        if (startTime != null) {
-            triggerBuilder.startAt(startTime);
-        }
 
         // 构建Trigger
         Trigger trigger = triggerBuilder.build();
