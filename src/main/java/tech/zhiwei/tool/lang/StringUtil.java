@@ -47,7 +47,7 @@ public class StringUtil extends StrUtil {
      * @param value  要替换的值
      * @return 替换后的字符串
      */
-    public static String replace(String source, String key, String value) {
+    public static String substitute(String source, String key, String value) {
         if (isBlank(source) || isBlank(key) || value == null) {
             return source;
         }
