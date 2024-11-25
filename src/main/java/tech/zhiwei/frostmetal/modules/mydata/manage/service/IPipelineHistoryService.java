@@ -13,8 +13,17 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 public interface IPipelineHistoryService extends IBaseService<PipelineHistory> {
     /**
      * 保存流水线执行记录
+     *
      * @param pipelineHistoryDTO 流水线执行记录
      * @return id
      */
     Long savePipelineHistory(PipelineHistoryDTO pipelineHistoryDTO);
+
+    /**
+     * 查询流水线的最新一次执行记录
+     *
+     * @param pipelineId 流水线id
+     * @return 最新一次执行记录
+     */
+    PipelineHistory latestHistory(Long pipelineId);
 }

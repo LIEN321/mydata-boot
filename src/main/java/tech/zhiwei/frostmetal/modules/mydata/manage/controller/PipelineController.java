@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineTaskVO;
@@ -44,8 +46,7 @@ import java.util.List;
 public class PipelineController {
     private IPipelineService pipelineService;
     private IPipelineTaskService pipelineTaskService;
-
-    @Resource
+    private IPipelineHistoryService pipelineHistoryService;
     private PipelineScheduler pipelineScheduler;
 
     @PostMapping
@@ -80,6 +81,7 @@ public class PipelineController {
     public R<PipelineVO> detail(@PathVariable Long id) {
         PipelineVO pipelineVO = PipelineWrapper.getInstance().entityVO(pipelineService.getById(id));
 
+        // 查询流水线的任务列表
         List<PipelineTaskVO> pipelineTaskVOList = PipelineTaskWrapper.getInstance().listVO(pipelineTaskService.listByPipeline(id));
         pipelineVO.setTasks(pipelineTaskVOList);
 
@@ -97,5 +99,29 @@ public class PipelineController {
     @Operation(summary = "批量删除流水线", operationId = "deletePipelines")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
         return R.status(pipelineService.remove(ids));
+    }
+
+    @GetMapping("/execute/{id}")
+    @Operation(summary = "执行流水线", operationId = "executePipeline")
+    public R<Boolean> execute(@PathVariable Long id) {
+        PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
+        if (pipelineHistory != null && MdConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()) {
+            return R.fail("执行失败：流水线正在运行中，请稍后再试！");
+        }
+
+        pipelineScheduler.executePipeline(id);
+        return R.success();
+    }
+
+    @GetMapping("/stop/{id}")
+    @Operation(summary = "停止流水线", operationId = "stopPipeline")
+    public R<Boolean> stop(@PathVariable Long id) {
+        PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
+        if (pipelineHistory != null && MdConstant.PIPELINE_HISTORY_STATUS_RUNNING != pipelineHistory.getExecutionStatus()) {
+            return R.fail("停止失败：流水线不在运行中，请确认！");
+        }
+
+        pipelineScheduler.stopPipeline(id);
+        return R.success();
     }
 }
