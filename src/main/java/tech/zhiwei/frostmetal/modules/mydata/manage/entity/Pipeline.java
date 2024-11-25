@@ -103,4 +103,8 @@ public class Pipeline extends TenantEntity {
      */
     private String emailReceiver;
 
+    /**
+     * 最新的执行记录id
+     */
+    private Long latestHistoryId;
 }
