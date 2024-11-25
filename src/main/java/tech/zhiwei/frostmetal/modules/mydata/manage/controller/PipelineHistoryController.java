@@ -10,21 +10,16 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
-import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineHistoryVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineHistoryWrapper;
-import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.lang.ObjectUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,11 +37,11 @@ import java.util.List;
 public class PipelineHistoryController {
     private IPipelineHistoryService pipelineHistoryService;
 
-    @PostMapping
-    @Operation(summary = "新增或更新流水线执行记录", operationId = "savePipelineHistory")
-    public R<Long> save(@RequestBody PipelineHistoryDTO pipelineHistoryDTO) {
-        return R.data(pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO));
-    }
+//    @PostMapping
+//    @Operation(summary = "新增或更新流水线执行记录", operationId = "savePipelineHistory")
+//    public R<Long> save(@RequestBody PipelineHistoryDTO pipelineHistoryDTO) {
+//        return R.data(pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO));
+//    }
 
     @GetMapping("/page")
     @Operation(summary = "分页查询流水线执行记录", operationId = "pipelineHistoryPage")
