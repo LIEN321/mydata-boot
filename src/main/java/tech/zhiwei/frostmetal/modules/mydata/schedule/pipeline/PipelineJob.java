@@ -2,9 +2,10 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline;
 
 import cn.hutool.core.date.DateUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.Job;
+import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.UnableToInterruptJobException;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -31,10 +32,12 @@ import java.util.Map;
  * @since 2024/11/20
  */
 @Slf4j
-public class PipelineJob implements Job {
+public class PipelineJob implements InterruptableJob {
     private final IPipelineService pipelineService = SpringUtil.getBean(IPipelineService.class);
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
+
+    private volatile boolean interrupted = false;
 
     // Job执行过程中的变量
     private Map<String, Object> jobContextData = new HashMap<String, Object>();
@@ -54,35 +57,46 @@ public class PipelineJob implements Job {
             throw new JobExecutionException(StringUtil.format("Job执行失败：流水线不存在，id={}！", pipelineId));
         }
 
-        // TODO 创建流水线的执行记录
+        // 创建流水线的执行记录
         Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE);
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
         pipelineHistoryDTO.setTriggerType(triggerType);
         pipelineHistoryDTO.setStartTime(startTime);
+        pipelineHistoryDTO.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+        pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
         Long historyId = pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO);
+
+        // 更新流水线的最新执行记录id
+        pipeline.setLatestHistoryId(historyId);
+        pipelineService.updateById(pipeline);
 
         // 查询流水线任务列表
         List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
-        if (CollectionUtil.isEmpty(tasks)) {
-            return;
-        }
 
         // 待更新的流水线历史记录
         PipelineHistory pipelineHistory = new PipelineHistory();
         pipelineHistory.setId(historyId);
 
         try {
-            tasks.forEach(task -> {
-                // TODO 记录执行过程log
-                // 执行任务
-                TaskExecutor.getExecutor(task).execute(jobContextData);
-                // TODO 临时用task的type作为key
-                log.info(jobContextData.toString());
-            });
-            pipelineHistory.setStatus(MdConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+            if (CollectionUtil.isNotEmpty(tasks)) {
+                for (PipelineTask task : tasks) {
+                    if (interrupted) {
+                        pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+                        System.out.println("job break");
+                        break;
+                    }
+                    // TODO 记录执行过程log
+                    // 执行任务
+                    TaskExecutor.getExecutor(task).execute(jobContextData);
+                    log.info(jobContextData.toString());
+                }
+            }
+            if (pipelineHistory.getExecutionStatus() == null) {
+                pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+            }
         } catch (Exception e) {
-            pipelineHistory.setStatus(MdConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_FAILED);
         }
 
         // 结束时间
@@ -90,7 +104,13 @@ public class PipelineJob implements Job {
 
         // 更新流水线结果
         pipelineHistory.setEndTime(endTime);
-        pipelineHistory.setExecutionTime(DateUtil.between(startTime,endTime, DateUnit.SECOND));
+        pipelineHistory.setExecutionTime(DateUtil.between(startTime, endTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
+    }
+
+    @Override
+    public void interrupt() throws UnableToInterruptJobException {
+        log.info("job interrupted");
+        interrupted = true;
     }
 }
