@@ -149,6 +149,11 @@ public interface MdConstant {
      */
     Integer JOB_TRIGGER_TYPE_WEBHOOK = 3;
 
+    /**
+     * 手动执行流水线的分组标识
+     */
+    String JOB_GROUP_MANUAL = "manual";
+
     // ------------------------------ 流水线历史记录常量 ------------------------------
 
     /**
