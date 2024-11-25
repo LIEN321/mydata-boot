@@ -21,6 +21,9 @@ spring:
       port: 6379
       database: 0
       password:
+    # mongodb 配置
+    mongodb:
+      uri: mongodb://root:root@svc-dev:27017/admin
   quartz:
     job-store-type: memory
 
@@ -70,3 +73,10 @@ sa-token:
 #配置日志地址
 logging:
   config: classpath:log/logback_${spring.profiles.active}.xml
+
+#mydata配置
+mydata:
+  mongodb:
+    url: mongodb://root:root@svc-dev:27017/{}?authSource=admin&ssl=false
+  secure:
+    encrypt-db: false
