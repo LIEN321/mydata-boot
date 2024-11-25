@@ -5,12 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -18,8 +18,6 @@ import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
-import tech.zhiwei.tool.thread.ThreadUtil;
-import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -30,8 +28,8 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/11/21
  */
+@Slf4j
 public class PullDataFromApi extends TaskExecutor {
-    private static final Logger log = LoggerFactory.getLogger(PullDataFromApi.class);
 
     public PullDataFromApi(PipelineTask pipelineTask) {
         super(pipelineTask);
@@ -39,15 +37,15 @@ public class PullDataFromApi extends TaskExecutor {
 
     @Override
     public void execute(Map<String, Object> jobContextData) {
-        // TODO 临时延长时间，模拟长时间执行过程
-        ThreadUtil.sleep(RandomUtil.randomInt(20) * 1000L);
-
         log.info("从API获取数据 开始");
 
         PipelineTask pipelineTask = getPipelineTask();
         // 获取应用信息
         App app = MdCache.getApp(pipelineTask.getAppId());
         String apiPrefix = app.getApiPrefix();
+
+        // 获取标准数据信息
+        Data data = MdCache.getData(pipelineTask.getDataId());
 
         // 获取接口信息
         AppApi api = MdCache.getApi(pipelineTask.getApiId());
@@ -160,6 +158,8 @@ public class PullDataFromApi extends TaskExecutor {
 
         // 数据存入任务上下文数据中
         jobContextData.put(MdConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+        jobContextData.put(MdConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
+        jobContextData.put(MdConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
         log.info("存入job上下文的业务数据：{}", bizDataList);
     }
 }
