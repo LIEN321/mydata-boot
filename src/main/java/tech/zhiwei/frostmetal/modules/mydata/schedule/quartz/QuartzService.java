@@ -2,29 +2,23 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.quartz;
 
 import org.quartz.DailyTimeIntervalScheduleBuilder;
 import org.quartz.DailyTimeIntervalTrigger;
-import org.quartz.DateBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.SimpleTrigger;
 import org.quartz.TimeOfDay;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
+import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.StdSchedulerFactory;
-import org.quartz.impl.calendar.DailyCalendar;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
-import tech.zhiwei.tool.date.CalendarUtil;
-import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.util.ArrayUtil;
 
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -65,7 +59,7 @@ public class QuartzService {
         Scheduler currentScheduler = getScheduler();
 
         // 构建Job Detail对象，带有流水线id值
-        JobDetail jobDetail = JobBuilder.newJob(PipelineJob.class)
+        JobDetail job = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(sPipelineId)
                 .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
                 .usingJobData(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE, MdConstant.JOB_TRIGGER_TYPE_SCHEDULE)
@@ -103,8 +97,42 @@ public class QuartzService {
         if (isJobExist) {
             currentScheduler.rescheduleJob(new TriggerKey(sPipelineId), trigger);
         } else {
-            currentScheduler.scheduleJob(jobDetail, trigger);
+            currentScheduler.scheduleJob(job, trigger);
         }
+    }
+
+    /**
+     * 手动执行流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    public void executeJob(Long pipelineId) throws SchedulerException {
+        // 流水线id的字符串值
+        String sPipelineId = pipelineId.toString();
+
+        JobDetail job = JobBuilder.newJob(PipelineJob.class)
+                .withIdentity(sPipelineId, MdConstant.JOB_GROUP_MANUAL)
+                .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
+                .usingJobData(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE, MdConstant.JOB_TRIGGER_TYPE_MANUAL)
+                .build();
+
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(sPipelineId, MdConstant.JOB_GROUP_MANUAL)
+                .startNow()
+                .build();
+
+        scheduler.scheduleJob(job, trigger);
+    }
+
+    /**
+     * 停止执行中的流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    public void stopPipeline(Long pipelineId) throws UnableToInterruptJobException {
+        // 流水线id的字符串值
+        String sPipelineId = pipelineId.toString();
+        scheduler.interrupt(new JobKey(sPipelineId, MdConstant.JOB_GROUP_MANUAL));
     }
 
     public void deleteJob(Long pipelineId) {
