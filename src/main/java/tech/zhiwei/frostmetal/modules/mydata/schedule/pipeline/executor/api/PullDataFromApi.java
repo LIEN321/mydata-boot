@@ -18,6 +18,8 @@ import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.thread.ThreadUtil;
+import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,9 @@ public class PullDataFromApi extends TaskExecutor {
 
     @Override
     public void execute(Map<String, Object> jobContextData) {
+        // TODO 临时延长时间，模拟长时间执行过程
+        ThreadUtil.sleep(RandomUtil.randomInt(20) * 1000L);
+
         log.info("从API获取数据 开始");
 
         PipelineTask pipelineTask = getPipelineTask();

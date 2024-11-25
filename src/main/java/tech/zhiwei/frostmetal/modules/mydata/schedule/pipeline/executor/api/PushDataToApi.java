@@ -13,6 +13,8 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.thread.ThreadUtil;
+import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,9 @@ public class PushDataToApi extends TaskExecutor {
 
     @Override
     public void execute(Map<String, Object> jobContextData) {
+        // TODO 临时延长时间，模拟长时间执行过程
+        ThreadUtil.sleep(RandomUtil.randomInt(20) * 1000L);
+        
         PipelineTask pipelineTask = getPipelineTask();
 
         // 获取业务数据
