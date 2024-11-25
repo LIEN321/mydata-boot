@@ -6,6 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
 import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.Map;
@@ -46,6 +47,7 @@ public abstract class TaskExecutor {
             }
             case MdConstant.TASK_TYPE_SAVE_DATA -> {
                 log.info("TASK_TYPE_SAVE_DATA");
+                return new SaveDataToWarehouse(pipelineTask);
             }
             case MdConstant.TASK_TYPE_QUERY_DATA -> {
                 log.info("TASK_TYPE_QUERY_DATA");
