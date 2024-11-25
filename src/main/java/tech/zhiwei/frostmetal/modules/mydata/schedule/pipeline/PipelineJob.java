@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.UnableToInterruptJobException;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -109,7 +108,7 @@ public class PipelineJob implements InterruptableJob {
     }
 
     @Override
-    public void interrupt() throws UnableToInterruptJobException {
+    public void interrupt() {
         log.info("job interrupted");
         interrupted = true;
     }
