@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
+
 import java.util.Date;
 
 /**
@@ -33,5 +34,11 @@ public class PipelineHistoryDTO extends BaseDTO {
 
     @Schema(description = "流水线参数")
     private String pipelineVars;
+
+    @Schema(description = "执行状态")
+    private Integer executionStatus;
+
+    @Schema(description = "租户id")
+    private String tenantId;
 
 }

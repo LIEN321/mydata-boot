@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
+
+import java.io.Serial;
 import java.util.Date;
 
 /**
@@ -16,6 +18,8 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @TableName(value = "md_pipeline_history")
 public class PipelineHistory extends TenantEntity {
+    @Serial
+    private static final long serialVersionUID = -7830690754588859083L;
     /**
      * 所属流水线
      */
@@ -45,5 +49,10 @@ public class PipelineHistory extends TenantEntity {
      * 流水线参数
      */
     private String pipelineVars;
+
+    /**
+     * 触发方式
+     */
+    private Integer executionStatus;
 
 }
