@@ -3,9 +3,11 @@ package tech.zhiwei.frostmetal.modules.mydata.cache;
 import tech.zhiwei.frostmetal.cache.CacheUtil;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppApiService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IProjectService;
 import tech.zhiwei.tool.spring.SpringUtil;
 
@@ -19,11 +21,13 @@ public class MdCache {
     private static final IProjectService projectService;
     private static final IAppService appService;
     private static final IAppApiService apiService;
+    private static final IDataService dataService;
 
     static {
         projectService = SpringUtil.getBean(IProjectService.class);
         appService = SpringUtil.getBean(IAppService.class);
         apiService = SpringUtil.getBean(IAppApiService.class);
+        dataService = SpringUtil.getBean(IDataService.class);
     }
 
     // mydata模块的缓存统一前缀
@@ -34,6 +38,8 @@ public class MdCache {
     private static final String CACHE_APP = "app:id:";
     // app缓存前缀
     private static final String CACHE_API = "api:id:";
+    // data缓存前缀
+    private static final String CACHE_DATA = "data:id:";
 
     // ---------------------------------------- 项目缓存 ----------------------------------------
 
@@ -97,5 +103,26 @@ public class MdCache {
      */
     public static void removeApi(Long id) {
         CacheUtil.remove(MYDATA_CACHE_PREFIX, CACHE_API, id);
+    }
+
+    // ---------------------------------------- 数据标准 缓存 ----------------------------------------
+
+    /**
+     * 获取数据标准
+     *
+     * @param id 数据标准 id
+     * @return 数据标准
+     */
+    public static Data getData(Long id) {
+        return CacheUtil.get(MYDATA_CACHE_PREFIX, CACHE_DATA, id, () -> dataService.getById(id));
+    }
+
+    /**
+     * 删除API的缓存
+     *
+     * @param id 应用id
+     */
+    public static void removeData(Long id) {
+        CacheUtil.remove(MYDATA_CACHE_PREFIX, CACHE_DATA, id);
     }
 }
