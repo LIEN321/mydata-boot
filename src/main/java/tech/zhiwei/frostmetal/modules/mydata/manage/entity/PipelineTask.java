@@ -24,6 +24,11 @@ public class PipelineTask extends TenantEntity {
     private static final long serialVersionUID = 5167132195306450765L;
 
     /**
+     * 所属项目
+     */
+    private Long projectId;
+
+    /**
      * 所属流水线
      */
     private Long pipelineId;
@@ -59,4 +64,8 @@ public class PipelineTask extends TenantEntity {
     @TableField(typeHandler = Fastjson2TypeHandler.class)
     private Map<String, Object> taskConfig;
 
+    /**
+     * 数据仓库名称
+     */
+    private String warehouse;
 }

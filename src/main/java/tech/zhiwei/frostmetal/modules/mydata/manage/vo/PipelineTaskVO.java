@@ -23,6 +23,10 @@ public class PipelineTaskVO extends BaseVO {
     @Serial
     private static final long serialVersionUID = -8071599184776939188L;
 
+    @Schema(description = "所属项目")
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long projectId;
+
     @Schema(description = "所属流水线")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long pipelineId;
@@ -47,5 +51,8 @@ public class PipelineTaskVO extends BaseVO {
 
     @Schema(description = "任务配置")
     private Map<String, Object> taskConfig;
+
+    @Schema(description = "数据仓库名称")
+    private String warehouse;
 
 }
