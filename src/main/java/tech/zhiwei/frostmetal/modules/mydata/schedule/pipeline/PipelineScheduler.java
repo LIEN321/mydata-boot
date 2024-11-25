@@ -1,9 +1,8 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline;
 
-import cn.hutool.core.date.DatePattern;
 import jakarta.annotation.Resource;
-import org.quartz.DateBuilder;
 import org.quartz.SchedulerException;
+import org.quartz.UnableToInterruptJobException;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -99,11 +98,37 @@ public class PipelineScheduler {
     }
 
     /**
-     * 停止流水线的调度
+     * 手动执行流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    public void executePipeline(Long pipelineId) {
+        try {
+            quartzService.executeJob(pipelineId);
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 停止执行中的流水线
      *
      * @param pipelineId 流水线id
      */
     public void stopPipeline(Long pipelineId) {
+        try {
+            quartzService.stopPipeline(pipelineId);
+        } catch (UnableToInterruptJobException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 撤销流水线的调度
+     *
+     * @param pipelineId 流水线id
+     */
+    public void deletePipeline(Long pipelineId) {
         quartzService.deleteJob(pipelineId);
     }
 
