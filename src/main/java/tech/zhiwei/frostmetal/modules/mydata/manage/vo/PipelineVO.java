@@ -79,4 +79,7 @@ public class PipelineVO extends BaseVO {
 
     @Schema(description = "下次执行时间")
     private Date nextFireTime;
+
+    @Schema(description = "最新一次的执行记录")
+    private PipelineHistoryVO latestHistory;
 }
