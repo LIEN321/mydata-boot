@@ -49,7 +49,7 @@ public class IntegerArrayTypeHandler extends BaseTypeHandler<Integer[]> {
 
     private Integer[] parseStringToIntegerArray(String value) {
         if (value == null || value.isEmpty()) {
-            return new Integer[0];
+            return null;
         }
         return Arrays.stream(value.split(StringPool.COMMA))
                 .map(Integer::parseInt)
