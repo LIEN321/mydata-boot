@@ -47,6 +47,16 @@ public interface MdConstant {
      */
     int API_DATA_MODE_LIST = 2;
 
+    /**
+     * 数据操作类型：数据提供者
+     */
+    int DATA_PRODUCER = 1;
+
+    /**
+     * 数据操作类型：数据消费者
+     */
+    int DATA_CONSUMER = 2;
+
     // ------------------------------ 流水线任务常量 ------------------------------
 
     /**
@@ -128,6 +138,15 @@ public interface MdConstant {
     String JOB_DATA_KEY_BIZ_DATA = "BIZ_DATA";
 
     /**
+     * Job上下文共享数据的标识：标准数据的id
+     */
+    String JOB_DATA_KEY_DATA_ID = "DATA_ID";
+    /**
+     * Job上下文共享数据的标识：标准数据的编号
+     */
+    String JOB_DATA_KEY_DATA_CODE = "DATA_CODE";
+
+    /**
      * Job上下文共享数据的标识：API 消费数据
      */
     String JOB_DATA_KEY_API_CONSUME_DATA = "API_CONSUME_DATA";
@@ -172,4 +191,147 @@ public interface MdConstant {
      * 流水线历史记录的执行状态：4-失败
      */
     int PIPELINE_HISTORY_STATUS_FAILED = 4;
+
+    // ------------------------------ 业务数据相关常量 ------------------------------
+
+    /**
+     * 唯一标识名
+     */
+    String MONGODB_OBJECT_ID = "_id";
+
+    /**
+     * 业务数据字段名称：唯一标识
+     */
+    String DATA_COLUMN_DATA_ID = "_MD_DATA_ID_";
+
+    /**
+     * 业务数据字段名称：最后更新时间
+     */
+    String DATA_COLUMN_UPDATE_TIME = "_MD_UPDATE_TIME_";
+
+    /**
+     * 业务数据历史记录集合后缀
+     */
+    String DATA_COLUMN_HISTORY = "_MD_HISTORY";
+
+    /**
+     * 任务过滤条件值类型 - 值类型
+     */
+    Integer TASK_FILTER_TYPE_VALUE = 1;
+
+    /**
+     * 任务过滤条件值类型 - 字段名
+     */
+    Integer TASK_FILTER_TYPE_FIELD = 2;
+
+    /**
+     * 数据过滤操作：等于
+     */
+    String DATA_OP_EQ = "=";
+
+    /**
+     * 数据过滤操作：等于
+     */
+    String DATA_OP_NE = "!=";
+
+    /**
+     * 数据过滤操作：大于
+     */
+    String DATA_OP_GT = ">";
+
+    /**
+     * 数据过滤操作：大于或等于
+     */
+    String DATA_OP_GTE = ">=";
+
+    /**
+     * 数据过滤操作：小于
+     */
+    String DATA_OP_LT = "<";
+
+    /**
+     * 数据过滤操作：小于或等于
+     */
+    String DATA_OP_LTE = "<=";
+
+    /**
+     * 数据过滤操作：not null
+     */
+    String DATA_NOT_NULL = "nn";
+
+    /**
+     * 数据过滤操作：not empty
+     */
+    String DATA_NOT_EMPTY = "ne";
+
+    /**
+     * 数据过滤操作：模糊匹配
+     */
+    String DATA_OP_LIKE = "like";
+
+    /**
+     * 数据类型：默认，随提供放返回而定
+     */
+    String DATA_TYPE_DEFAULT = "default";
+    /**
+     * 数据类型：整数
+     */
+    String DATA_TYPE_INT = "int";
+    /**
+     * 数据类型：字符串
+     */
+    String DATA_TYPE_STRING = "string";
+    /**
+     * 数据类型：日期
+     */
+    String DATA_TYPE_DATE = "date";
+    /**
+     * 数据类型：数字，包括小数
+     */
+    String DATA_TYPE_NUMBER = "number";
+
+    // ---------- 网络常量 ----------
+
+    /**
+     * Http方法枚举
+     */
+    enum HttpMethod {
+        /**
+         * GET
+         */
+        GET,
+        /**
+         * POST
+         */
+        POST,
+        /**
+         * PUT
+         */
+        PUT,
+        /**
+         * DELETE
+         */
+        DELETE
+    }
+
+    /**
+     * 接口数据类型枚举
+     */
+    enum ApiDataType {
+
+        /**
+         * 接口类型：json
+         */
+        JSON;
+    }
+
+    /**
+     * http协议
+     */
+    String HTTP = "http://";
+
+    /**
+     * https协议
+     */
+    String HTTPS = "https://";
 }
