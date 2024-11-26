@@ -1,7 +1,7 @@
 package tech.zhiwei.frostmetal.modules.mydata.data;
 
 import lombok.Data;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.tool.lang.StringUtil;
 
 import java.io.Serializable;
@@ -34,8 +34,8 @@ public class BizDataFilter implements Serializable {
     /**
      * 条件类型
      *
-     * @see MdConstant#TASK_FILTER_TYPE_VALUE
-     * @see MdConstant#TASK_FILTER_TYPE_FIELD
+     * @see MyDataConstant#TASK_FILTER_TYPE_VALUE
+     * @see MyDataConstant#TASK_FILTER_TYPE_FIELD
      */
     private Object type;
 

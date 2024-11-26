@@ -2,7 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.wrapper;
 
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.core.base.wrapper.BaseWrapper;
-import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.DataVO;
@@ -31,7 +31,7 @@ public class DataWrapper extends BaseWrapper<Data, DataVO> {
         DataVO dataVO = BeanUtil.copyProperties(entity, DataVO.class);
 
         // 查询所属项目
-        Project project = MdCache.getProject(entity.getProjectId());
+        Project project = MyDataCache.getProject(entity.getProjectId());
         if (project != null) {
             dataVO.setProjectName(project.getProjectName());
         }

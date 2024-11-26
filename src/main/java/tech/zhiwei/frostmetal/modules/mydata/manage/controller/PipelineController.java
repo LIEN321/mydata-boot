@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
@@ -105,7 +105,7 @@ public class PipelineController {
     @Operation(summary = "执行流水线", operationId = "executePipeline")
     public R<Boolean> execute(@PathVariable Long id) {
         PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
-        if (pipelineHistory != null && MdConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()) {
+        if (pipelineHistory != null && MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()) {
             return R.fail("执行失败：流水线正在运行中，请稍后再试！");
         }
 
@@ -117,7 +117,7 @@ public class PipelineController {
     @Operation(summary = "停止流水线", operationId = "stopPipeline")
     public R<Boolean> stop(@PathVariable Long id) {
         PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
-        if (pipelineHistory != null && MdConstant.PIPELINE_HISTORY_STATUS_RUNNING != pipelineHistory.getExecutionStatus()) {
+        if (pipelineHistory != null && MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING != pipelineHistory.getExecutionStatus()) {
             return R.fail("停止失败：流水线不在运行中，请确认！");
         }
 

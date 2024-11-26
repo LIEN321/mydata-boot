@@ -7,7 +7,7 @@ import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -20,7 +20,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/11/25
  */
-public class MdUtil {
+public class MyDataUtil {
 
     /**
      * 校验 数据操作类型 是否有效
@@ -32,7 +32,7 @@ public class MdUtil {
         if (opType == null) {
             return false;
         }
-        return MdConstant.DATA_PRODUCER == opType || MdConstant.DATA_CONSUMER == opType;
+        return MyDataConstant.DATA_PRODUCER == opType || MyDataConstant.DATA_CONSUMER == opType;
     }
 
     /**
@@ -45,7 +45,7 @@ public class MdUtil {
         if (StrUtil.isEmpty(url)) {
             return false;
         }
-        return url.startsWith(MdConstant.HTTP) || url.startsWith(MdConstant.HTTPS);
+        return url.startsWith(MyDataConstant.HTTP) || url.startsWith(MyDataConstant.HTTPS);
     }
 
     /**
@@ -58,7 +58,7 @@ public class MdUtil {
         if (StrUtil.isEmpty(method)) {
             return false;
         }
-        return EnumUtil.contains(MdConstant.HttpMethod.class, method.toUpperCase());
+        return EnumUtil.contains(MyDataConstant.HttpMethod.class, method.toUpperCase());
     }
 
     /**
@@ -72,7 +72,7 @@ public class MdUtil {
             return false;
         }
 
-        return EnumUtil.contains(MdConstant.ApiDataType.class, apiDataType.toUpperCase());
+        return EnumUtil.contains(MyDataConstant.ApiDataType.class, apiDataType.toUpperCase());
     }
 
     /**
@@ -131,7 +131,7 @@ public class MdUtil {
     }
 
     public static String getBizHistoryCollection(String dataCode) {
-        return dataCode + MdConstant.DATA_COLUMN_HISTORY;
+        return dataCode + MyDataConstant.DATA_COLUMN_HISTORY;
     }
 
     /**
@@ -149,16 +149,16 @@ public class MdUtil {
                 return value;
             }
             switch (targetType) {
-                case MdConstant.DATA_TYPE_INT:
+                case MyDataConstant.DATA_TYPE_INT:
                     convertValue = NumberUtil.parseInt(StrUtil.toString(value));
                     break;
-                case MdConstant.DATA_TYPE_STRING:
+                case MyDataConstant.DATA_TYPE_STRING:
                     convertValue = StrUtil.toString(value);
                     break;
-                case MdConstant.DATA_TYPE_DATE:
+                case MyDataConstant.DATA_TYPE_DATE:
                     convertValue = DateUtil.parse(StrUtil.toString(value));
                     break;
-                case MdConstant.DATA_TYPE_NUMBER:
+                case MyDataConstant.DATA_TYPE_NUMBER:
                     convertValue = NumberUtil.parseNumber(StrUtil.toString(value));
                     break;
             }
@@ -170,11 +170,11 @@ public class MdUtil {
     public static String formatData(Object value, String targetType) {
         if (ObjUtil.isNotNull(value) && StrUtil.isNotEmpty(targetType)) {
             switch (targetType) {
-                case MdConstant.DATA_TYPE_INT:
-                case MdConstant.DATA_TYPE_STRING:
-                case MdConstant.DATA_TYPE_NUMBER:
+                case MyDataConstant.DATA_TYPE_INT:
+                case MyDataConstant.DATA_TYPE_STRING:
+                case MyDataConstant.DATA_TYPE_NUMBER:
                     return StrUtil.toString(value);
-                case MdConstant.DATA_TYPE_DATE:
+                case MyDataConstant.DATA_TYPE_DATE:
                     Date date = DateUtil.parse(StrUtil.toString(value));
                     return DateUtil.formatDateTime(date);
             }
@@ -185,11 +185,11 @@ public class MdUtil {
 
     public static String defaultValue(String targetType) {
         switch (targetType) {
-            case MdConstant.DATA_TYPE_INT:
-            case MdConstant.DATA_TYPE_NUMBER:
+            case MyDataConstant.DATA_TYPE_INT:
+            case MyDataConstant.DATA_TYPE_NUMBER:
                 return "0";
 //            case MdConstant.DATA_TYPE_STRING:
-            case MdConstant.DATA_TYPE_DATE:
+            case MyDataConstant.DATA_TYPE_DATE:
                 return DateUtil.formatDateTime(new Date());
             default:
                 return "";

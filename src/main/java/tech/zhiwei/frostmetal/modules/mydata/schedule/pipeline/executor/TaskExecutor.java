@@ -2,7 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
@@ -31,37 +31,37 @@ public abstract class TaskExecutor {
 
     public static TaskExecutor getExecutor(PipelineTask pipelineTask) {
         switch (pipelineTask.getTaskType()) {
-            case MdConstant.TASK_TYPE_API_GET_DATA -> {
+            case MyDataConstant.TASK_TYPE_API_GET_DATA -> {
                 log.info("TASK_TYPE_API_GET_DATA");
                 return new PullDataFromApi(pipelineTask);
             }
-            case MdConstant.TASK_TYPE_API_SEND_DATA -> {
+            case MyDataConstant.TASK_TYPE_API_SEND_DATA -> {
                 log.info("TASK_TYPE_API_SEND_DATA");
                 return new PushDataToApi(pipelineTask);
             }
-            case MdConstant.TASK_TYPE_WEBHOOK_GET_DATA -> {
+            case MyDataConstant.TASK_TYPE_WEBHOOK_GET_DATA -> {
                 log.info("TASK_TYPE_WEBHOOK_GET_DATA");
             }
-            case MdConstant.TASK_TYPE_API_GET_VAR -> {
+            case MyDataConstant.TASK_TYPE_API_GET_VAR -> {
                 log.info("TASK_TYPE_API_GET_VAR");
             }
-            case MdConstant.TASK_TYPE_SAVE_DATA -> {
+            case MyDataConstant.TASK_TYPE_SAVE_DATA -> {
                 log.info("TASK_TYPE_SAVE_DATA");
                 return new SaveDataToWarehouse(pipelineTask);
             }
-            case MdConstant.TASK_TYPE_QUERY_DATA -> {
+            case MyDataConstant.TASK_TYPE_QUERY_DATA -> {
                 log.info("TASK_TYPE_QUERY_DATA");
             }
-            case MdConstant.TASK_TYPE_FILTER_DATA -> {
+            case MyDataConstant.TASK_TYPE_FILTER_DATA -> {
                 log.info("TASK_TYPE_FILTER_DATA");
             }
-            case MdConstant.TASK_TYPE_OPERATE_DATA -> {
+            case MyDataConstant.TASK_TYPE_OPERATE_DATA -> {
                 log.info("TASK_TYPE_OPERATE_DATA");
             }
-            case MdConstant.TASK_TYPE_WRITE_EXCEL -> {
+            case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> {
                 log.info("TASK_TYPE_WRITE_EXCEL");
             }
-            case MdConstant.TASK_TYPE_SEND_EMAIL -> {
+            case MyDataConstant.TASK_TYPE_SEND_EMAIL -> {
                 log.info("TASK_TYPE_SEND_EMAIL");
             }
             default -> {
@@ -89,6 +89,6 @@ public abstract class TaskExecutor {
         if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
             return null;
         }
-        return (Map<String, String>) pipelineTask.getTaskConfig().get(MdConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
+        return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
     }
 }

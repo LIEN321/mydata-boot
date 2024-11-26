@@ -19,7 +19,7 @@ import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
-import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.ProjectDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IProjectService;
@@ -48,7 +48,7 @@ public class ProjectController {
     public R<Long> save(@RequestBody ProjectDTO projectDTO) {
         Long id = projectService.saveProject(projectDTO);
         if (id != null) {
-            MdCache.removeProject(projectDTO.getId());
+            MyDataCache.removeProject(projectDTO.getId());
         }
         return R.data(id);
     }

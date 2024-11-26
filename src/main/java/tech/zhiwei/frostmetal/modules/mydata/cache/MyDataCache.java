@@ -17,7 +17,7 @@ import tech.zhiwei.tool.spring.SpringUtil;
  * @author LIEN
  * @since 2024/11/9
  */
-public class MdCache {
+public class MyDataCache {
     private static final IProjectService projectService;
     private static final IAppService appService;
     private static final IAppApiService apiService;

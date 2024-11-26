@@ -6,7 +6,7 @@ package tech.zhiwei.frostmetal.modules.mydata.constant;
  * @author LIEN
  * @since 2024/11/9
  */
-public interface MdConstant {
+public interface MyDataConstant {
     // ------------------------------ 字段常量 ------------------------------
     /**
      * 编号长度

@@ -4,7 +4,7 @@ import jakarta.annotation.Resource;
 import org.quartz.SchedulerException;
 import org.quartz.UnableToInterruptJobException;
 import org.springframework.stereotype.Component;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.quartz.QuartzService;
@@ -79,10 +79,10 @@ public class PipelineScheduler {
         int intervalSeconds = LocalTime.parse(intervalTime).toSecondOfDay();
         // 开始时间
         String startTime = pipeline.getStartTime();
-        Date dStartTime = DateUtil.parse(startTime, MdConstant.TASK_TIME_FORMAT);
+        Date dStartTime = DateUtil.parse(startTime, MyDataConstant.TASK_TIME_FORMAT);
         // 结束时间
         String endTime = pipeline.getEndTime();
-        Date dEndTime = DateUtil.parse(endTime, MdConstant.TASK_TIME_FORMAT);
+        Date dEndTime = DateUtil.parse(endTime, MyDataConstant.TASK_TIME_FORMAT);
 
         // 计算下一次执行时间
         // TODO 临时改用null
@@ -91,7 +91,7 @@ public class PipelineScheduler {
 
         try {
             // 使用 quartz 调度任务
-            quartzService.scheduleJob(pipelineId, dayOfWeek, intervalSeconds, dStartTime, dEndTime, MdConstant.JOB_REPEAT_FOREVER);
+            quartzService.scheduleJob(pipelineId, dayOfWeek, intervalSeconds, dStartTime, dEndTime, MyDataConstant.JOB_REPEAT_FOREVER);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }

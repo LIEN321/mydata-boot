@@ -1,7 +1,7 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse;
 
-import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
@@ -34,22 +34,22 @@ public class SaveDataToWarehouse extends TaskExecutor {
     @Override
     public void execute(Map<String, Object> jobContextData) {
         // 业务数据集合
-        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(MdConstant.JOB_DATA_KEY_BIZ_DATA);
+        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (CollectionUtil.isEmpty(bizDataList)) {
             // TODO 业务数据集合为空
             return;
         }
 
         PipelineTask pipelineTask = getPipelineTask();
-        Project project = MdCache.getProject(pipelineTask.getProjectId());
+        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
 
         // 数据仓库名称
         String warehouseName = pipelineTask.getTenantId() + "_" + project.getProjectCode();
         // 标准数据的编号
-        String dataCode = jobContextData.get(MdConstant.JOB_DATA_KEY_DATA_CODE).toString();
+        String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
 
         // 标准数据id
-        Long dataId = (Long) jobContextData.get(MdConstant.JOB_DATA_KEY_DATA_ID);
+        Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
         if (ObjectUtil.isNull(dataId)) {
             throw new RuntimeException("保存业务数据失败：缺少标准数据");
         }

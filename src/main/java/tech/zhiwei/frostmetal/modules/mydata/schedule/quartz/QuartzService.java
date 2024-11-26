@@ -15,7 +15,7 @@ import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.tool.util.ArrayUtil;
 
@@ -61,8 +61,8 @@ public class QuartzService {
         // 构建Job Detail对象，带有流水线id值
         JobDetail job = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(sPipelineId)
-                .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
-                .usingJobData(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE, MdConstant.JOB_TRIGGER_TYPE_SCHEDULE)
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, MyDataConstant.JOB_TRIGGER_TYPE_SCHEDULE)
                 .build();
 
         // 设置执行日 weeklyCalendar
@@ -111,13 +111,13 @@ public class QuartzService {
         String sPipelineId = pipelineId.toString();
 
         JobDetail job = JobBuilder.newJob(PipelineJob.class)
-                .withIdentity(sPipelineId, MdConstant.JOB_GROUP_MANUAL)
-                .usingJobData(MdConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
-                .usingJobData(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE, MdConstant.JOB_TRIGGER_TYPE_MANUAL)
+                .withIdentity(sPipelineId, MyDataConstant.JOB_GROUP_MANUAL)
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, MyDataConstant.JOB_TRIGGER_TYPE_MANUAL)
                 .build();
 
         Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(sPipelineId, MdConstant.JOB_GROUP_MANUAL)
+                .withIdentity(sPipelineId, MyDataConstant.JOB_GROUP_MANUAL)
                 .startNow()
                 .build();
 
@@ -132,7 +132,7 @@ public class QuartzService {
     public void stopPipeline(Long pipelineId) throws UnableToInterruptJobException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
-        scheduler.interrupt(new JobKey(sPipelineId, MdConstant.JOB_GROUP_MANUAL));
+        scheduler.interrupt(new JobKey(sPipelineId, MyDataConstant.JOB_GROUP_MANUAL));
     }
 
     public void deleteJob(Long pipelineId) {

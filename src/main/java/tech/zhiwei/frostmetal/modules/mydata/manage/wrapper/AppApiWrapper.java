@@ -2,7 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.wrapper;
 
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.core.base.wrapper.BaseWrapper;
-import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.AppApiVO;
@@ -31,7 +31,7 @@ public class AppApiWrapper extends BaseWrapper<AppApi, AppApiVO> {
         AppApiVO appApiVO = BeanUtil.copyProperties(entity, AppApiVO.class);
 
         // 查询所属应用
-        App app = MdCache.getApp(entity.getAppId());
+        App app = MyDataCache.getApp(entity.getAppId());
         if (app != null) {
             appApiVO.setAppName(app.getAppName());
         }

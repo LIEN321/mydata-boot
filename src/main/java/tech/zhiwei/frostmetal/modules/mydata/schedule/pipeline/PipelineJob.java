@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
@@ -48,7 +48,7 @@ public class PipelineJob implements InterruptableJob {
 
         log.info("PipelineJob execute");
         // 获取流水线id
-        Long pipelineId = context.getJobDetail().getJobDataMap().getLong(MdConstant.JOB_DATA_KEY_PIPELINE_ID);
+        Long pipelineId = context.getJobDetail().getJobDataMap().getLong(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
 
         // 查询流水线记录
         Pipeline pipeline = pipelineService.getById(pipelineId);
@@ -57,12 +57,12 @@ public class PipelineJob implements InterruptableJob {
         }
 
         // 创建流水线的执行记录
-        Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MdConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+        Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
         pipelineHistoryDTO.setTriggerType(triggerType);
         pipelineHistoryDTO.setStartTime(startTime);
-        pipelineHistoryDTO.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+        pipelineHistoryDTO.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
         pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
         Long historyId = pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO);
 
@@ -81,7 +81,7 @@ public class PipelineJob implements InterruptableJob {
             if (CollectionUtil.isNotEmpty(tasks)) {
                 for (PipelineTask task : tasks) {
                     if (interrupted) {
-                        pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+                        pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
                         System.out.println("job break");
                         break;
                     }
@@ -92,10 +92,10 @@ public class PipelineJob implements InterruptableJob {
                 }
             }
             if (pipelineHistory.getExecutionStatus() == null) {
-                pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
             }
         } catch (Exception e) {
-            pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
             log.error(e.getMessage(), e);
         }
 

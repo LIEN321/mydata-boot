@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -120,7 +120,7 @@ public class BizDataDAO {
                 query.with(sort);
             }
         }
-        query.fields().exclude(MdConstant.MONGODB_OBJECT_ID);
+        query.fields().exclude(MyDataConstant.MONGODB_OBJECT_ID);
         // 执行查询
         List<Document> documents = mongoTemplate.find(query, Document.class, dataCode);
         return new ArrayList<>(documents);
@@ -183,7 +183,7 @@ public class BizDataDAO {
      */
     public void remove(String dbCode, String dataCode, String bizId) {
         Query query = new Query();
-        query.addCriteria(Criteria.where(MdConstant.DATA_COLUMN_DATA_ID).is(bizId));
+        query.addCriteria(Criteria.where(MyDataConstant.DATA_COLUMN_DATA_ID).is(bizId));
         mongoFactory.getTemplate(dbCode).remove(query, dataCode);
     }
 
@@ -195,10 +195,10 @@ public class BizDataDAO {
     private void fillData(Map<String, Object> bizData) {
         Date currentTime = DateUtil.date();
         // 设置业务数据的最后更新时间
-        bizData.put(MdConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
-        if (ObjectUtil.isEmpty(bizData.get(MdConstant.DATA_COLUMN_DATA_ID))) {
+        bizData.put(MyDataConstant.DATA_COLUMN_UPDATE_TIME, currentTime);
+        if (ObjectUtil.isEmpty(bizData.get(MyDataConstant.DATA_COLUMN_DATA_ID))) {
             // 设置数据的唯一标识
-            bizData.put(MdConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
+            bizData.put(MyDataConstant.DATA_COLUMN_DATA_ID, UUID.randomUUID(true).toString(true));
         }
     }
 
@@ -218,21 +218,21 @@ public class BizDataDAO {
                 Object type = bizDataFilter.getType();
 
                 Criteria criteria;
-                if (MdConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
+                if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
                     criteria = new Criteria() {
                         @NotNull
                         @Override
                         public Document getCriteriaObject() {
                             String executeOp;
                             switch (op) {
-                                case MdConstant.DATA_OP_EQ:
+                                case MyDataConstant.DATA_OP_EQ:
                                     executeOp = "==";
                                     break;
-                                case MdConstant.DATA_OP_NE:
-                                case MdConstant.DATA_OP_GT:
-                                case MdConstant.DATA_OP_GTE:
-                                case MdConstant.DATA_OP_LT:
-                                case MdConstant.DATA_OP_LTE:
+                                case MyDataConstant.DATA_OP_NE:
+                                case MyDataConstant.DATA_OP_GT:
+                                case MyDataConstant.DATA_OP_GTE:
+                                case MyDataConstant.DATA_OP_LT:
+                                case MyDataConstant.DATA_OP_LTE:
                                     executeOp = op;
                                     break;
 
@@ -246,32 +246,32 @@ public class BizDataDAO {
                     // 根据条件操作类型 调用mongodb对应的查询方法
                     criteria = Criteria.where(key);
                     switch (op) {
-                        case MdConstant.DATA_OP_EQ:
+                        case MyDataConstant.DATA_OP_EQ:
                             criteria.is(value);
                             break;
-                        case MdConstant.DATA_OP_NE:
+                        case MyDataConstant.DATA_OP_NE:
                             criteria.ne(value);
                             break;
-                        case MdConstant.DATA_OP_GT:
+                        case MyDataConstant.DATA_OP_GT:
                             criteria.gt(value);
                             break;
-                        case MdConstant.DATA_OP_GTE:
+                        case MyDataConstant.DATA_OP_GTE:
                             criteria.gte(value);
                             break;
-                        case MdConstant.DATA_OP_LT:
+                        case MyDataConstant.DATA_OP_LT:
                             criteria.lt(value);
                             break;
-                        case MdConstant.DATA_OP_LTE:
+                        case MyDataConstant.DATA_OP_LTE:
                             criteria.lte(value);
                             break;
-                        case MdConstant.DATA_NOT_EMPTY:
+                        case MyDataConstant.DATA_NOT_EMPTY:
                             criteria.ne("");
                             criteriaList.add(Criteria.where(key).ne(null));
                             break;
-                        case MdConstant.DATA_NOT_NULL:
+                        case MyDataConstant.DATA_NOT_NULL:
                             criteria.ne(null).exists(true);
                             break;
-                        case MdConstant.DATA_OP_LIKE:
+                        case MyDataConstant.DATA_OP_LIKE:
                             criteria.regex(".*" + value + ".*", "i");
                             break;
 

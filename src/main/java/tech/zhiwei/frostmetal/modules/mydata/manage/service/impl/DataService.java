@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.DataDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.DataMapper;
@@ -62,7 +62,7 @@ public class DataService extends BaseService<DataMapper, Data> implements IDataS
             // 数据项编号 不能为空
             AssertUtil.notBlank(dataCode, "提交失败：编号 不能为空！");
             // 数据项编号 长度不能超过限制
-            AssertUtil.isTrue(dataCode.length() <= MdConstant.MAX_CODE_LENGTH, "提交失败：编号 不能超过{}位！", MdConstant.MAX_CODE_LENGTH);
+            AssertUtil.isTrue(dataCode.length() <= MyDataConstant.MAX_CODE_LENGTH, "提交失败：编号 不能超过{}位！", MyDataConstant.MAX_CODE_LENGTH);
 
             // 校验code是否唯一
             Data check = findByCode(projectId, dataCode);
@@ -72,7 +72,7 @@ public class DataService extends BaseService<DataMapper, Data> implements IDataS
         // 数据项名称 不能为空
         AssertUtil.notBlank(dataName, "提交失败：名称 不能为空！");
         // 数据项名称 长度不能超过限制
-        AssertUtil.isTrue(dataName.length() <= MdConstant.MAX_NAME_LENGTH, "提交失败：名称 不能超过{}位！", MdConstant.MAX_NAME_LENGTH);
+        AssertUtil.isTrue(dataName.length() <= MyDataConstant.MAX_NAME_LENGTH, "提交失败：名称 不能超过{}位！", MyDataConstant.MAX_NAME_LENGTH);
     }
 
     /**

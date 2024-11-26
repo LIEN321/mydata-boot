@@ -6,8 +6,8 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
@@ -41,14 +41,14 @@ public class PullDataFromApi extends TaskExecutor {
 
         PipelineTask pipelineTask = getPipelineTask();
         // 获取应用信息
-        App app = MdCache.getApp(pipelineTask.getAppId());
+        App app = MyDataCache.getApp(pipelineTask.getAppId());
         String apiPrefix = app.getApiPrefix();
 
         // 获取标准数据信息
-        Data data = MdCache.getData(pipelineTask.getDataId());
+        Data data = MyDataCache.getData(pipelineTask.getDataId());
 
         // 获取接口信息
-        AppApi api = MdCache.getApi(pipelineTask.getApiId());
+        AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
         String apiUrl = api.getApiUri();
         if (StringUtil.isNotEmpty(apiPrefix)) {
             apiUrl = apiPrefix + apiUrl;
@@ -118,8 +118,8 @@ public class PullDataFromApi extends TaskExecutor {
                     // 获取业务数据值
                     Object value;
                     // /field 根目录格式
-                    if (StringUtil.startWith(apiFieldCode, MdConstant.FIELD_MAPPING_ROOT)) {
-                        value = baseJson.getByPath(apiFieldCode.substring(MdConstant.FIELD_MAPPING_ROOT.length()));
+                    if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
+                        value = baseJson.getByPath(apiFieldCode.substring(MyDataConstant.FIELD_MAPPING_ROOT.length()));
                     } else {
                         value = jsonObject.getByPath(apiFieldCode);
                     }
@@ -157,9 +157,9 @@ public class PullDataFromApi extends TaskExecutor {
         });
 
         // 数据存入任务上下文数据中
-        jobContextData.put(MdConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
-        jobContextData.put(MdConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
-        jobContextData.put(MdConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
+        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
+        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
         log.info("存入job上下文的业务数据：{}", bizDataList);
     }
 }
