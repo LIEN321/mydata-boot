@@ -1,9 +1,11 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse;
 
+import tech.zhiwei.frostmetal.modules.mydata.cache.MdCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MdConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -39,9 +41,10 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         PipelineTask pipelineTask = getPipelineTask();
+        Project project = MdCache.getProject(pipelineTask.getProjectId());
 
         // 数据仓库名称
-        String warehouseName = pipelineTask.getTenantId() + "_" + pipelineTask.getWarehouse();
+        String warehouseName = pipelineTask.getTenantId() + "_" + project.getProjectCode();
         // 标准数据的编号
         String dataCode = jobContextData.get(MdConstant.JOB_DATA_KEY_DATA_CODE).toString();
 
