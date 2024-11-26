@@ -96,6 +96,7 @@ public class PipelineJob implements InterruptableJob {
             }
         } catch (Exception e) {
             pipelineHistory.setExecutionStatus(MdConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            log.error(e.getMessage(), e);
         }
 
         // 结束时间
