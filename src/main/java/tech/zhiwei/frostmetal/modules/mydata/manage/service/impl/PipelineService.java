@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
 
@@ -32,6 +33,12 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
     @Override
     public Long savePipeline(PipelineDTO pipelineDTO) {
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
+        if (pipeline.getId() == null) {
+            pipeline.setWebhookCode(RandomUtil.randomString(64));
+            pipeline.setStartTime("00:00");
+            pipeline.setEndTime("23:59");
+            pipeline.setIntervalTime("00:15:00");
+        }
         // 保存流水线基本信息
         saveOrUpdate(pipeline);
 
