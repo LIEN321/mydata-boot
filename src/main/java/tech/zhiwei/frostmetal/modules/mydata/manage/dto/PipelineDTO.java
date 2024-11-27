@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -49,13 +50,13 @@ public class PipelineDTO extends BaseDTO {
     private String timeZone;
 
     @Schema(description = "是否启用webhook")
-    private Integer isWebhook;
+    private Boolean isWebhook;
 
     @Schema(description = "webhook认证方式")
-    private String webhookAuthType;
+    private Integer webhookAuthType;
 
     @Schema(description = "webhook认证参数")
-    private String webhookAuthParams;
+    private Map<String, Object> webhookAuthParams;
 
     @Schema(description = "是否启用邮件")
     private Integer isEmail;

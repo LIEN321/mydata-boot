@@ -2,12 +2,14 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.Fastjson2TypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.jackson.IntegerArrayTypeHandler;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
 import java.io.Serial;
+import java.util.Map;
 
 
 /**
@@ -18,7 +20,7 @@ import java.io.Serial;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "md_pipeline")
+@TableName(value = "md_pipeline", autoResultMap = true)
 public class Pipeline extends TenantEntity {
     @Serial
     private static final long serialVersionUID = 7478639346585117850L;
@@ -76,17 +78,23 @@ public class Pipeline extends TenantEntity {
     /**
      * 是否启用webhook
      */
-    private Integer isWebhook;
+    private Boolean isWebhook;
 
     /**
      * webhook认证方式
      */
-    private String webhookAuthType;
+    private Integer webhookAuthType;
 
     /**
      * webhook认证参数
      */
-    private String webhookAuthParams;
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> webhookAuthParams;
+
+    /**
+     * webhook标识编号
+     */
+    private String webhookCode;
 
     /**
      * 是否启用邮件

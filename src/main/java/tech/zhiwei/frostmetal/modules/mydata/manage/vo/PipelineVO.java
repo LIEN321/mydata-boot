@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 import java.io.Serial;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -57,13 +58,13 @@ public class PipelineVO extends BaseVO {
     private String timeZone;
 
     @Schema(description = "是否启用webhook")
-    private Integer isWebhook;
+    private Boolean isWebhook;
 
     @Schema(description = "webhook认证方式")
-    private String webhookAuthType;
+    private Integer webhookAuthType;
 
     @Schema(description = "webhook认证参数")
-    private String webhookAuthParams;
+    private Map<String, Object> webhookAuthParams;
 
     @Schema(description = "是否启用邮件")
     private Integer isEmail;
@@ -82,4 +83,7 @@ public class PipelineVO extends BaseVO {
 
     @Schema(description = "最新一次的执行记录")
     private PipelineHistoryVO latestHistory;
+
+    @Schema(description = "webhook标识编号")
+    private String webhookCode;
 }
