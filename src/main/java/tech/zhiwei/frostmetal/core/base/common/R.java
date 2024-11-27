@@ -82,6 +82,16 @@ public class R<T> implements Serializable {
     }
 
     /**
+     * 操作成功，无数据返回
+     *
+     * @param <T> 泛型
+     * @return 响应结果
+     */
+    public static <T> R<T> success(String message) {
+        return new R<>(ResponseCode.SUCCESS, message);
+    }
+
+    /**
      * 操作失败，无数据返回
      *
      * @param <T> 泛型
