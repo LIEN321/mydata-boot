@@ -106,18 +106,18 @@ public class QuartzService {
      *
      * @param pipelineId 流水线id
      */
-    public void executeJob(Long pipelineId) throws SchedulerException {
+    public void executeJob(Long pipelineId, String group, Integer triggerType) throws SchedulerException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
         JobDetail job = JobBuilder.newJob(PipelineJob.class)
-                .withIdentity(sPipelineId, MyDataConstant.JOB_GROUP_MANUAL)
+                .withIdentity(sPipelineId, group)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
-                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, MyDataConstant.JOB_TRIGGER_TYPE_MANUAL)
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, triggerType)
                 .build();
 
         Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(sPipelineId, MyDataConstant.JOB_GROUP_MANUAL)
+                .withIdentity(sPipelineId, group)
                 .startNow()
                 .build();
 
