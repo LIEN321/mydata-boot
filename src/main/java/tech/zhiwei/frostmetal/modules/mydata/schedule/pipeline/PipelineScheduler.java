@@ -104,7 +104,20 @@ public class PipelineScheduler {
      */
     public void executePipeline(Long pipelineId) {
         try {
-            quartzService.executeJob(pipelineId);
+            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_MANUAL, MyDataConstant.JOB_TRIGGER_TYPE_MANUAL);
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * webhook执行流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    public void webhookPipeline(Long pipelineId) {
+        try {
+            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
