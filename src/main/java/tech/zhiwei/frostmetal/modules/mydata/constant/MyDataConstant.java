@@ -111,6 +111,76 @@ public interface MyDataConstant {
     String TASK_TIME_FORMAT = "HH:mm";
 
     /**
+     * 认证类型，无需认证
+     */
+    Integer TASK_AUTH_TYPE_NONE = 0;
+    /**
+     * 认证类型，api key
+     */
+    Integer TASK_AUTH_TYPE_API_KEY = 1;
+
+    /**
+     * ApiKey
+     */
+    String TASK_AUTH_API_KEY = "ApiKey";
+
+    /**
+     * api key 的名称
+     */
+    String TASK_AUTH_API_KEY_KEY = "key";
+    /**
+     * api key value 的名称
+     */
+    String TASK_AUTH_API_KEY_VALUE = "value";
+
+    /**
+     * 认证类型，basic auth
+     */
+    Integer TASK_AUTH_TYPE_BASIC = 2;
+
+    /**
+     * BasicAuth
+     */
+    String TASK_AUTH_BASIC = "BasicAuth";
+
+    /**
+     * Basic Auth的username
+     */
+    String TASK_AUTH_BASIC_USERNAME = "username";
+    /**
+     * Basic Auth的password
+     */
+    String TASK_AUTH_BASIC_PASSWORD = "password";
+    /**
+     * Basic Auth的header
+     */
+    String TASK_AUTH_BASIC_HEADER = "Authorization";
+    /**
+     * 认证类型，hmac
+     */
+    Integer TASK_AUTH_TYPE_HMAC = 3;
+
+    /**
+     * HMAC的algorithm
+     */
+    String TASK_AUTH_HMAC_ALGORITHM = "algorithm";
+
+    /**
+     * HMAC的encoding
+     */
+    String TASK_AUTH_HMAC_ENCODING = "encoding";
+
+    /**
+     * HMAC的header
+     */
+    String TASK_AUTH_HMAC_KEY_HEADER = "header";
+
+    /**
+     * HMAC的secret
+     */
+    String TASK_AUTH_HMAC_SECRET = "secret";
+
+    /**
      * 字段映射的根目录
      */
     String FIELD_MAPPING_ROOT = "/";
@@ -172,6 +242,11 @@ public interface MyDataConstant {
      * 手动执行流水线的分组标识
      */
     String JOB_GROUP_MANUAL = "manual";
+
+    /**
+     * webhook触发执行流水线的分组标识
+     */
+    String JOB_GROUP_WEBHOOK = "webhook";
 
     // ------------------------------ 流水线历史记录常量 ------------------------------
 
