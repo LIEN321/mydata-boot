@@ -27,19 +27,6 @@ spring:
   quartz:
     job-store-type: memory
 
-# frostmetal
-frostmetal:
-  tenant:
-    ignore-tables:
-      - sys_tenant
-  secure:
-    auth:
-      # 启用token认证拦截
-      enabled: true
-      # 自定义放行地址
-      skip-url:
-        - /demo/**
-
 # springdoc-openapi项目配置
 springdoc:
   swagger-ui:
@@ -73,6 +60,21 @@ sa-token:
 #配置日志地址
 logging:
   config: classpath:log/logback_${spring.profiles.active}.xml
+
+
+# frostmetal 框架配置
+frostmetal:
+  tenant:
+    ignore-tables:
+      - sys_tenant
+  secure:
+    auth:
+      # 启用token认证拦截
+      enabled: true
+      # 自定义放行地址
+      skip-url:
+        - /demo/**
+        - /webhook/**
 
 #mydata配置
 mydata:
