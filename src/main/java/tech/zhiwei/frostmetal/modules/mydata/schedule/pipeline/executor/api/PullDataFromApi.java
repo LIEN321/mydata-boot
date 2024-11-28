@@ -44,9 +44,6 @@ public class PullDataFromApi extends TaskExecutor {
         App app = MyDataCache.getApp(pipelineTask.getAppId());
         String apiPrefix = app.getApiPrefix();
 
-        // 获取标准数据信息
-        Data data = MyDataCache.getData(pipelineTask.getDataId());
-
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
         String apiUrl = api.getApiUri();
@@ -60,17 +57,28 @@ public class PullDataFromApi extends TaskExecutor {
         String responseJson = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
         log.info("API获取结果：{}", responseJson);
 
+        // 字段层级前缀
+        String apiFieldPrefix = api.getFieldPrefix();
+
+        handleJson(responseJson, apiFieldPrefix, jobContextData);
+    }
+
+    /**
+     * 将json字符串转为业务数据
+     *
+     * @param jsonString     json字符串
+     * @param apiFieldPrefix 业务数据在api中的字段前缀
+     * @param jobContextData job上下文数据
+     */
+    protected void handleJson(String jsonString, String apiFieldPrefix, Map<String, Object> jobContextData) {
         // 字段映射
         Map<String, String> fieldMapping = getFieldMapping();
         if (CollectionUtil.isEmpty(fieldMapping)) {
             throw new IllegalArgumentException("字段映射为空！");
         }
 
-        // 字段层级前缀
-        String apiFieldPrefix = api.getFieldPrefix();
-
         // 最初的json对象
-        JSON originJson = JsonUtil.parse(responseJson);
+        JSON originJson = JsonUtil.parse(jsonString);
 
         // 使用数组模式 兼容单个对象和数组模式
         JSONArray baseArray;
@@ -155,6 +163,11 @@ public class PullDataFromApi extends TaskExecutor {
                 bizDataList.add(produceData);
             });
         });
+
+        // 当前流水线任务
+        PipelineTask pipelineTask = getPipelineTask();
+        // 获取标准数据信息
+        Data data = MyDataCache.getData(pipelineTask.getDataId());
 
         // 数据存入任务上下文数据中
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
