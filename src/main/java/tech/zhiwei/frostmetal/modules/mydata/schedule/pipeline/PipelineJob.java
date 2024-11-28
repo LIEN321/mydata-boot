@@ -9,14 +9,17 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.Date;
@@ -35,16 +38,17 @@ public class PipelineJob implements InterruptableJob {
     private final IPipelineService pipelineService = SpringUtil.getBean(IPipelineService.class);
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
+    private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
 
     private volatile boolean interrupted = false;
 
     // Job执行过程中的变量
-    private Map<String, Object> jobContextData = new HashMap<String, Object>();
+    private final Map<String, Object> jobContextData = new HashMap<String, Object>();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         // 开始时间
-        Date startTime = new Date();
+        Date historyStartTime = new Date();
 
         log.info("PipelineJob execute");
         // 获取流水线id
@@ -61,7 +65,7 @@ public class PipelineJob implements InterruptableJob {
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
         pipelineHistoryDTO.setTriggerType(triggerType);
-        pipelineHistoryDTO.setStartTime(startTime);
+        pipelineHistoryDTO.setStartTime(historyStartTime);
         pipelineHistoryDTO.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
         pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
         Long historyId = pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO);
@@ -73,6 +77,23 @@ public class PipelineJob implements InterruptableJob {
         // 查询流水线任务列表
         List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
 
+        // 任务 与 日志 的id映射
+        Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
+        if (CollectionUtil.isNotEmpty(tasks)) {
+            // 创建流水线的执行日志
+            tasks.forEach(task -> {
+                PipelineLog pipelineLog = new PipelineLog();
+                pipelineLog.setPipelineId(pipelineId);
+                pipelineLog.setHistoryId(historyId);
+                pipelineLog.setTaskType(task.getTaskType());
+                pipelineLog.setTaskName(task.getTaskName());
+                pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+                pipelineLogService.save(pipelineLog);
+
+                taskLogIdMapping.put(task.getId(), pipelineLog.getId());
+            });
+        }
+
         // 待更新的流水线历史记录
         PipelineHistory pipelineHistory = new PipelineHistory();
         pipelineHistory.setId(historyId);
@@ -80,15 +101,47 @@ public class PipelineJob implements InterruptableJob {
         try {
             if (CollectionUtil.isNotEmpty(tasks)) {
                 for (PipelineTask task : tasks) {
+                    // 任务开始
+                    Date taskStartTime = new Date();
+                    PipelineLog pipelineLog = new PipelineLog();
+                    pipelineLog.setId(taskLogIdMapping.get(task.getId()));
+                    // 更新任务日志的开始时间
+                    pipelineLog.setStartTime(taskStartTime);
+
                     if (interrupted) {
+                        // 停止执行流水线
+                        // 更新执行记录为中止
                         pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
-                        System.out.println("job break");
+                        // 更新任务日志为中止
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
                         break;
                     }
-                    // TODO 记录执行过程log
-                    // 执行任务
-                    TaskExecutor.getExecutor(task).execute(jobContextData);
-                    log.info(jobContextData.toString());
+
+                    try {
+                        // 更新任务日志的执行状态
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+                        pipelineLogService.updateById(pipelineLog);
+
+                        // TODO 记录执行过程log
+                        // 执行任务
+                        TaskExecutor.getExecutor(task).execute(jobContextData);
+
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                    } catch (Exception e) {
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+                        log.error(e.getMessage(), e);
+                        // 抛出异常，结束流水线和后续任务
+                        throw e;
+                    } finally {
+                        // 任务执行结束
+                        // 更新任务日志的结束时间
+                        Date taskEndTime = new Date();
+                        pipelineLog.setEndTime(taskEndTime);
+                        // 计算任务执行的耗时
+                        pipelineLog.setExecutionTime(DateUtil.between(taskStartTime, taskEndTime, DateUnit.SECOND));
+                        // 更新任务日志
+                        pipelineLogService.updateById(pipelineLog);
+                    }
                 }
             }
             if (pipelineHistory.getExecutionStatus() == null) {
@@ -100,11 +153,11 @@ public class PipelineJob implements InterruptableJob {
         }
 
         // 结束时间
-        Date endTime = new Date();
+        Date historyEndTime = new Date();
 
         // 更新流水线结果
-        pipelineHistory.setEndTime(endTime);
-        pipelineHistory.setExecutionTime(DateUtil.between(startTime, endTime, DateUnit.SECOND));
+        pipelineHistory.setEndTime(historyEndTime);
+        pipelineHistory.setExecutionTime(DateUtil.between(historyStartTime, historyEndTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
     }
 
