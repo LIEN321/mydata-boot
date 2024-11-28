@@ -73,8 +73,8 @@ public class ${entityClassName}Controller {
 </#list>
 
     <#if extendMode == "id">
-        IPage<Demo> page = new Page<>(pageParam.getCurrent(), pageParam.getPageSize());
-        return P.page(DemoWrapper.getInstance().pageVO(demoService.page(page, queryWrapper)));
+        IPage<${entityClassName}> page = new Page<>(pageParam.getCurrent(), pageParam.getPageSize());
+        return P.page(${entityClassName}Wrapper.getInstance().pageVO(${entityCode}Service.page(page, queryWrapper)));
     <#else>
         return P.page(${entityClassName}Wrapper.getInstance().pageVO(${entityCode}Service.page(queryWrapper, pageParam)));
     </#if>
