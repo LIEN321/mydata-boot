@@ -3,6 +3,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.quartz;
 import org.quartz.DailyTimeIntervalScheduleBuilder;
 import org.quartz.DailyTimeIntervalTrigger;
 import org.quartz.JobBuilder;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
@@ -17,9 +18,11 @@ import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
+import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.util.ArrayUtil;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Quartz Service类
@@ -102,19 +105,41 @@ public class QuartzService {
     }
 
     /**
-     * 手动执行流水线
+     * 执行流水线
      *
-     * @param pipelineId 流水线id
+     * @param pipelineId  流水线id
+     * @param group       分组
+     * @param triggerType 触发类型
+     * @throws SchedulerException 调度异常
      */
     public void executeJob(Long pipelineId, String group, Integer triggerType) throws SchedulerException {
+        executeJob(pipelineId, group, triggerType, null);
+    }
+
+    /**
+     * 执行流水线
+     *
+     * @param pipelineId  流水线id
+     * @param group       分组
+     * @param triggerType 触发类型
+     * @param map         数据
+     * @throws SchedulerException 调度异常
+     */
+    public void executeJob(Long pipelineId, String group, Integer triggerType, Map<String, Object> map) throws SchedulerException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
-        JobDetail job = JobBuilder.newJob(PipelineJob.class)
+        JobBuilder jobBuilder = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(sPipelineId, group)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
-                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, triggerType)
-                .build();
+                .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, triggerType);
+
+        if (MapUtil.isNotEmpty(map)) {
+            JobDataMap jobDataMap = new JobDataMap(map);
+            jobBuilder.usingJobData(jobDataMap);
+        }
+
+        JobDetail job = jobBuilder.build();
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(sPipelineId, group)
