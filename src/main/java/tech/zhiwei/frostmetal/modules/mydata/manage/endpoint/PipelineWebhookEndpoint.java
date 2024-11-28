@@ -1,4 +1,4 @@
-package tech.zhiwei.frostmetal.modules.mydata.manage.webhook;
+package tech.zhiwei.frostmetal.modules.mydata.manage.endpoint;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/webhook")
+@RequestMapping("/pipeline")
 @AllArgsConstructor
 @Tag(name = "pipelineWebhook", description = "触发流水线的webhook接口")
 @Hidden
@@ -45,7 +45,7 @@ public class PipelineWebhookEndpoint {
     @Resource
     private PipelineScheduler pipelineScheduler;
 
-    @GetMapping("/{pipelineId}/{code}")
+    @GetMapping("/{pipelineId}/webhook/{code}")
     public R get(@PathVariable("pipelineId") Long pipelineId
             , @PathVariable("code") String code
             , @RequestHeader(required = false) HttpHeaders httpHeaders
@@ -54,7 +54,7 @@ public class PipelineWebhookEndpoint {
         return execute(pipelineId, code, httpHeaders, body);
     }
 
-    @PostMapping("/{pipelineId}/{code}")
+    @PostMapping("/{pipelineId}/webhook/{code}")
     public R post(@PathVariable("pipelineId") Long pipelineId
             , @PathVariable("code") String code
             , @RequestHeader(required = false) HttpHeaders httpHeaders
@@ -63,7 +63,7 @@ public class PipelineWebhookEndpoint {
         return execute(pipelineId, code, httpHeaders, body);
     }
 
-    @PutMapping("/{pipelineId}/{code}")
+    @PutMapping("/{pipelineId}/webhook/{code}")
     public R put(@PathVariable("pipelineId") Long pipelineId
             , @PathVariable("code") String code
             , @RequestHeader(required = false) HttpHeaders httpHeaders

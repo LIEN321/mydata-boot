@@ -74,7 +74,7 @@ frostmetal:
       # 自定义放行地址
       skip-url:
         - /demo/**
-        - /webhook/**
+        - /pipeline/*/webhook/*
 
 #mydata配置
 mydata:
