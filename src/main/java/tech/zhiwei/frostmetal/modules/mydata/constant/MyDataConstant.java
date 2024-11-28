@@ -251,6 +251,10 @@ public interface MyDataConstant {
     // ------------------------------ 流水线历史记录常量 ------------------------------
 
     /**
+     * 流水线历史记录的执行状态：0-未开始
+     */
+    int PIPELINE_HISTORY_STATUS_READY = 0;
+    /**
      * 流水线历史记录的执行状态：1-运行中
      */
     int PIPELINE_HISTORY_STATUS_RUNNING = 1;
