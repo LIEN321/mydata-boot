@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetDataFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
@@ -41,6 +42,7 @@ public abstract class TaskExecutor {
             }
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_DATA -> {
                 log.info("TASK_TYPE_WEBHOOK_GET_DATA");
+                return new GetDataFromWebhook(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_API_GET_VAR -> {
                 log.info("TASK_TYPE_API_GET_VAR");
