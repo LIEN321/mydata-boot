@@ -106,6 +106,11 @@ public interface MyDataConstant {
     String TASK_CONFIG_KEY_FIELD_MAPPING = "FIELD_MAPPING";
 
     /**
+     * 任务配置中的常量key：业务数据在json中的前缀层级
+     */
+    String TASK_CONFIG_KEY_FIELD_PREFIX = "FIELD_PREFIX";
+
+    /**
      * 任务的定时起始时间的格式
      */
     String TASK_TIME_FORMAT = "HH:mm";
@@ -201,6 +206,11 @@ public interface MyDataConstant {
      * 调度任务的数据标识：流水线id
      */
     String JOB_DATA_KEY_PIPELINE_ID = "PIPELINE_ID";
+
+    /**
+     * Job上下文共享数据的标识：API响应体
+     */
+    String JOB_DATA_KEY_API_BODY = "API_BODY";
 
     /**
      * Job上下文共享数据的标识：业务数据

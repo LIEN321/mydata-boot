@@ -106,7 +106,7 @@ public class PipelineWebhookEndpoint {
         }
 
         // 执行任务流程 接收数据
-        pipelineScheduler.webhookPipeline(pipelineId);
+        pipelineScheduler.webhookPipeline(pipelineId, body);
         return R.success(StringUtil.format("流水线 [{}] 开始执行，请查看日志。", pipeline.getPipelineName()));
     }
 
