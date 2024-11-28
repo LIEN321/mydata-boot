@@ -51,6 +51,7 @@ public class PipelineHistoryController {
     ) {
         LambdaQueryWrapper<PipelineHistory> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(PipelineHistory::getPipelineId, pipelineId);
+        queryWrapper.orderByDesc(PipelineHistory::getCreateTime);
 
         return P.page(PipelineHistoryWrapper.getInstance().pageVO(pipelineHistoryService.page(queryWrapper, pageParam)));
     }
