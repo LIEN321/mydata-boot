@@ -9,10 +9,12 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.quartz.QuartzService;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 全局流水线的调度器
@@ -115,9 +117,11 @@ public class PipelineScheduler {
      *
      * @param pipelineId 流水线id
      */
-    public void webhookPipeline(Long pipelineId) {
+    public void webhookPipeline(Long pipelineId, String body) {
         try {
-            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK);
+            Map<String, Object> map = MapUtil.newHashMap();
+            map.put(MyDataConstant.JOB_DATA_KEY_API_BODY, body);
+            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK, map);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
