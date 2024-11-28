@@ -47,6 +47,8 @@ public class PipelineJob implements InterruptableJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+        jobContextData.putAll(context.getJobDetail().getJobDataMap());
+
         // 开始时间
         Date historyStartTime = new Date();
 
