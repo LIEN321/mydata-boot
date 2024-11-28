@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
@@ -46,8 +47,10 @@ public class PipelineHistoryController {
     @GetMapping("/page")
     @Operation(summary = "分页查询流水线执行记录", operationId = "pipelineHistoryPage")
     public P<List<PipelineHistoryVO>> page(@ParameterObject PageParam pageParam
+            , @RequestParam Long pipelineId
     ) {
         LambdaQueryWrapper<PipelineHistory> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(PipelineHistory::getPipelineId, pipelineId);
 
         return P.page(PipelineHistoryWrapper.getInstance().pageVO(pipelineHistoryService.page(queryWrapper, pageParam)));
     }
