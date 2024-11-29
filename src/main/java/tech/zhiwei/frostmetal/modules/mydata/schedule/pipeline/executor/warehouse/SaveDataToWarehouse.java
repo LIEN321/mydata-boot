@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
+import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 
@@ -33,8 +34,19 @@ public class SaveDataToWarehouse extends TaskExecutor {
 
     @Override
     public void execute(Map<String, Object> jobContextData) {
+        Map<String, String> inputMap = getInputMap();
+        if (MapUtil.isEmpty(inputMap)) {
+            return;
+        }
+
+        // 获业务数据的key
+        String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(bizDataKey)) {
+            return;
+        }
+
         // 业务数据集合
-        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         if (CollectionUtil.isEmpty(bizDataList)) {
             // TODO 业务数据集合为空
             return;
@@ -138,6 +150,12 @@ public class SaveDataToWarehouse extends TaskExecutor {
                 bizDataDAO.update(warehouseName, dataCode, idMap, data);
             });
             savedDataList.addAll(dataUpdateList);
+        }
+
+        Map<String, String> outputMap = getOutputMap();
+        String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
+        if (StringUtil.isNotEmpty(savedDataKey)) {
+            jobContextData.put(savedDataKey, savedDataList);
         }
     }
 }
