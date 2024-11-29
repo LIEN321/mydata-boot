@@ -7,6 +7,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetDataFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
 import tech.zhiwei.tool.map.MapUtil;
 
@@ -32,9 +33,11 @@ public abstract class TaskExecutor {
 
     public static TaskExecutor getExecutor(PipelineTask pipelineTask) {
         switch (pipelineTask.getTaskType()) {
+            // 从API获取JSON
             case MyDataConstant.TASK_TYPE_API_GET_JSON -> {
                 return new GetJsonFromApi(pipelineTask);
             }
+            // 向API发送数据
             case MyDataConstant.TASK_TYPE_API_SEND_DATA -> {
                 return new PushDataToApi(pipelineTask);
             }
@@ -44,12 +47,10 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_API_GET_VAR -> {
                 log.info("TASK_TYPE_API_GET_VAR");
             }
-            case MyDataConstant.TASK_TYPE_SAVE_DATA -> {
-                log.info("TASK_TYPE_SAVE_DATA");
-                return new SaveDataToWarehouse(pipelineTask);
-            }
-            case MyDataConstant.TASK_TYPE_QUERY_DATA -> {
-                log.info("TASK_TYPE_QUERY_DATA");
+
+            // JSON转数据
+            case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> {
+                return new ParseJsonToData(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_FILTER_DATA -> {
                 log.info("TASK_TYPE_FILTER_DATA");
@@ -60,6 +61,15 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> {
                 log.info("TASK_TYPE_WRITE_EXCEL");
             }
+
+            // 保存数据到数仓
+            case MyDataConstant.TASK_TYPE_SAVE_DATA -> {
+                return new SaveDataToWarehouse(pipelineTask);
+            }
+            case MyDataConstant.TASK_TYPE_QUERY_DATA -> {
+                log.info("TASK_TYPE_QUERY_DATA");
+            }
+
             case MyDataConstant.TASK_TYPE_SEND_EMAIL -> {
                 log.info("TASK_TYPE_SEND_EMAIL");
             }
@@ -92,7 +102,23 @@ public abstract class TaskExecutor {
     }
 
     /**
-     * 获取任务配置中的输出变量名配置
+     * 获取任务配置中的 输入 变量名配置
+     *
+     * @return 输入变量名配置
+     */
+    public Map<String, String> getInputMap() {
+        if (pipelineTask == null) {
+            return null;
+        }
+        if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
+            return null;
+        }
+
+        return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_INPUT);
+    }
+
+    /**
+     * 获取任务配置中的 输出 变量名配置
      *
      * @return 输出变量名配置
      */
