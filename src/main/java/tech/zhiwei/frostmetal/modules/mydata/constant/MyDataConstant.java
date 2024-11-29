@@ -111,6 +111,11 @@ public interface MyDataConstant {
     String TASK_CONFIG_KEY_FIELD_PREFIX = "FIELD_PREFIX";
 
     /**
+     * 任务配置中的常量key：任务输出变量名
+     */
+    String TASK_CONFIG_KEY_OUTPUT = "OUTPUT";
+
+    /**
      * 任务的定时起始时间的格式
      */
     String TASK_TIME_FORMAT = "HH:mm";
@@ -189,6 +194,16 @@ public interface MyDataConstant {
      * 字段映射的根目录
      */
     String FIELD_MAPPING_ROOT = "/";
+
+    /**
+     * 任务输出项：原始json
+     */
+    String TASK_OUTPUT_KEY_ORIGIN_JSON = "ORIGIN_JSON";
+
+    /**
+     * 任务输出项：数据json
+     */
+    String TASK_OUTPUT_KEY_DATA_JSON = "DATA_JSON";
 
     // ------------------------------ 调度任务常量 ------------------------------
 
