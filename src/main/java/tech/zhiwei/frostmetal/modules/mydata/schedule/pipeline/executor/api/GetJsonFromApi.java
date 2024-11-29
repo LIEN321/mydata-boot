@@ -68,11 +68,11 @@ public class GetJsonFromApi extends TaskExecutor {
 
         // 将结果保存到 job上下文
         Map<String, String> output = getOutputMap();
-        String originJsonKey = output.get(MyDataConstant.TASK_OUTPUT_KEY_ORIGIN_JSON);
+        String originJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_ORIGIN_JSON);
         if (StringUtil.isNotEmpty(originJsonKey)) {
             jobContextData.put(originJsonKey, originJsonString);
         }
-        String dataJsonKey = output.get(MyDataConstant.TASK_OUTPUT_KEY_DATA_JSON);
+        String dataJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
         if (StringUtil.isNotEmpty(dataJsonKey)) {
             jobContextData.put(dataJsonKey, dataJson.toString());
         }

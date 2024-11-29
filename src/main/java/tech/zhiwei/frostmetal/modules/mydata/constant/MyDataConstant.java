@@ -83,6 +83,11 @@ public interface MyDataConstant {
      * 任务类型：从数仓查询数据
      */
     String TASK_TYPE_QUERY_DATA = "QUERY_DATA";
+
+    /**
+     * 任务类型：JSON转数据
+     */
+    String TASK_TYPE_JSON_TO_DATA = "JSON_TO_DATA";
     /**
      * 任务类型：过滤数据
      */
@@ -110,6 +115,10 @@ public interface MyDataConstant {
      */
     String TASK_CONFIG_KEY_FIELD_PREFIX = "FIELD_PREFIX";
 
+    /**
+     * 任务配置中的常量key：任务输入变量名
+     */
+    String TASK_CONFIG_KEY_INPUT = "INPUT";
     /**
      * 任务配置中的常量key：任务输出变量名
      */
@@ -195,16 +204,6 @@ public interface MyDataConstant {
      */
     String FIELD_MAPPING_ROOT = "/";
 
-    /**
-     * 任务输出项：原始json
-     */
-    String TASK_OUTPUT_KEY_ORIGIN_JSON = "ORIGIN_JSON";
-
-    /**
-     * 任务输出项：数据json
-     */
-    String TASK_OUTPUT_KEY_DATA_JSON = "DATA_JSON";
-
     // ------------------------------ 调度任务常量 ------------------------------
 
     /**
@@ -242,14 +241,25 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_DATA_CODE = "DATA_CODE";
 
     /**
-     * Job上下文共享数据的标识：API 消费数据
+     * Job上下文共享数据的标识：保存的业务数据
      */
-    String JOB_DATA_KEY_API_CONSUME_DATA = "API_CONSUME_DATA";
+    String JOB_DATA_KEY_SAVED_DATA = "SAVED_DATA";
 
     /**
      * 调度任务的数据标识：触发类型
      */
     String JOB_DATA_KEY_TRIGGER_TYPE = "TRIGGER_TYPE";
+
+    /**
+     * 任务输出项：原始json
+     */
+    String TASK_DATA_KEY_ORIGIN_JSON = "ORIGIN_JSON";
+
+    /**
+     * 任务输出项：数据json
+     */
+    String TASK_DATA_KEY_DATA_JSON = "DATA_JSON";
+
     /**
      * Job触发类型：1-手动
      */
