@@ -23,15 +23,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 从API读取数据
+ * 从API获取json
  *
  * @author LIEN
  * @since 2024/11/21
  */
 @Slf4j
-public class PullDataFromApi extends TaskExecutor {
+public class GetJsonFromApi extends TaskExecutor {
 
-    public PullDataFromApi(PipelineTask pipelineTask) {
+    public GetJsonFromApi(PipelineTask pipelineTask) {
         super(pipelineTask);
     }
 
@@ -53,14 +53,29 @@ public class PullDataFromApi extends TaskExecutor {
 
         // TODO 分批模式
 
-        // 调用api
-        String responseJson = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
-        log.info("API获取结果：{}", responseJson);
+        // 调用api，获取原始json字符串
+        String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
+        log.info("API获取JSON：{}", originJsonString);
+
+        // json字符串转为json对象
+        JSON originJson = JsonUtil.parse(originJsonString);
 
         // 字段层级前缀
         String apiFieldPrefix = api.getFieldPrefix();
 
-        handleJson(responseJson, apiFieldPrefix, jobContextData);
+        // 提取业务数据json对象
+        JSON dataJson = (JSON) originJson.getByPath(apiFieldPrefix);
+
+        // 将结果保存到 job上下文
+        Map<String, String> output = getOutputMap();
+        String originJsonKey = output.get(MyDataConstant.TASK_OUTPUT_KEY_ORIGIN_JSON);
+        if (StringUtil.isNotEmpty(originJsonKey)) {
+            jobContextData.put(originJsonKey, originJsonString);
+        }
+        String dataJsonKey = output.get(MyDataConstant.TASK_OUTPUT_KEY_DATA_JSON);
+        if (StringUtil.isNotEmpty(dataJsonKey)) {
+            jobContextData.put(dataJsonKey, dataJson.toString());
+        }
     }
 
     /**

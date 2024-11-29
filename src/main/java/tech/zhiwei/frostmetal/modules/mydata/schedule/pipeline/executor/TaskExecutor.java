@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetDataFromWebhook;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PullDataFromApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
 import tech.zhiwei.tool.map.MapUtil;
@@ -32,16 +32,13 @@ public abstract class TaskExecutor {
 
     public static TaskExecutor getExecutor(PipelineTask pipelineTask) {
         switch (pipelineTask.getTaskType()) {
-            case MyDataConstant.TASK_TYPE_API_GET_DATA -> {
-                log.info("TASK_TYPE_API_GET_DATA");
-                return new PullDataFromApi(pipelineTask);
+            case MyDataConstant.TASK_TYPE_API_GET_JSON -> {
+                return new GetJsonFromApi(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_API_SEND_DATA -> {
-                log.info("TASK_TYPE_API_SEND_DATA");
                 return new PushDataToApi(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_DATA -> {
-                log.info("TASK_TYPE_WEBHOOK_GET_DATA");
                 return new GetDataFromWebhook(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_API_GET_VAR -> {
@@ -92,5 +89,21 @@ public abstract class TaskExecutor {
             return null;
         }
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
+    }
+
+    /**
+     * 获取任务配置中的输出变量名配置
+     *
+     * @return 输出变量名配置
+     */
+    public Map<String, String> getOutputMap() {
+        if (pipelineTask == null) {
+            return null;
+        }
+        if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
+            return null;
+        }
+
+        return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_OUTPUT);
     }
 }

@@ -62,7 +62,7 @@ public interface MyDataConstant {
     /**
      * 任务类型：从API获取数据
      */
-    String TASK_TYPE_API_GET_DATA = "API_GET_DATA";
+    String TASK_TYPE_API_GET_JSON = "API_GET_JSON";
     /**
      * 任务类型：向API发送数据
      */
