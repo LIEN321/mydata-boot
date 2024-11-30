@@ -33,8 +33,15 @@ public class PushDataToApi extends TaskExecutor {
     public void execute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
 
+        Map<String, String> inputMap = getInputMap();
+        String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(bizDataKey)) {
+            log.info("{} 没有配置业务数据变量，无法获取业务数据，结束执行。", pipelineTask.getTaskName());
+            return;
+        }
+
         // 获取业务数据
-        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         log.info("从job上下文获取的业务数据：{}", bizDataList);
         if (CollectionUtil.isEmpty(bizDataList)) {
             log.info("{} 没有获取有效业务数据，结束执行。", pipelineTask.getTaskName());
