@@ -93,10 +93,10 @@ public abstract class TaskExecutor {
      */
     public Map<String, String> getFieldMapping() {
         if (pipelineTask == null) {
-            return null;
+            return MapUtil.empty();
         }
         if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
-            return null;
+            return MapUtil.empty();
         }
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
     }
@@ -108,10 +108,10 @@ public abstract class TaskExecutor {
      */
     public Map<String, String> getInputMap() {
         if (pipelineTask == null) {
-            return null;
+            return MapUtil.empty();
         }
         if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
-            return null;
+            return MapUtil.empty();
         }
 
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_INPUT);
@@ -124,10 +124,10 @@ public abstract class TaskExecutor {
      */
     public Map<String, String> getOutputMap() {
         if (pipelineTask == null) {
-            return null;
+            return MapUtil.empty();
         }
         if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
-            return null;
+            return MapUtil.empty();
         }
 
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_OUTPUT);
