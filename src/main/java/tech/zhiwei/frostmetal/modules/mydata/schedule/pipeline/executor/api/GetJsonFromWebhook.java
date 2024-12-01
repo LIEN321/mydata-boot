@@ -13,9 +13,9 @@ import java.util.Map;
  * @since 2024/11/28
  */
 @Slf4j
-public class GetDataFromWebhook extends GetJsonFromApi {
+public class GetJsonFromWebhook extends GetJsonFromApi {
 
-    public GetDataFromWebhook(PipelineTask pipelineTask) {
+    public GetJsonFromWebhook(PipelineTask pipelineTask) {
         super(pipelineTask);
     }
 
