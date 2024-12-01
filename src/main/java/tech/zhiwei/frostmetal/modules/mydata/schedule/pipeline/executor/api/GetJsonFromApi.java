@@ -1,25 +1,17 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
-import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.map.MapUtil;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,137 +49,32 @@ public class GetJsonFromApi extends TaskExecutor {
         String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
         log.info("API获取JSON：{}", originJsonString);
 
-        // json字符串转为json对象
-        JSON originJson = JsonUtil.parse(originJsonString);
-
-        // 字段层级前缀
-        String apiFieldPrefix = api.getFieldPrefix();
-
-        // 提取业务数据json对象
-        JSON dataJson = (JSON) originJson.getByPath(apiFieldPrefix);
-
-        // 将结果保存到 job上下文
-        Map<String, String> output = getOutputMap();
-        String originJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_ORIGIN_JSON);
-        if (StringUtil.isNotEmpty(originJsonKey)) {
-            jobContextData.put(originJsonKey, originJsonString);
-        }
-        String dataJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
-        if (StringUtil.isNotEmpty(dataJsonKey)) {
-            jobContextData.put(dataJsonKey, dataJson.toString());
-        }
+        handleJson(originJsonString, apiPrefix, jobContextData);
     }
 
     /**
      * 将json字符串转为业务数据
      *
      * @param jsonString     json字符串
-     * @param apiFieldPrefix 业务数据在api中的字段前缀
+     * @param fieldPrefix    业务数据在json中的字段前缀
      * @param jobContextData job上下文数据
      */
-    protected void handleJson(String jsonString, String apiFieldPrefix, Map<String, Object> jobContextData) {
-        // 字段映射
-        Map<String, String> fieldMapping = getFieldMapping();
-        if (CollectionUtil.isEmpty(fieldMapping)) {
-            throw new IllegalArgumentException("字段映射为空！");
-        }
-
-        // 最初的json对象
+    protected void handleJson(String jsonString, String fieldPrefix, Map<String, Object> jobContextData) {
+        // json字符串转为json对象
         JSON originJson = JsonUtil.parse(jsonString);
 
-        // 使用数组模式 兼容单个对象和数组模式
-        JSONArray baseArray;
-        if (originJson instanceof JSONArray) {
-            baseArray = (JSONArray) originJson;
-        } else {
-            baseArray = new JSONArray();
-            baseArray.add(originJson);
+        // 提取业务数据json对象
+        JSON dataJson = (JSON) originJson.getByPath(fieldPrefix);
+
+        // 将结果保存到 job上下文
+        Map<String, String> output = getOutputMap();
+        String originJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_ORIGIN_JSON);
+        if (StringUtil.isNotEmpty(originJsonKey)) {
+            jobContextData.put(originJsonKey, jsonString);
         }
-
-        // 业务数据集合
-        List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
-
-        baseArray.forEach(json -> {
-            // 保留根目录json，用于 /field 格式提取数据
-            JSON baseJson = (JSONObject) json;
-            // 根据配置的prefix 定位到数据层级
-            JSON dataJson = baseJson;
-            if (StrUtil.isNotEmpty(apiFieldPrefix)) {
-                Object prefixJson = baseJson.getByPath(apiFieldPrefix);
-                if (!(prefixJson instanceof JSON)) {
-                    throw new RuntimeException("接口前缀 无法解析为JSON");
-                }
-                dataJson = (JSON) prefixJson;
-            }
-            // 使用数组模式 兼容单个对象和数组模式
-            JSONArray jsonArray;
-            if (dataJson instanceof JSONArray) {
-                jsonArray = (JSONArray) dataJson;
-            } else {
-                jsonArray = new JSONArray();
-                jsonArray.add(dataJson);
-            }
-
-            // 根据映射 解析出json中的数据 并存入数据
-            jsonArray.forEach(obj -> {
-                JSONObject jsonObject = (JSONObject) obj;
-                Map<String, Object> produceData = MapUtil.newHashMap();
-                fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
-                    // 若字段映射中 未设置api参数名，则跳过处理；
-                    if (StrUtil.isEmpty(apiFieldCode)) {
-                        return;
-                    }
-
-                    // 获取业务数据值
-                    Object value;
-                    // /field 根目录格式
-                    if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
-                        value = baseJson.getByPath(apiFieldCode.substring(MyDataConstant.FIELD_MAPPING_ROOT.length()));
-                    } else {
-                        value = jsonObject.getByPath(apiFieldCode);
-                    }
-                    // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
-//                    if (value == null && JobVarService.isFieldExp(apiCode)) {
-//                        value = JobVarService.parseDataFieldVar(apiCode, taskJob.getTaskVar(), taskJob.getFieldTypeMapping());
-//                    }
-                    // 若接口数据中 没有执行的字段名，则跳过处理
-                    if (value == null) {
-                        return;
-                    }
-
-//                    String targetType = fieldTypeMapping.get(standardCode);
-//                    try {
-//                        produceData.put(standardCode, MdUtil.convertDataType(value, targetType));
-//                    } catch (Exception e) {
-//                        taskJob.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
-//                    }
-                    produceData.put(dataFieldCode, value);
-                });
-
-                // TODO 补充默认字段值
-//                if (CollUtil.isNotEmpty(fieldDefaultValues)) {
-//                    fieldDefaultValues.forEach((fieldCode, fieldDefaultValue) -> {
-//                        if (produceData.containsKey(fieldCode)) {
-//                            return;
-//                        }
-//
-//                        String targetType = fieldTypeMapping.get(fieldCode);
-//                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
-//                    });
-//                }
-                bizDataList.add(produceData);
-            });
-        });
-
-        // 当前流水线任务
-        PipelineTask pipelineTask = getPipelineTask();
-        // 获取标准数据信息
-        Data data = MyDataCache.getData(pipelineTask.getDataId());
-
-        // 数据存入任务上下文数据中
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
-        log.info("存入job上下文的业务数据：{}", bizDataList);
+        String dataJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
+        if (StringUtil.isNotEmpty(dataJsonKey)) {
+            jobContextData.put(dataJsonKey, dataJson.toString());
+        }
     }
 }

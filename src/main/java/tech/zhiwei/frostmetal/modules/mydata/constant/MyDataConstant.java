@@ -70,7 +70,7 @@ public interface MyDataConstant {
     /**
      * 任务类型：解析webhook数据
      */
-    String TASK_TYPE_WEBHOOK_GET_DATA = "WEBHOOK_GET_DATA";
+    String TASK_TYPE_WEBHOOK_GET_JSON = "WEBHOOK_GET_JSON";
     /**
      * 任务类型：从API获取参数
      */
