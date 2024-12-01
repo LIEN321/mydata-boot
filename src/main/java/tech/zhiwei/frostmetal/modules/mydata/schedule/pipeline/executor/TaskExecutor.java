@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
@@ -19,16 +20,13 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/11/21
  */
+@Getter
 public abstract class TaskExecutor {
     private static final Logger log = LoggerFactory.getLogger(TaskExecutor.class);
-    private PipelineTask pipelineTask;
+    private final PipelineTask pipelineTask;
 
     public TaskExecutor(PipelineTask pipelineTask) {
         this.pipelineTask = pipelineTask;
-    }
-
-    public PipelineTask getPipelineTask() {
-        return pipelineTask;
     }
 
     public static TaskExecutor getExecutor(PipelineTask pipelineTask) {
@@ -41,10 +39,12 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_API_SEND_DATA -> {
                 return new PushDataToApi(pipelineTask);
             }
+            // 从Webhook接收JSON
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> {
                 return new GetJsonFromWebhook(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_API_GET_VAR -> {
+                // TODO
                 log.info("TASK_TYPE_API_GET_VAR");
             }
 
@@ -53,12 +53,15 @@ public abstract class TaskExecutor {
                 return new ParseJsonToData(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_FILTER_DATA -> {
+                // TODO
                 log.info("TASK_TYPE_FILTER_DATA");
             }
             case MyDataConstant.TASK_TYPE_OPERATE_DATA -> {
+                // TODO
                 log.info("TASK_TYPE_OPERATE_DATA");
             }
             case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> {
+                // TODO
                 log.info("TASK_TYPE_WRITE_EXCEL");
             }
 
@@ -67,10 +70,12 @@ public abstract class TaskExecutor {
                 return new SaveDataToWarehouse(pipelineTask);
             }
             case MyDataConstant.TASK_TYPE_QUERY_DATA -> {
+                // TODO
                 log.info("TASK_TYPE_QUERY_DATA");
             }
 
             case MyDataConstant.TASK_TYPE_SEND_EMAIL -> {
+                // TODO
                 log.info("TASK_TYPE_SEND_EMAIL");
             }
             default -> {
