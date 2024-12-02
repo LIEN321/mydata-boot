@@ -8,9 +8,12 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
+import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.Map;
 
@@ -44,6 +47,22 @@ public class GetJsonFromApi extends TaskExecutor {
         }
 
         // TODO 分批模式
+        Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
+        boolean isBatch = batchConfig.get("ENABLE") != null ? (boolean) batchConfig.get("ENABLE") : false;
+        Map<String, Object> batchParams = (Map<String, Object>) batchConfig.get("PARAMS");
+        Integer interval = (Integer) batchConfig.get("INTERVAL");
+        Integer endType = (Integer) batchConfig.get("END_TYPE");
+
+        do {
+            // API的请求参数
+            Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
+
+            // 若启用分批，则将分批参数加入请求参数中
+            if(isBatch){
+                reqParams = MapUtil.u
+            }
+
+        } while (isBatch);
 
         // 调用api，获取原始json字符串
         String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, null);
