@@ -1,13 +1,14 @@
 package tech.zhiwei.frostmetal.modules.mydata.util;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.EnumUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.util.EnumUtil;
+import tech.zhiwei.tool.util.NumberUtil;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -82,8 +83,8 @@ public class MyDataUtil {
      * @return map List<Map<String, Object>>
      */
     public static List<Map<String, String>> switchMapToList(Map<String, String> map) {
-        List<Map<String, String>> maps = CollUtil.newArrayList();
-        if (CollUtil.isNotEmpty(map)) {
+        List<Map<String, String>> maps = CollectionUtil.newArrayList();
+        if (CollectionUtil.isNotEmpty(map)) {
             map.forEach((k, v) -> {
                 Map<String, String> item = MapUtil.newHashMap();
                 item.put("k", k);
@@ -102,7 +103,7 @@ public class MyDataUtil {
      */
     public static LinkedHashMap<String, String> parseToKvMap(List<Map<String, String>> list) {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        if (CollUtil.isNotEmpty(list)) {
+        if (CollectionUtil.isNotEmpty(list)) {
             list.forEach(item -> {
                 map.put(item.get("k"), item.get("v"));
             });
@@ -111,16 +112,18 @@ public class MyDataUtil {
     }
 
     /**
-     * 将表格的k列和v列 转为 接口参数的k-v格式
+     * 将表格的k列和v列 转为 接口参数的k:v格式
      *
      * @param list List<Map<String, Object>>
      * @return Map
      */
-    public static LinkedHashMap<String, Object> parseToKvMapObj(List<Map<String, Object>> list) {
-        LinkedHashMap<String, Object> map = new LinkedHashMap<>();
-        if (CollUtil.isNotEmpty(list)) {
+    public static LinkedHashMap<String, String> parseToKvMapObj(List<Map<String, Object>> list) {
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        if (CollectionUtil.isNotEmpty(list)) {
             list.forEach(item -> {
-                map.put((String) item.get("k"), item.get("v"));
+                if ((Boolean) item.getOrDefault("enable", false)) {
+                    map.put((String) item.get("k"), StringUtil.toStringOrEmpty(item.get("v")));
+                }
             });
         }
         return map;
