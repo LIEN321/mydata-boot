@@ -43,58 +43,59 @@ public class ParseJsonToData extends TaskExecutor {
         }
 
         // 从上下文获取json
-        String dataJsonString = (String) jobContextData.get(inputDataKey);
-        if (StringUtil.isEmpty(dataJsonString)) {
+        List<String> dataJsonList = (List<String>) jobContextData.get(inputDataKey);
+        if (CollectionUtil.isEmpty(dataJsonList)) {
             return;
-        }
-
-        // 业务数据的json对象
-        JSON dataJson = JsonUtil.parse(dataJsonString);
-
-        // 字段映射
-        Map<String, String> fieldMapping = getFieldMapping();
-        if (CollectionUtil.isEmpty(fieldMapping)) {
-            throw new IllegalArgumentException("字段映射为空！");
-        }
-
-        // 使用数组模式 兼容单个对象和数组模式
-        JSONArray jsonArray;
-        if (dataJson instanceof JSONArray) {
-            jsonArray = (JSONArray) dataJson;
-        } else {
-            jsonArray = new JSONArray();
-            jsonArray.add(dataJson);
         }
 
         // 业务数据集合
         List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
 
-        // 根据映射 解析出json中的数据 并存入数据
-        jsonArray.forEach(obj -> {
-            JSONObject jsonObject = (JSONObject) obj;
-            Map<String, Object> produceData = MapUtil.newHashMap();
-            fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
-                // 若字段映射中 未设置api参数名，则跳过处理；
-                if (StrUtil.isEmpty(apiFieldCode)) {
-                    return;
-                }
+        for (String dataJsonString : dataJsonList) {
+            // 业务数据的json对象
+            JSON dataJson = JsonUtil.parse(dataJsonString);
 
-                // 获取业务数据值
-                Object value;
-                // TODO /field 根目录格式
+            // 字段映射
+            Map<String, String> fieldMapping = getFieldMapping();
+            if (CollectionUtil.isEmpty(fieldMapping)) {
+                throw new IllegalArgumentException("字段映射为空！");
+            }
+
+            // 使用数组模式 兼容单个对象和数组模式
+            JSONArray jsonArray;
+            if (dataJson instanceof JSONArray) {
+                jsonArray = (JSONArray) dataJson;
+            } else {
+                jsonArray = new JSONArray();
+                jsonArray.add(dataJson);
+            }
+
+            // 根据映射 解析出json中的数据 并存入数据
+            jsonArray.forEach(obj -> {
+                JSONObject jsonObject = (JSONObject) obj;
+                Map<String, Object> produceData = MapUtil.newHashMap();
+                fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiFieldCode)) {
+                        return;
+                    }
+
+                    // 获取业务数据值
+                    Object value;
+                    // TODO /field 根目录格式
 //                if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
 //                    value = baseJson.getByPath(apiFieldCode.substring(MyDataConstant.FIELD_MAPPING_ROOT.length()));
 //                } else {
-                value = jsonObject.getByPath(apiFieldCode);
+                    value = jsonObject.getByPath(apiFieldCode);
 //                }
-                // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
+                    // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
 //                    if (value == null && JobVarService.isFieldExp(apiCode)) {
 //                        value = JobVarService.parseDataFieldVar(apiCode, taskJob.getTaskVar(), taskJob.getFieldTypeMapping());
 //                    }
-                // 若接口数据中 没有执行的字段名，则跳过处理
-                if (value == null) {
-                    return;
-                }
+                    // 若接口数据中 没有执行的字段名，则跳过处理
+                    if (value == null) {
+                        return;
+                    }
 
 //                    String targetType = fieldTypeMapping.get(standardCode);
 //                    try {
@@ -102,10 +103,10 @@ public class ParseJsonToData extends TaskExecutor {
 //                    } catch (Exception e) {
 //                        taskJob.appendLog("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", obj, standardCode, targetType, e.getMessage());
 //                    }
-                produceData.put(dataFieldCode, value);
-            });
+                    produceData.put(dataFieldCode, value);
+                });
 
-            // TODO 补充默认字段值
+                // TODO 补充默认字段值
 //                if (CollUtil.isNotEmpty(fieldDefaultValues)) {
 //                    fieldDefaultValues.forEach((fieldCode, fieldDefaultValue) -> {
 //                        if (produceData.containsKey(fieldCode)) {
@@ -116,8 +117,9 @@ public class ParseJsonToData extends TaskExecutor {
 //                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
 //                    });
 //                }
-            bizDataList.add(produceData);
-        });
+                bizDataList.add(produceData);
+            });
+        }
 
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
