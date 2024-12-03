@@ -19,6 +19,7 @@ import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppApiDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppApiService;
@@ -45,7 +46,11 @@ public class AppApiController {
     @PostMapping
     @Operation(summary = "新增或更新应用接口", operationId = "saveAppApi")
     public R<Long> save(@RequestBody AppApiDTO appApiDTO) {
-        return R.data(appApiService.saveAppApi(appApiDTO));
+        Long id = appApiService.saveAppApi(appApiDTO);
+        if (id != null) {
+            MyDataCache.removeApi(id);
+        }
+        return R.data(id);
     }
 
     @GetMapping("/page")
@@ -78,13 +83,21 @@ public class AppApiController {
     @Operation(summary = "单个删除应用接口", operationId = "deleteAppApi")
     @Parameter(name = "id", description = "记录id")
     public R<Boolean> delete(@PathVariable Long id) {
-        return R.status(appApiService.remove(id));
+        boolean result = appApiService.remove(id);
+        if (result) {
+            MyDataCache.removeApi(id);
+        }
+        return R.status(result);
     }
 
     @DeleteMapping
     @Operation(summary = "批量删除应用接口", operationId = "deleteAppApis")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
-        return R.status(appApiService.remove(ids));
+        boolean result = appApiService.remove(ids);
+        if (result) {
+            ids.forEach(MyDataCache::removeApi);
+        }
+        return R.status(result);
     }
 
     @GetMapping("/select")
