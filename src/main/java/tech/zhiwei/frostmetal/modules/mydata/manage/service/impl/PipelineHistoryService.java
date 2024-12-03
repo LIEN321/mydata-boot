@@ -2,18 +2,22 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineHistoryMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.tool.bean.BeanUtil;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -49,5 +53,14 @@ public class PipelineHistoryService extends BaseService<PipelineHistoryMapper, P
             return histories.get(0);
         }
         return null;
+    }
+
+    @Override
+    public void stopRunningHistory() {
+        LambdaUpdateWrapper<PipelineHistory> updateWrapper = Wrappers.lambdaUpdate();
+        updateWrapper.set(PipelineHistory::getExecutionStatus, MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED)
+                .set(PipelineHistory::getEndTime, new Date())
+                .eq(PipelineHistory::getExecutionStatus, MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+        update(updateWrapper);
     }
 }

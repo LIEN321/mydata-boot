@@ -26,4 +26,9 @@ public interface IPipelineHistoryService extends IBaseService<PipelineHistory> {
      * @return 最新一次执行记录
      */
     PipelineHistory latestHistory(Long pipelineId);
+
+    /**
+     * 中止运行中的历史记录
+     */
+    void stopRunningHistory();
 }
