@@ -121,9 +121,7 @@ public class MyDataUtil {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         if (CollectionUtil.isNotEmpty(list)) {
             list.forEach(item -> {
-                if ((Boolean) item.getOrDefault("enable", false)) {
-                    map.put((String) item.get("k"), StringUtil.toStringOrEmpty(item.get("v")));
-                }
+                map.put((String) item.get("k"), StringUtil.toStringOrEmpty(item.get("v")));
             });
         }
         return map;
