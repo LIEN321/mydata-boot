@@ -7,6 +7,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -25,6 +26,9 @@ public class ApplicationEventListener {
     private IPipelineService pipelineService;
 
     @Resource
+    private IPipelineHistoryService pipelineHistoryService;
+
+    @Resource
     private PipelineScheduler pipelineScheduler;
 
     /**
@@ -33,6 +37,9 @@ public class ApplicationEventListener {
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() throws SchedulerException {
         log.info("onApplicationReady");
+
+        // 查询未结束的历史记录，设置为中止状态
+        pipelineHistoryService.stopRunningHistory();
 
         // 查询已启动定时的流水线
         List<Pipeline> pipelines = pipelineService.listScheduledPipelines();
