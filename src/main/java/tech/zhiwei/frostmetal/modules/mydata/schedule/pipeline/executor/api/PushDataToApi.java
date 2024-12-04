@@ -1,7 +1,9 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
@@ -70,8 +72,13 @@ public class PushDataToApi extends TaskExecutor {
 
             apiDataList.add(apiData);
         });
-
         log("转换后的业务数据：", apiDataList);
+
+        // 判断业务数据是否有效，若无效则结束
+        if (CollectionUtil.isEmpty(apiDataList)) {
+            error("业务数据为空，结束执行。");
+            return;
+        }
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
@@ -79,14 +86,10 @@ public class PushDataToApi extends TaskExecutor {
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
-        String apiUrl = api.getApiUri();
-        if (StringUtil.isNotEmpty(apiPrefix)) {
-            apiUrl = apiPrefix + apiUrl;
-        }
+        final String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
-            String reqBody = null;
 
             String reqBodyType = api.getReqBodyType();
             if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(reqBodyType)) {
@@ -97,7 +100,7 @@ public class PushDataToApi extends TaskExecutor {
                 // 分批模式的参数配置
                 Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
                 // 是否启用分批模式
-                boolean isBatch = batchConfig.get("ENABLE") != null ? (boolean) batchConfig.get("ENABLE") : false;
+                boolean isBatch = batchConfig.get("ENABLE") != null && (boolean) batchConfig.get("ENABLE");
                 // 分批的间隔
                 Integer interval = (Integer) batchConfig.get("INTERVAL");
                 // 分批的批次数量
@@ -132,17 +135,10 @@ public class PushDataToApi extends TaskExecutor {
                     }
 
                     // api中的原始body
-                    reqBody = api.getReqBodyRaw();
+                    String reqBodyRaw = api.getReqBodyRaw();
 
-                    // 将json字符串 替换${data}占位符
-                    reqBody = StringUtil.substitute(reqBody, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
-
-                    log("调用接口 [{}] {}", api.getApiMethod(), apiUrl);
-                    log("\t请求体：{}", reqBody);
-                    // 调用api
-                    // TODO params headers
-                    HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, reqBody);
-                    log("调用接口成功");
+                    // 发送数据
+                    send(api.getApiMethod(), apiUrl, null, null, reqBodyRaw, jsonArray);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -152,7 +148,29 @@ public class PushDataToApi extends TaskExecutor {
                 } while (isBatch);
             }
         } else {
-            // TODO 单数据模式，逐个调API推送数据
+            // 单数据模式，逐个调API推送数据
+            apiDataList.forEach(apiData -> {
+                // api中的原始body
+                String reqBodyRaw = api.getReqBodyRaw();
+
+                // 单条数据 转为 json对象
+                JSONObject jsonObject = new JSONObject(apiData);
+
+                // 发送数据
+                send(api.getApiMethod(), apiUrl, null, null, reqBodyRaw, jsonObject);
+            });
         }
+    }
+
+    private void send(String method, String url, Map<String, String> reqParams, Map<String, String> headers, String reqBodyRaw, JSON json) {
+        // 将json字符串 替换${data}占位符
+        String reqBody = StringUtil.substitute(reqBodyRaw, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, json.toString());
+
+        log("调用接口 [{}] {}", method, url);
+        log("\t请求体：{}", reqBody);
+        // 调用api
+        // TODO params headers
+        String responseBody = HttpUtil.send(method, url, null, null, null, reqBody);
+        log("调用返回：{}", responseBody);
     }
 }
