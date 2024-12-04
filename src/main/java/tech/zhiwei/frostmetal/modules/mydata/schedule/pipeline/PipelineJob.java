@@ -102,11 +102,11 @@ public class PipelineJob implements InterruptableJob {
 
         try {
             if (CollectionUtil.isNotEmpty(tasks)) {
-                for (PipelineTask task : tasks) {
+                for (PipelineTask pipelineTask : tasks) {
                     // 任务开始
                     Date taskStartTime = new Date();
                     PipelineLog pipelineLog = new PipelineLog();
-                    pipelineLog.setId(taskLogIdMapping.get(task.getId()));
+                    pipelineLog.setId(taskLogIdMapping.get(pipelineTask.getId()));
                     // 更新任务日志的开始时间
                     pipelineLog.setStartTime(taskStartTime);
 
@@ -126,7 +126,7 @@ public class PipelineJob implements InterruptableJob {
 
                         // TODO 记录执行过程log
                         // 执行任务
-                        TaskExecutor.getExecutor(task).execute(jobContextData);
+                        TaskExecutor.create(pipelineTask, pipelineLog).execute(jobContextData);
 
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
                     } catch (Exception e) {
@@ -141,8 +141,15 @@ public class PipelineJob implements InterruptableJob {
                         pipelineLog.setEndTime(taskEndTime);
                         // 计算任务执行的耗时
                         pipelineLog.setExecutionTime(DateUtil.between(taskStartTime, taskEndTime, DateUnit.SECOND));
-                        // 更新任务日志
-                        pipelineLogService.updateById(pipelineLog);
+                        try {
+                            // 更新任务日志
+                            pipelineLogService.updateById(pipelineLog);
+                        } catch (Exception e) {
+                            // 更新任务日志失败，则停止任务
+                            pipelineLogService.failLog(pipelineLog.getId());
+                            log.error(e.getMessage(), e);
+                            throw e;
+                        }
                     }
                 }
             }

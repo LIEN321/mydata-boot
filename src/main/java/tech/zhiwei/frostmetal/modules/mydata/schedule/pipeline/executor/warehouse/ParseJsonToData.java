@@ -8,6 +8,7 @@ import cn.hutool.json.JSONObject;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -25,12 +26,12 @@ import java.util.Map;
  * @since 2024/11/29
  */
 public class ParseJsonToData extends TaskExecutor {
-    public ParseJsonToData(PipelineTask pipelineTask) {
-        super(pipelineTask);
+    public ParseJsonToData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+        super(pipelineTask, pipelineLog);
     }
 
     @Override
-    public void execute(Map<String, Object> jobContextData) {
+    public void doExecute(Map<String, Object> jobContextData) {
         Map<String, String> inputMap = getInputMap();
         if (MapUtil.isEmpty(inputMap)) {
             return;

@@ -9,6 +9,7 @@ import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
@@ -36,18 +37,19 @@ public class GetJsonFromApi extends TaskExecutor {
 
     private final JobBatchService jobBatchService = SpringUtil.getBean(JobBatchService.class);
 
-    public GetJsonFromApi(PipelineTask pipelineTask) {
-        super(pipelineTask);
+    public GetJsonFromApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+        super(pipelineTask, pipelineLog);
     }
 
     @Override
-    public void execute(Map<String, Object> jobContextData) {
-        log.info("从API获取数据 开始");
-
+    public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
+
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
         String apiPrefix = app.getApiPrefix();
+
+        log("将调用应用 {} 的接口", app.getAppName());
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
@@ -55,6 +57,8 @@ public class GetJsonFromApi extends TaskExecutor {
         if (StringUtil.isNotEmpty(apiPrefix)) {
             apiUrl = apiPrefix + apiUrl;
         }
+
+        log("接口地址：{}", apiUrl);
 
         // 分批模式的参数配置
         Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
@@ -65,6 +69,8 @@ public class GetJsonFromApi extends TaskExecutor {
         // 分批的间隔
         Integer interval = (Integer) batchConfig.get("INTERVAL");
 
+        log("分批模式配置：{}", batchConfig);
+
         // json列表
         List<String> originJsonList = CollectionUtil.newArrayList();
         // 数据json列表
@@ -74,9 +80,15 @@ public class GetJsonFromApi extends TaskExecutor {
         long lastJsonHash = -1L;
 
         // 循环计数器，超过最大数则结束，避免死循环
-        int loopCount = 0;
+        int loopCount = 1;
 
         do {
+            loopCount++;
+            if (loopCount > 100) {
+                error("执行次数超过上限{}，结束执行！", 100);
+                break;
+            }
+
             // API的请求参数
             Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
 
@@ -86,17 +98,24 @@ public class GetJsonFromApi extends TaskExecutor {
                 reqParams = MapUtil.union(reqParams, batchParams);
             }
 
+
+            log("第{}次调用接口 [{}] {}", loopCount, api.getApiMethod(), apiUrl);
+            log("\t请求参数：{}", reqParams);
+            // TODO headers  reqForms  reqBody
             // 调用接口 获取json
             String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, null, null, null);
+            log("\t返回JSON：{}", originJsonString);
 
             // json为空则结束
             if (StringUtil.isEmpty(originJsonString)) {
+                error("JSON为空字符串，结束执行。");
                 break;
             }
 
             // 对比上一次数据
             if (lastJsonHash != -1L) {
                 if (lastJsonHash == HashUtil.mixHash(originJsonString)) {
+                    error("本次结果与前一次 完全一样，结束执行。");
                     break;
                 }
             }
@@ -107,11 +126,22 @@ public class GetJsonFromApi extends TaskExecutor {
             JSON originJson = JsonUtil.parse(originJsonString);
 
             // 提取业务数据json对象
-            JSON dataJson = (JSON) originJson.getByPath(StringUtil.nullToEmpty(api.getFieldPrefix()));
+            String fieldPrefix = StringUtil.nullToEmpty(api.getFieldPrefix());
+            JSON dataJson;
+            if (StringUtil.isEmpty(fieldPrefix)) {
+                dataJson = originJson;
+            } else {
+                dataJson = (JSON) originJson.getByPath(fieldPrefix);
+            }
+
+            log("数据所在层级：{}，提取的数据JSON：{}", fieldPrefix, dataJson);
+
             // 若没有数据，则结束
             if (dataJson instanceof JSONObject && ((JSONObject) dataJson).isEmpty()) {
+                error("JSON为空 {}，结束执行。", dataJson.toString());
                 break;
             } else if (dataJson instanceof JSONArray && ((JSONArray) dataJson).isEmpty()) {
+                error("JSON为空 {}，结束执行。", dataJson.toString());
                 break;
             }
 
@@ -125,15 +155,12 @@ public class GetJsonFromApi extends TaskExecutor {
                 // 分批模式
                 // 调整递增参数值
                 jobBatchService.incBatchParam(batchParamList);
+                log("分批模式，调整分批参数：{}", batchParamList);
+
                 // 暂停间隔
                 ThreadUtil.sleep(interval, TimeUnit.SECONDS);
+                log("分批模式，等待 {} 秒", interval);
             }
-
-            loopCount++;
-            if (loopCount > 100) {
-                break;
-            }
-
         } while (isBatch);
 
 //        handleJson(originJsonList, apiPrefix, jobContextData);
@@ -143,9 +170,12 @@ public class GetJsonFromApi extends TaskExecutor {
         if (StringUtil.isNotEmpty(originJsonKey)) {
             jobContextData.put(originJsonKey, originJsonList);
         }
+        log("获取的原始JSON：{}", originJsonList);
+
         String dataJsonKey = output.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
         if (StringUtil.isNotEmpty(dataJsonKey)) {
             jobContextData.put(dataJsonKey, dataJsonList);
         }
+        log("获取的数据JSON：{}", dataJsonList);
     }
 }

@@ -7,6 +7,7 @@ import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -27,31 +28,32 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class PushDataToApi extends TaskExecutor {
-    public PushDataToApi(PipelineTask pipelineTask) {
-        super(pipelineTask);
+    public PushDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+        super(pipelineTask, pipelineLog);
     }
 
     @Override
-    public void execute(Map<String, Object> jobContextData) {
+    public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
 
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            log.info("{} 没有配置业务数据变量，无法获取业务数据，结束执行。", pipelineTask.getTaskName());
+            error("{} 没有配置业务数据变量，无法获取业务数据，结束执行。", pipelineTask.getTaskName());
             return;
         }
 
         // 获取业务数据
         List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        log.info("从job上下文获取的业务数据：{}", bizDataList);
+        log("从上下文获取的业务数据：{}", bizDataList);
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log.info("{} 没有获取有效业务数据，结束执行。", pipelineTask.getTaskName());
+            error("没有业务数据，结束执行。");
             return;
         }
 
         // 字段映射
         Map<String, String> fieldMapping = getFieldMapping();
+        log("字段映射配置：{}", fieldMapping);
 
         // 根据字段映射 转换为接口结构的数据
         List<Map<String, Object>> apiDataList = CollectionUtil.newArrayList();
@@ -69,6 +71,8 @@ public class PushDataToApi extends TaskExecutor {
             apiDataList.add(apiData);
         });
 
+        log("转换后的业务数据：", apiDataList);
+
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
         String apiPrefix = app.getApiPrefix();
@@ -82,15 +86,14 @@ public class PushDataToApi extends TaskExecutor {
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
-            Map<String, String> reqForms = null;
             String reqBody = null;
 
             String reqBodyType = api.getReqBodyType();
             if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(reqBodyType)) {
-                // TODO 设置reqForms
-
+                // TODO 暂不支持form模式发送多条数据
+                error("暂不支持form模式发送多条数据");
+                throw new IllegalArgumentException("接口{}的请求体类型是form，暂不支持form模式发送多条数据。");
             } else if (MyDataConstant.API_REQUEST_BODY_TYPE_JSON.equals(reqBodyType)) {
-
                 // 分批模式的参数配置
                 Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
                 // 是否启用分批模式
@@ -99,6 +102,8 @@ public class PushDataToApi extends TaskExecutor {
                 Integer interval = (Integer) batchConfig.get("INTERVAL");
                 // 分批的批次数量
                 Integer count = (Integer) batchConfig.get("COUNT");
+
+                log("分批模式配置：{}", batchConfig);
 
                 // 分批执行次数
                 int batchRound = 0;
@@ -117,9 +122,13 @@ public class PushDataToApi extends TaskExecutor {
 
                         // 执行次数+1
                         batchRound++;
+
+                        log("分批模式，第{}批数据：{}", batchRound, subDataList);
                     } else {
                         // 不分批，则发送所有数据
                         jsonArray.addAll(apiDataList);
+
+                        log("不分批，全部数据：{}", batchRound, apiDataList);
                     }
 
                     // api中的原始body
@@ -128,17 +137,20 @@ public class PushDataToApi extends TaskExecutor {
                     // 将json字符串 替换${data}占位符
                     reqBody = StringUtil.substitute(reqBody, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
 
+                    log("调用接口 [{}] {}", api.getApiMethod(), apiUrl);
+                    log("\t请求体：{}", reqBody);
                     // 调用api
-                    HttpUtil.send(api.getApiMethod(), apiUrl, null, null, reqForms, reqBody);
+                    // TODO params headers
+                    HttpUtil.send(api.getApiMethod(), apiUrl, null, null, null, reqBody);
+                    log("调用接口成功");
 
                     if (isBatch) {
                         // 暂停间隔
                         ThreadUtil.sleep(interval, TimeUnit.SECONDS);
+                        log("分批模式，等待 {} 秒", interval);
                     }
                 } while (isBatch);
-
             }
-            log.info("向接口发送数据：{}", reqBody);
         } else {
             // TODO 单数据模式，逐个调API推送数据
         }
