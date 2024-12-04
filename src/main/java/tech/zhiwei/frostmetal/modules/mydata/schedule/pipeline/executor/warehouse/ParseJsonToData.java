@@ -32,35 +32,49 @@ public class ParseJsonToData extends TaskExecutor {
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
+        // 输入配置
         Map<String, String> inputMap = getInputMap();
         if (MapUtil.isEmpty(inputMap)) {
-            return;
+            error("未配置输入参数，结束执行。");
+            throw new IllegalArgumentException("未配置输入参数，结束执行。");
         }
 
         // 获取待解析json的key
         String inputDataKey = inputMap.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
         if (StringUtil.isEmpty(inputDataKey)) {
-            return;
+            error("JSON变量名为空，结束执行。");
+            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
+        }
+
+        // 字段映射
+        Map<String, String> fieldMapping = getFieldMapping();
+        if (CollectionUtil.isEmpty(fieldMapping)) {
+            error("字段映射为空，结束执行。");
+            throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
 
         // 从上下文获取json
         List<String> dataJsonList = (List<String>) jobContextData.get(inputDataKey);
         if (CollectionUtil.isEmpty(dataJsonList)) {
+            log("没有JSON待转换，结束执行。");
             return;
+        }
+
+        // 输出配置
+        Map<String, String> outputMap = getOutputMap();
+        String bizDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(bizDataKey)) {
+            error("输出设置中的业务数据变量名为空，结束执行。");
+            throw new IllegalArgumentException("输出设置中的业务数据变量名为空，结束执行。");
         }
 
         // 业务数据集合
         List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
 
         for (String dataJsonString : dataJsonList) {
+            log("开始转换JSON：{}", dataJsonString);
             // 业务数据的json对象
             JSON dataJson = JsonUtil.parse(dataJsonString);
-
-            // 字段映射
-            Map<String, String> fieldMapping = getFieldMapping();
-            if (CollectionUtil.isEmpty(fieldMapping)) {
-                throw new IllegalArgumentException("字段映射为空！");
-            }
 
             // 使用数组模式 兼容单个对象和数组模式
             JSONArray jsonArray;
@@ -127,12 +141,10 @@ public class ParseJsonToData extends TaskExecutor {
         // 获取标准数据信息
         Data data = MyDataCache.getData(pipelineTask.getDataId());
 
-        Map<String, String> outputMap = getOutputMap();
-        String bizDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
-        if (StringUtil.isNotEmpty(bizDataKey)) {
-            // 数据存入任务上下文数据中
-            jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
-        }
+        // 数据存入任务上下文数据中
+        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+        log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
+
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
     }

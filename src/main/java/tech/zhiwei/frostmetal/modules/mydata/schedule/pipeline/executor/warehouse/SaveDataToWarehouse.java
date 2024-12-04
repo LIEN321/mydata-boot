@@ -18,6 +18,7 @@ import tech.zhiwei.tool.spring.SpringUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 保存业务数据到数据仓库
@@ -35,21 +36,24 @@ public class SaveDataToWarehouse extends TaskExecutor {
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
+        // 输入参数
         Map<String, String> inputMap = getInputMap();
         if (MapUtil.isEmpty(inputMap)) {
-            return;
+            error("未配置输入参数，结束执行。");
+            throw new IllegalArgumentException("未配置输入参数，结束执行。");
         }
 
         // 获业务数据的key
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            return;
+            error("业务数据的变量名为空，结束执行。");
+            throw new IllegalArgumentException("业务数据的变量名为空，结束执行。");
         }
 
         // 业务数据集合
         List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         if (CollectionUtil.isEmpty(bizDataList)) {
-            // TODO 业务数据集合为空
+            log("没有待保存的业务数据，结束执行。");
             return;
         }
 
@@ -64,24 +68,29 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 标准数据id
         Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
         if (ObjectUtil.isNull(dataId)) {
-            throw new RuntimeException("保存业务数据失败：缺少标准数据");
+            error("保存业务数据失败：前置任务中没有选择标准数据");
+            throw new RuntimeException("保存业务数据失败：前置任务中没有选择标准数据");
         }
 
         // 标准数据字段列表
         List<DataField> dataFields = dataFieldService.listByData(dataId);
         if (CollectionUtil.isEmpty(dataFields)) {
+            error("保存业务数据失败：标准数据没有字段");
             throw new RuntimeException("保存业务数据失败：标准数据没有字段");
         }
 
         // 从字段列表提取标识字段
         List<DataField> idFields = dataFields.stream().filter(DataField::getIsId).toList();
         if (CollectionUtil.isEmpty(idFields)) {
+            error("保存业务数据失败：标准数据没有标识字段");
             throw new RuntimeException("保存业务数据失败：标准数据没有标识字段");
         }
 
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollectionUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollectionUtil.newArrayList();
+        // 没有变化的数据量
+        AtomicInteger sameCount = new AtomicInteger();
 
         // 实际入库的业务数据
         List<Map<String, Object>> savedDataList = CollectionUtil.newArrayList();
@@ -122,6 +131,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
                     }
                 }
                 if (isSame) {
+                    sameCount.getAndIncrement();
                     return;
                 }
 
@@ -136,6 +146,9 @@ public class SaveDataToWarehouse extends TaskExecutor {
         if (!dataInsertList.isEmpty()) {
             bizDataDAO.insertBatch(warehouseName, dataCode, dataInsertList);
             savedDataList.addAll(dataInsertList);
+            log("新增数据 {} 条", dataInsertList.size());
+        } else {
+            log("无新增数据");
         }
 
         // 更新数据仓库的数据
@@ -151,8 +164,15 @@ public class SaveDataToWarehouse extends TaskExecutor {
                 bizDataDAO.update(warehouseName, dataCode, idMap, data);
             });
             savedDataList.addAll(dataUpdateList);
+
+            log("更新数据 {} 条", dataUpdateList.size());
+        } else {
+            log("无更新数据");
         }
 
+        log("跳过保存的数据 {} 条", sameCount.get());
+
+        // 输出参数
         Map<String, String> outputMap = getOutputMap();
         String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
         if (StringUtil.isNotEmpty(savedDataKey)) {
