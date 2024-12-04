@@ -13,9 +13,11 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.thread.ThreadUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 向API发送数据
@@ -88,19 +90,55 @@ public class PushDataToApi extends TaskExecutor {
                 // TODO 设置reqForms
 
             } else if (MyDataConstant.API_REQUEST_BODY_TYPE_JSON.equals(reqBodyType)) {
-                // apiDataList 转为json字符串
-                JSONArray jsonArray = new JSONArray();
-                jsonArray.addAll(apiDataList);
 
-                // api中的原始body
-                reqBody = api.getReqBodyRaw();
+                // 分批模式的参数配置
+                Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
+                // 是否启用分批模式
+                boolean isBatch = batchConfig.get("ENABLE") != null ? (boolean) batchConfig.get("ENABLE") : false;
+                // 分批的间隔
+                Integer interval = (Integer) batchConfig.get("INTERVAL");
+                // 分批的批次数量
+                Integer count = (Integer) batchConfig.get("COUNT");
 
-                // 将json字符串 替换${data}占位符
-                reqBody = StringUtil.substitute(reqBody, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
+                // 分批执行次数
+                int batchRound = 0;
+
+                do {
+                    // json字符串
+                    JSONArray jsonArray = new JSONArray();
+                    if (isBatch) {
+                        // 从数据列表中 提取分批的数据
+                        List<Map<String, Object>> subDataList = CollectionUtil.sub(apiDataList, batchRound * count, (batchRound + 1) * count);
+                        // 分批数据为空，则结束
+                        if (CollectionUtil.isEmpty(subDataList)) {
+                            break;
+                        }
+                        jsonArray.addAll(subDataList);
+
+                        // 执行次数+1
+                        batchRound++;
+                    } else {
+                        // 不分批，则发送所有数据
+                        jsonArray.addAll(apiDataList);
+                    }
+
+                    // api中的原始body
+                    reqBody = api.getReqBodyRaw();
+
+                    // 将json字符串 替换${data}占位符
+                    reqBody = StringUtil.substitute(reqBody, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, jsonArray.toString());
+
+                    // 调用api
+                    HttpUtil.send(api.getApiMethod(), apiUrl, null, null, reqForms, reqBody);
+
+                    if (isBatch) {
+                        // 暂停间隔
+                        ThreadUtil.sleep(interval, TimeUnit.SECONDS);
+                    }
+                } while (isBatch);
+
             }
-            HttpUtil.send(api.getApiMethod(), apiUrl, null, null, reqForms, reqBody);
             log.info("向接口发送数据：{}", reqBody);
-            // TODO 分批模式
         } else {
             // TODO 单数据模式，逐个调API推送数据
         }
