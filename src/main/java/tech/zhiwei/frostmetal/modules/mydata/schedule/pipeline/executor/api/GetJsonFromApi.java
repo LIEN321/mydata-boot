@@ -53,10 +53,7 @@ public class GetJsonFromApi extends TaskExecutor {
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
-        String apiUrl = api.getApiUri();
-        if (StringUtil.isNotEmpty(apiPrefix)) {
-            apiUrl = apiPrefix + apiUrl;
-        }
+        final String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
         log("接口地址：{}", apiUrl);
 

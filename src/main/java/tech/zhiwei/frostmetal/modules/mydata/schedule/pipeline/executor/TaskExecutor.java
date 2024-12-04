@@ -62,7 +62,7 @@ public abstract class TaskExecutor {
             doExecute(jobContextData);
             log("[{}] 执行完成。", pipelineTask.getTaskName());
         } catch (Exception e) {
-            log("[{}] 执行失败：{}", pipelineTask.getTaskName(), e.getMessage());
+            error("[{}] 执行失败：{}", pipelineTask.getTaskName(), e.getMessage());
             throw e;
         }
     }
