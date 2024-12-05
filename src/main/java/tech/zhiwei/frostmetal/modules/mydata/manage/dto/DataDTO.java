@@ -27,9 +27,6 @@ public class DataDTO extends BaseDTO {
     @Schema(description = "数据名称")
     private String dataName;
 
-    @Schema(description = "业务数据")
-    private Integer dataCount;
-
     @Schema(description = "字段列表")
     private List<DataFieldDTO> dataFields;
 

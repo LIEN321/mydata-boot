@@ -38,7 +38,8 @@ public class DataVO extends BaseVO {
     private String dataName;
 
     @Schema(description = "业务数据")
-    private Integer dataCount;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long dataCount;
 
     @Schema(description = "字段列表")
     private List<DataFieldVO> dataFields;

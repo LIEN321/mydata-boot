@@ -37,6 +37,6 @@ public class Data extends TenantEntity {
     /**
      * 业务数据
      */
-    private Integer dataCount;
+    private Long dataCount;
 
 }
