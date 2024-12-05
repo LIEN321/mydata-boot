@@ -30,6 +30,14 @@ public interface IDataFieldService extends IIdService<DataField> {
     List<DataField> listByData(Long dataId);
 
     /**
+     * 根据数据项 查询可显示的字段列表
+     *
+     * @param dataId 数据项id
+     * @return 字段列表
+     */
+    List<DataField> listDisplayedFields(Long dataId);
+
+    /**
      * 保存数据项字段列表
      *
      * @param dataId           数据项id

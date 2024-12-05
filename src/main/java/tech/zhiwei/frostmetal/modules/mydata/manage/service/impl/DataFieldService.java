@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.IdService;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.DataFieldDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.DataFieldMapper;
@@ -38,6 +39,14 @@ public class DataFieldService extends IdService<DataFieldMapper, DataField> impl
     public List<DataField> listByData(Long dataId) {
         AssertUtil.notNull(dataId);
         return this.list(Wrappers.<DataField>lambdaQuery().eq(DataField::getDataId, dataId));
+    }
+
+    @Override
+    public List<DataField> listDisplayedFields(Long dataId) {
+        AssertUtil.notNull(dataId);
+        return this.list(Wrappers.<DataField>lambdaQuery()
+                .eq(DataField::getDataId, dataId)
+                .eq(DataField::getDisplayMode, SysConstant.STATUS_ENABLED));
     }
 
     @Transactional(rollbackFor = Exception.class)
