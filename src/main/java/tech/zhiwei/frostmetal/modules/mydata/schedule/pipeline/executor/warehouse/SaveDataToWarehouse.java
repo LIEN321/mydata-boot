@@ -7,8 +7,10 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -29,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SaveDataToWarehouse extends TaskExecutor {
     private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
+    private final IBizDataService bizDataService = SpringUtil.getBean(IBizDataService.class);
 
     public SaveDataToWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -61,7 +64,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         Project project = MyDataCache.getProject(pipelineTask.getProjectId());
 
         // 数据仓库名称
-        String warehouseName = pipelineTask.getTenantId() + "_" + project.getProjectCode();
+        String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
         // 标准数据的编号
         String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
 
@@ -178,5 +181,8 @@ public class SaveDataToWarehouse extends TaskExecutor {
         if (StringUtil.isNotEmpty(savedDataKey)) {
             jobContextData.put(savedDataKey, savedDataList);
         }
+
+        bizDataService.updateDataCount(dataId);
+        log("更新标准数据的业务数量");
     }
 }
