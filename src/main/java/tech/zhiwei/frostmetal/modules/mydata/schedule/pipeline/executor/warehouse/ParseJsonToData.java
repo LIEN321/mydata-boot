@@ -40,7 +40,7 @@ public class ParseJsonToData extends TaskExecutor {
         }
 
         // 获取待解析json的key
-        String inputDataKey = inputMap.get(MyDataConstant.TASK_DATA_KEY_DATA_JSON);
+        String inputDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
         if (StringUtil.isEmpty(inputDataKey)) {
             error("JSON变量名为空，结束执行。");
             throw new IllegalArgumentException("JSON变量名为空，结束执行。");

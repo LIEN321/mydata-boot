@@ -204,6 +204,17 @@ public interface MyDataConstant {
      */
     String FIELD_MAPPING_ROOT = "/";
 
+
+    /**
+     * 任务过滤条件值类型 - 值类型
+     */
+    Integer TASK_FILTER_TYPE_VALUE = 1;
+
+    /**
+     * 任务过滤条件值类型 - 字段名
+     */
+    Integer TASK_FILTER_TYPE_FIELD = 2;
+
     // ------------------------------ 调度任务常量 ------------------------------
 
     /**
@@ -253,12 +264,12 @@ public interface MyDataConstant {
     /**
      * 任务输出项：原始json
      */
-    String TASK_DATA_KEY_ORIGIN_JSON = "ORIGIN_JSON";
+    String JOB_DATA_KEY_ORIGIN_JSON = "ORIGIN_JSON";
 
     /**
      * 任务输出项：数据json
      */
-    String TASK_DATA_KEY_DATA_JSON = "DATA_JSON";
+    String JOB_DATA_KEY_DATA_JSON = "DATA_JSON";
 
     /**
      * Job触发类型：1-手动
@@ -327,16 +338,6 @@ public interface MyDataConstant {
      * 业务数据历史记录集合后缀
      */
     String DATA_COLUMN_HISTORY = "_MD_HISTORY";
-
-    /**
-     * 任务过滤条件值类型 - 值类型
-     */
-    Integer TASK_FILTER_TYPE_VALUE = 1;
-
-    /**
-     * 任务过滤条件值类型 - 字段名
-     */
-    Integer TASK_FILTER_TYPE_FIELD = 2;
 
     /**
      * 数据过滤操作：等于
