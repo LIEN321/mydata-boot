@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineHistoryVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineHistoryWrapper;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,10 +50,18 @@ public class PipelineHistoryController {
     @Operation(summary = "分页查询流水线执行记录", operationId = "pipelineHistoryPage")
     public P<List<PipelineHistoryVO>> page(@ParameterObject PageParam pageParam
             , @RequestParam Long pipelineId
+            , @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date[] startTime
     ) {
         LambdaQueryWrapper<PipelineHistory> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(PipelineHistory::getPipelineId, pipelineId);
         queryWrapper.orderByDesc(PipelineHistory::getCreateTime);
+        if (startTime != null) {
+            if (startTime.length == 1) {
+                queryWrapper.ge(PipelineHistory::getStartTime, startTime[0]);
+            } else if (startTime.length > 1) {
+                queryWrapper.between(PipelineHistory::getStartTime, startTime[0], startTime[1]);
+            }
+        }
 
         return P.page(PipelineHistoryWrapper.getInstance().pageVO(pipelineHistoryService.page(queryWrapper, pageParam)));
     }
