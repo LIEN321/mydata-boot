@@ -127,8 +127,8 @@ public class MyDataUtil {
         return map;
     }
 
-    public static String getBizDbCode(String tenantId, Long projectId) {
-        return tenantId + ":" + projectId;
+    public static String getBizDbCode(String tenantId, String projectCode) {
+        return tenantId + "_" + projectCode;
     }
 
     public static String getBizHistoryCollection(String dataCode) {
