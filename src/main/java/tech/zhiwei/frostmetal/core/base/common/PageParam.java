@@ -24,7 +24,7 @@ public class PageParam {
     /**
      * 分页默认每页数量
      */
-    private static final long PAGE_DEFAULT_PAGE_SIZE = 10;
+    private static final int PAGE_DEFAULT_PAGE_SIZE = 10;
     /**
      * 分页默认总数
      */
@@ -40,7 +40,7 @@ public class PageParam {
      * 每页数量
      */
     @Schema(description = "每页数量", type = "int")
-    private Long pageSize;
+    private Integer pageSize;
 
     /**
      * 记录总数
@@ -52,7 +52,7 @@ public class PageParam {
         return ObjectUtil.defaultIfNull(this.current, PAGE_DEFAULT_CURRENT);
     }
 
-    public Long getPageSize() {
+    public Integer getPageSize() {
         return ObjectUtil.defaultIfNull(this.pageSize, PAGE_DEFAULT_PAGE_SIZE);
     }
 

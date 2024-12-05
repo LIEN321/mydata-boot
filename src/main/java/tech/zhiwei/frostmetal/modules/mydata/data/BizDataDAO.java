@@ -140,7 +140,7 @@ public class BizDataDAO {
      * @param bizDataFilters 过滤参数
      * @return 业务数据列表
      */
-    public List<Map<String, Object>> page(String dbCode, String dataCode, Integer pageNo, Integer pageSize, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
+    public List<Map<String, Object>> page(String dbCode, String dataCode, Long pageNo, Integer pageSize, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
         Long skip = (pageNo - 1L) * pageSize;
         return this.list(dbCode, dataCode, bizDataFilters, skip, pageSize, bizDataSorts);
     }

@@ -46,7 +46,7 @@ public class PipelineHistoryService extends BaseService<PipelineHistoryMapper, P
 
         PageParam pageParam = new PageParam();
         pageParam.setCurrent(1L);
-        pageParam.setPageSize(1L);
+        pageParam.setPageSize(1);
         IPage<PipelineHistory> page = page(queryWrapper, pageParam);
         List<PipelineHistory> histories = page.getRecords();
         if (CollectionUtil.isNotEmpty(histories)) {
