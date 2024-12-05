@@ -110,7 +110,7 @@ public class DataController {
     }
 
     @GetMapping("/fieldList")
-    @Operation(summary = "查询标准数据", operationId = "fieldList")
+    @Operation(summary = "查询标准数据的字段列表", operationId = "fieldList")
     public R<List<DataFieldVO>> fieldList(@RequestParam Long dataId) {
         return R.data(DataFieldWrapper.getInstance().listVO(dataFieldService.listByData(dataId)));
     }
