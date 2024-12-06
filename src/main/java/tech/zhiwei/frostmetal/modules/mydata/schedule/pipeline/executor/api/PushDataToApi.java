@@ -41,8 +41,8 @@ public class PushDataToApi extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("{} 没有配置业务数据变量，无法获取业务数据，结束执行。", pipelineTask.getTaskName());
-            return;
+            error("执行失败：未配置业务数据变量，无法获取业务数据。");
+            throw new IllegalArgumentException("执行失败：未配置业务数据变量，无法获取业务数据。");
         }
 
         // 获取业务数据
@@ -72,7 +72,7 @@ public class PushDataToApi extends TaskExecutor {
 
             apiDataList.add(apiData);
         });
-        log("转换后的业务数据：", apiDataList);
+        log("转换后的业务数据：{}", apiDataList);
 
         // 判断业务数据是否有效，若无效则结束
         if (CollectionUtil.isEmpty(apiDataList)) {
@@ -106,7 +106,9 @@ public class PushDataToApi extends TaskExecutor {
                 // 分批的批次数量
                 Integer count = (Integer) batchConfig.get("COUNT");
 
-                log("分批模式配置：{}", batchConfig);
+                if (isBatch) {
+                    log("分批模式配置：{}", batchConfig);
+                }
 
                 // 分批执行次数
                 int batchRound = 0;
@@ -131,7 +133,7 @@ public class PushDataToApi extends TaskExecutor {
                         // 不分批，则发送所有数据
                         jsonArray.addAll(apiDataList);
 
-                        log("不分批，全部数据：{}", batchRound, apiDataList);
+                        log("不分批，全部数据：{}", apiDataList);
                     }
 
                     // api中的原始body
