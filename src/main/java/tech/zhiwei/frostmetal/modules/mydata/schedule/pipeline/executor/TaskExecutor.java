@@ -9,6 +9,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
@@ -46,6 +47,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
             // JSON转数据
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
+            // 过滤数据
+            case MyDataConstant.TASK_TYPE_FILTER_DATA -> new FilterData(task, log);
             // 保存数据到数仓
             case MyDataConstant.TASK_TYPE_SAVE_DATA -> new SaveDataToWarehouse(task, log);
             // 从数仓查询数据
