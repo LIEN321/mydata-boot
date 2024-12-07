@@ -68,7 +68,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
 
         log("开始查询数据：{}", data.getDataName());
-        log("查询条件是：{}", CollectionUtil.emptyIfNull(dataFilters));
+        log("查询条件：{}", CollectionUtil.emptyIfNull(dataFilters));
 
         // 查询业务数据
         List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters);
