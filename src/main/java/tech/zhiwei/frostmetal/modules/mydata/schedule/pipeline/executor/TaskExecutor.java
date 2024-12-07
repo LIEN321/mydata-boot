@@ -1,8 +1,7 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
@@ -26,8 +25,8 @@ import java.util.Map;
  * @since 2024/11/21
  */
 @Getter
+@Slf4j
 public abstract class TaskExecutor {
-    private static final Logger log = LoggerFactory.getLogger(TaskExecutor.class);
     private final PipelineTask pipelineTask;
     private final PipelineLog pipelineLog;
 
@@ -135,6 +134,7 @@ public abstract class TaskExecutor {
             String existingLog = pipelineLog.getTaskLog();
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.now() + "] [INFO] " + StringUtil.format(message, params));
         }
+        log.info(message, params);
     }
 
     protected void error(String message, Object... params) {
@@ -142,5 +142,6 @@ public abstract class TaskExecutor {
             String existingLog = pipelineLog.getTaskLog();
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.now() + "] [ERROR] " + StringUtil.format(message, params));
         }
+        log.error(message, params);
     }
 }
