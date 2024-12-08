@@ -88,6 +88,15 @@ public class GetJsonFromApi extends TaskExecutor {
 
             // API的请求参数
             Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
+            Map<String, String> reqHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+            Map<String, String> reqForm = null;
+            String reqBody = null;
+            // 根据请求体类型 初始对应的数据
+            if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(api.getReqBodyType())) {
+                reqForm = MyDataUtil.parseToKvMapObj(api.getReqBodyForm());
+            } else {
+                reqBody = api.getReqBodyRaw();
+            }
 
             // 若启用分批，则将分批参数加入请求参数中
             if (isBatch) {
@@ -97,10 +106,13 @@ public class GetJsonFromApi extends TaskExecutor {
 
 
             log("第{}次调用接口 [{}] {}", loopCount, api.getApiMethod(), apiUrl);
-            log("\t请求参数：{}", reqParams);
-            // TODO headers  reqForms  reqBody
+            log("\trequest param：{}", reqParams);
+            log("\trequest header：{}", reqHeaders);
+            log("\trequest form：{}", reqForm);
+            log("\trequest body：{}", reqBody);
+
             // 调用接口 获取json
-            String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, null, null, null);
+            String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
             log("\t返回JSON：{}", originJsonString);
 
             // json为空则结束

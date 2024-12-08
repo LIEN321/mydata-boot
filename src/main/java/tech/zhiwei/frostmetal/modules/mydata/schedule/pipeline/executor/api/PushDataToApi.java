@@ -12,6 +12,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -88,12 +89,17 @@ public class PushDataToApi extends TaskExecutor {
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
         final String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
+        // API 请求参数
+        Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
+        // API 请求Header
+        Map<String, String> reqHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
 
             String reqBodyType = api.getReqBodyType();
             if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(reqBodyType)) {
-                // TODO 暂不支持form模式发送多条数据
+                // 暂不支持form模式发送多条数据
                 error("暂不支持form模式发送多条数据");
                 throw new IllegalArgumentException("接口{}的请求体类型是form，暂不支持form模式发送多条数据。");
             } else if (MyDataConstant.API_REQUEST_BODY_TYPE_JSON.equals(reqBodyType)) {
@@ -140,7 +146,7 @@ public class PushDataToApi extends TaskExecutor {
                     String reqBodyRaw = api.getReqBodyRaw();
 
                     // 发送数据
-                    send(api.getApiMethod(), apiUrl, null, null, reqBodyRaw, jsonArray);
+                    send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqBodyRaw, jsonArray);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -159,20 +165,22 @@ public class PushDataToApi extends TaskExecutor {
                 JSONObject jsonObject = new JSONObject(apiData);
 
                 // 发送数据
-                send(api.getApiMethod(), apiUrl, null, null, reqBodyRaw, jsonObject);
+                send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqBodyRaw, jsonObject);
             });
         }
     }
 
-    private void send(String method, String url, Map<String, String> reqParams, Map<String, String> headers, String reqBodyRaw, JSON json) {
+    private void send(String method, String url, Map<String, String> reqParams, Map<String, String> reqHeaders, String reqBodyRaw, JSON json) {
         // 将json字符串 替换${data}占位符
         String reqBody = StringUtil.substitute(reqBodyRaw, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, json.toString());
 
         log("调用接口 [{}] {}", method, url);
-        log("\t请求体：{}", reqBody);
+        log("\trequest param：{}", reqParams);
+        log("\trequest header：{}", reqHeaders);
+        log("\trequest body：{}", reqBody);
+
         // 调用api
-        // TODO params headers
-        String responseBody = HttpUtil.send(method, url, null, null, null, reqBody);
+        String responseBody = HttpUtil.send(method, url, reqParams, reqHeaders, null, reqBody);
         log("调用返回：{}", responseBody);
     }
 }
