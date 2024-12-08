@@ -164,43 +164,28 @@ public class FilterData extends TaskExecutor {
             Comparable cDataValue = (Comparable) dataValue;
             Comparable cFilterValue = (Comparable) filterValue;
             // 根据op类型，过滤数据
-            switch (op) {
-                case MyDataConstant.DATA_NOT_NULL:
-                    // not null
-                    isCorrect = ObjectUtil.isNotNull(dataValue);
-                    break;
-                case MyDataConstant.DATA_NOT_EMPTY:
-                    // not empty
-                    isCorrect = ObjectUtil.isNotEmpty(dataValue);
-                    break;
-                case MyDataConstant.DATA_OP_EQ:
-                    // 等于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
-                    break;
-                case MyDataConstant.DATA_OP_NE:
-                    // 不等于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
-                    break;
-                case MyDataConstant.DATA_OP_GT:
-                    // 大于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
-                    break;
-                case MyDataConstant.DATA_OP_GTE:
-                    // 大于等于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
-                    break;
-                case MyDataConstant.DATA_OP_LT:
-                    // 小于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
-                    break;
-                case MyDataConstant.DATA_OP_LTE:
-                    // 小于等于
-                    isCorrect = (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
-                    break;
+            isCorrect = switch (op) {
+                // not null
+                case MyDataConstant.DATA_NOT_NULL -> ObjectUtil.isNotNull(dataValue);
+                // not empty
+                case MyDataConstant.DATA_NOT_EMPTY -> ObjectUtil.isNotEmpty(dataValue);
+                // 等于
+                case MyDataConstant.DATA_OP_EQ -> (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
+                // 不等于
+                case MyDataConstant.DATA_OP_NE -> (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
+                // 大于
+                case MyDataConstant.DATA_OP_GT -> (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
+                // 大于等于
+                case MyDataConstant.DATA_OP_GTE -> (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
+                // 小于
+                case MyDataConstant.DATA_OP_LT -> (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
+                // 小于等于
+                case MyDataConstant.DATA_OP_LTE -> (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
 
-                default:
-                    throw new RuntimeException("JobDataFilter: 不支持的过滤操作");
-            }
+                default -> throw new IllegalArgumentException(
+                        StringUtil.format("过滤条件无效: 不支持的过滤操作 {}", op)
+                );
+            };
         }
 
         return isCorrect;
