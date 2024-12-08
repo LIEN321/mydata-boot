@@ -2,17 +2,13 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process
 
 import cn.hutool.core.collection.CollUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -24,10 +20,6 @@ import java.util.Map;
  * @since 2024/12/7
  */
 public class FilterData extends TaskExecutor {
-    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
-    private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
-    private final IBizDataService bizDataService = SpringUtil.getBean(IBizDataService.class);
-
     public FilterData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }

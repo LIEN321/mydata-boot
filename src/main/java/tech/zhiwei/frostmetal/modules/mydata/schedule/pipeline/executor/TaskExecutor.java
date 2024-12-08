@@ -125,9 +125,10 @@ public abstract class TaskExecutor {
     }
 
     /**
-     * 记录任务日志
+     * 记录任务正常日志
      *
-     * @param message
+     * @param message 日志内容
+     * @param params  占位符参数值
      */
     protected void log(String message, Object... params) {
         if (pipelineLog != null) {
@@ -137,6 +138,12 @@ public abstract class TaskExecutor {
         log.info(message, params);
     }
 
+    /**
+     * 记录任务异常日志
+     *
+     * @param message 日志内容
+     * @param params  占位符参数值
+     */
     protected void error(String message, Object... params) {
         if (pipelineLog != null) {
             String existingLog = pipelineLog.getTaskLog();

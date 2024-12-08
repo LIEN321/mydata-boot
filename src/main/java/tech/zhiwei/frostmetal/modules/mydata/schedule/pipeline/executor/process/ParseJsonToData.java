@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Json转为业务数据
+ * JSON转为业务数据
  *
  * @author LIEN
  * @since 2024/11/29
@@ -34,10 +34,6 @@ public class ParseJsonToData extends TaskExecutor {
     public void doExecute(Map<String, Object> jobContextData) {
         // 输入配置
         Map<String, String> inputMap = getInputMap();
-        if (MapUtil.isEmpty(inputMap)) {
-            error("未配置输入参数，结束执行。");
-            throw new IllegalArgumentException("未配置输入参数，结束执行。");
-        }
 
         // 获取待解析json的key
         String inputDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
@@ -46,18 +42,18 @@ public class ParseJsonToData extends TaskExecutor {
             throw new IllegalArgumentException("JSON变量名为空，结束执行。");
         }
 
-        // 字段映射
-        Map<String, String> fieldMapping = getFieldMapping();
-        if (CollectionUtil.isEmpty(fieldMapping)) {
-            error("字段映射为空，结束执行。");
-            throw new IllegalArgumentException("字段映射为空，结束执行。");
-        }
-
         // 从上下文获取json
         List<String> dataJsonList = (List<String>) jobContextData.get(inputDataKey);
         if (CollectionUtil.isEmpty(dataJsonList)) {
             log("没有JSON待转换，结束执行。");
             return;
+        }
+
+        // 字段映射
+        Map<String, String> fieldMapping = getFieldMapping();
+        if (CollectionUtil.isEmpty(fieldMapping)) {
+            error("字段映射为空，结束执行。");
+            throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
 
         // 输出配置

@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 从API获取json
+ * 从API获取JSON
  *
  * @author LIEN
  * @since 2024/11/21

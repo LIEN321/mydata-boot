@@ -41,10 +41,6 @@ public class SaveDataToWarehouse extends TaskExecutor {
     public void doExecute(Map<String, Object> jobContextData) {
         // 输入参数
         Map<String, String> inputMap = getInputMap();
-        if (MapUtil.isEmpty(inputMap)) {
-            error("未配置输入参数，结束执行。");
-            throw new IllegalArgumentException("未配置输入参数，结束执行。");
-        }
 
         // 获业务数据的key
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
@@ -59,14 +55,6 @@ public class SaveDataToWarehouse extends TaskExecutor {
             log("没有待保存的业务数据，结束执行。");
             return;
         }
-
-        PipelineTask pipelineTask = getPipelineTask();
-        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
-
-        // 数据仓库名称
-        String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
-        // 标准数据的编号
-        String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
 
         // 标准数据id
         Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
@@ -98,6 +86,16 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 实际入库的业务数据
         List<Map<String, Object>> savedDataList = CollectionUtil.newArrayList();
 
+        // 当前流水线
+        PipelineTask pipelineTask = getPipelineTask();
+        // 所属项目
+        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
+        // 数据仓库名称
+        String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
+        // 标准数据的编号
+        String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
+
+        // 遍历业务数据
         bizDataList.forEach(bizData -> {
             // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
@@ -173,7 +171,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
             log("无更新数据");
         }
 
-        log("跳过保存的数据 {} 条", sameCount.get());
+        log("实际保存数据 {} 条，没有变化的数据 {} 条", savedDataList.size(), sameCount.get());
 
         // 输出参数
         Map<String, String> outputMap = getOutputMap();

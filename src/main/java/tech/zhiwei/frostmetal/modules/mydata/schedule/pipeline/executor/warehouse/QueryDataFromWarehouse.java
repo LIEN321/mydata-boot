@@ -54,8 +54,13 @@ public class QueryDataFromWarehouse extends TaskExecutor {
             throw new RuntimeException("查询失败：无效的输出设置，未配置查询结果的变量名");
         }
 
-        Data data = MyDataCache.getData(dataId);
+        // 查询条件
+        List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
+        List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
 
+        // 标准数据
+        Data data = MyDataCache.getData(dataId);
+        // 所属项目
         Project project = MyDataCache.getProject(pipelineTask.getProjectId());
 
         // 数据仓库名称
@@ -63,13 +68,8 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 标准数据的编号
         String dataCode = data.getDataCode();
 
-        // 查询条件
-        List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
-        List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
-
         log("开始查询数据：{}", data.getDataName());
         log("查询条件：{}", CollectionUtil.emptyIfNull(dataFilters));
-
         // 查询业务数据
         List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters);
 
@@ -77,7 +77,6 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         // 输出参数
         jobContextData.put(bizDataKey, bizDataList);
-
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, dataId);
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, dataCode);
     }

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 从Webhook解析数据
+ * 从Webhook接收JSON
  *
  * @author LIEN
  * @since 2024/11/28
@@ -33,8 +33,6 @@ public class GetJsonFromWebhook extends GetJsonFromApi {
         String originJsonString = (String) jobContextData.get(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY);
         log("从Webhook接收的json：{}", originJsonString);
 
-        String fieldPrefix = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_PREFIX);
-
         // json列表
         List<String> originJsonList = CollectionUtil.newArrayList();
         // 数据json列表
@@ -44,15 +42,16 @@ public class GetJsonFromWebhook extends GetJsonFromApi {
         JSON originJson = JsonUtil.parse(originJsonString);
 
         // 提取业务数据json对象
+        String fieldPrefix = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_PREFIX);
         JSON dataJson = (JSON) originJson.getByPath(StringUtil.nullToEmpty(fieldPrefix));
         log("数据所在层级：{}，提取的数据JSON：{}", fieldPrefix, dataJson);
 
         // 若没有数据，则结束
         if (dataJson instanceof JSONObject && ((JSONObject) dataJson).isEmpty()) {
-            error("JSON为空 {}，结束执行。", dataJson.toString());
+            log("JSON为空 {}，结束执行。", dataJson.toString());
             return;
         } else if (dataJson instanceof JSONArray && ((JSONArray) dataJson).isEmpty()) {
-            error("JSON为空 {}，结束执行。", dataJson.toString());
+            log("JSON为空 {}，结束执行。", dataJson.toString());
             return;
         }
 
