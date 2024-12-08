@@ -124,7 +124,6 @@ public class PipelineJob implements InterruptableJob {
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
                         pipelineLogService.updateById(pipelineLog);
 
-                        // TODO 记录执行过程log
                         // 执行任务
                         TaskExecutor.create(pipelineTask, pipelineLog).execute(jobContextData);
 
