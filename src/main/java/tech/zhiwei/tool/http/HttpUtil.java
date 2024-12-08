@@ -5,6 +5,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.Method;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.Map;
 
@@ -29,11 +30,15 @@ public class HttpUtil extends cn.hutool.http.HttpUtil {
 
         HttpRequest request = HttpUtil.createRequest(Method.valueOf(method), url);
 
-        // 设置请求header，内部包含有效性判断
+        // 设置请求header
         request.addHeaders(headers);
-        // 设置请求表单参数，内部包含有效性判断
-        request.formStr(reqForms);
 
+        // 若请求form有效，则用reqForm
+        if (MapUtil.isNotEmpty(reqForms)) {
+            request.formStr(reqForms);
+        }
+
+        // 若请求body有效，则用reqBody
         if (StringUtil.isNotEmpty(reqBody)) {
             request.body(reqBody);
         }
