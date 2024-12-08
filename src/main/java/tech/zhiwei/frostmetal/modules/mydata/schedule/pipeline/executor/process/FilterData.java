@@ -3,15 +3,20 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process
 import cn.hutool.core.collection.CollUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 过滤数据
@@ -20,6 +25,8 @@ import java.util.Map;
  * @since 2024/12/7
  */
 public class FilterData extends TaskExecutor {
+    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
+
     public FilterData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }
@@ -51,6 +58,12 @@ public class FilterData extends TaskExecutor {
             throw new RuntimeException("执行失败：未配置过滤条件，结束执行");
         }
 
+        Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
+        if (ObjectUtil.isNull(dataId)) {
+            error("执行失败：前置任务未选择标准数据，结束执行");
+            throw new RuntimeException("执行失败：前置任务未选择标准数据，结束执行");
+        }
+
         // 输出参数
         Map<String, String> outputMap = getOutputMap();
         String filteredDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
@@ -58,6 +71,17 @@ public class FilterData extends TaskExecutor {
             error("执行失败：无效的输出设置，未配置过滤结果的变量名");
             throw new RuntimeException("执行失败：无效的输出设置，未配置过滤结果的变量名");
         }
+
+        // 标准数据字段列表
+        List<DataField> dataFields = dataFieldService.listByData(dataId);
+        if (CollectionUtil.isEmpty(dataFields)) {
+            error("保存业务数据失败：标准数据没有字段");
+            throw new RuntimeException("保存业务数据失败：标准数据没有字段");
+        }
+
+        // 字段编号-字段类型
+        Map<String, String> fieldTypeMapping = dataFields.stream()
+                .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
 
         log("过滤前，业务数据总数：{}", bizDataList.size());
         log("过滤条件：{}", dataFilters);
@@ -73,7 +97,7 @@ public class FilterData extends TaskExecutor {
 
             // 当数据未被过滤，则添加到过滤结果
 //            if (checkIdValue(data, dataIdCodes) && filterDataValues(data, fieldTypeMapping, dataFilters)) {
-            if (filterDataValues(data, null, dataFilters)) {
+            if (filterDataValues(data, fieldTypeMapping, dataFilters)) {
                 validDataList.add(data);
             } else {
                 blockedDataList.add(data);
@@ -123,13 +147,19 @@ public class FilterData extends TaskExecutor {
 
             // 当数据中 指定字段的值 无效，则过滤该数据
             Object dataValue = data.get(key);
-            // TODO
-//            filterValue = MyDataUtil.convertDataType(filterValue, fieldTypeMapping.get(key));
+            // 将条件值转换为字段的相同类型
+            filterValue = MyDataUtil.convertDataType(filterValue, fieldTypeMapping.get(key));
 
             // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
-//                if (!(dataValue instanceof Comparable && filterValue instanceof Comparable)) {
-//                    break;
-//                }
+            if (!(dataValue instanceof Comparable && filterValue instanceof Comparable)) {
+                throw new IllegalArgumentException(
+                        StringUtil.format("过滤条件无效：{}字段的值{} 或过滤条件值{} 无法进行对比"
+                                , key
+                                , dataValue
+                                , filterValue
+                        )
+                );
+            }
 
             Comparable cDataValue = (Comparable) dataValue;
             Comparable cFilterValue = (Comparable) filterValue;

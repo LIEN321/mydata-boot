@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 保存业务数据到数据仓库
@@ -77,6 +78,10 @@ public class SaveDataToWarehouse extends TaskExecutor {
             throw new RuntimeException("保存业务数据失败：标准数据没有标识字段");
         }
 
+        // 字段编号-字段类型
+        Map<String, String> fieldTypeMapping = dataFields.stream()
+                .collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+
         // 保存数据到数据中心
         List<Map<String, Object>> dataInsertList = CollectionUtil.newArrayList();
         List<Map<String, Object>> dataUpdateList = CollectionUtil.newArrayList();
@@ -122,10 +127,10 @@ public class SaveDataToWarehouse extends TaskExecutor {
                     Object produceDataValue = bizData.get(key);
                     Object queryDataValue = queryData.get(key);
 
-                    // TODO 将保存的数据 按最新配置的类型转换对比
-//                    String targetType = taskJob.getFieldTypeMapping().get(key);
-//                    produceDataValue = MdUtil.convertDataType(produceDataValue, targetType);
-//                    queryDataValue = MdUtil.convertDataType(queryDataValue, targetType);
+                    // 将保存的数据 按最新配置的类型转换对比
+                    String targetType = fieldTypeMapping.get(key);
+                    produceDataValue = MyDataUtil.convertDataType(produceDataValue, targetType);
+                    queryDataValue = MyDataUtil.convertDataType(queryDataValue, targetType);
                     if (!ObjectUtil.equal(produceDataValue, queryDataValue)) {
                         isSame = false;
                         break;
