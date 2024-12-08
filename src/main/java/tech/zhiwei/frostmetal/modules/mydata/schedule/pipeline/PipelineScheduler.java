@@ -120,7 +120,7 @@ public class PipelineScheduler {
     public void webhookPipeline(Long pipelineId, String body) {
         try {
             Map<String, Object> map = MapUtil.newHashMap();
-            map.put(MyDataConstant.JOB_DATA_KEY_API_BODY, body);
+            map.put(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY, body);
             quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK, map);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);

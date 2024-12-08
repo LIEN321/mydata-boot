@@ -233,9 +233,9 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_PIPELINE_ID = "PIPELINE_ID";
 
     /**
-     * Job上下文共享数据的标识：API响应体
+     * Job上下文共享数据的标识：webhook请求body
      */
-    String JOB_DATA_KEY_API_BODY = "API_BODY";
+    String JOB_DATA_KEY_WEBHOOK_REQUEST_BODY = "WEBHOOK_REQUEST_BODY";
 
     /**
      * Job上下文共享数据的标识：业务数据

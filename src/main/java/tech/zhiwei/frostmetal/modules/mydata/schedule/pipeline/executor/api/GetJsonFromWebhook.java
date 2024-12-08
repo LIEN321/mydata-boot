@@ -30,7 +30,7 @@ public class GetJsonFromWebhook extends GetJsonFromApi {
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
-        String originJsonString = (String) jobContextData.get(MyDataConstant.JOB_DATA_KEY_API_BODY);
+        String originJsonString = (String) jobContextData.get(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY);
         log("从Webhook接收的json：{}", originJsonString);
 
         String fieldPrefix = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_PREFIX);
