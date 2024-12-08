@@ -86,11 +86,6 @@ public class PipelineScheduler {
         String endTime = pipeline.getEndTime();
         Date dEndTime = DateUtil.parse(endTime, MyDataConstant.TASK_TIME_FORMAT);
 
-        // 计算下一次执行时间
-        // TODO 临时改用null
-//        Date nextFireTime = DateUtil.add(new Date(), null, null, intervalSeconds);
-        Date nextFireTime = null;
-
         try {
             // 使用 quartz 调度任务
             quartzService.scheduleJob(pipelineId, dayOfWeek, intervalSeconds, dStartTime, dEndTime, MyDataConstant.JOB_REPEAT_FOREVER);
