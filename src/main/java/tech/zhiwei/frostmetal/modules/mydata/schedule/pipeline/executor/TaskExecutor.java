@@ -7,7 +7,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.PushDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
@@ -41,7 +41,7 @@ public abstract class TaskExecutor {
             // 从API获取JSON
             case MyDataConstant.TASK_TYPE_API_GET_JSON -> new GetJsonFromApi(task, log);
             // 向API发送数据
-            case MyDataConstant.TASK_TYPE_API_SEND_DATA -> new PushDataToApi(task, log);
+            case MyDataConstant.TASK_TYPE_API_SEND_DATA -> new SendDataToApi(task, log);
             // 从Webhook接收JSON
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
             // JSON转数据

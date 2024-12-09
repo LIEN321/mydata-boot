@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
  * @since 2024/11/22
  */
 @Slf4j
-public class PushDataToApi extends TaskExecutor {
-    public PushDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+public class SendDataToApi extends TaskExecutor {
+    public SendDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }
 
