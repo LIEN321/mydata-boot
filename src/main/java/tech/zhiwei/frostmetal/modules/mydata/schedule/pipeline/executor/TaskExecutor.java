@@ -3,8 +3,10 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -12,10 +14,13 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
+import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.spring.SpringUtil;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,6 +34,7 @@ import java.util.Map;
 public abstract class TaskExecutor {
     private final PipelineTask pipelineTask;
     private final PipelineLog pipelineLog;
+    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
 
     public TaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         this.pipelineTask = pipelineTask;
@@ -90,6 +96,33 @@ public abstract class TaskExecutor {
             return MapUtil.empty();
         }
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_MAPPING);
+    }
+
+    /**
+     * 上下文的数据字段列表
+     * 支持存储多个数据标准的字段
+     */
+    Map<Long, List<DataField>> dataFieldMap = MapUtil.newHashMap();
+
+    /**
+     * 获取标准数据的字段列表
+     *
+     * @param dataId 标准数据id
+     * @return 字段列表
+     */
+    protected List<DataField> getDataFields(Long dataId) {
+        if (dataFieldMap.containsKey(dataId)) {
+            return dataFieldMap.get(dataId);
+        }
+
+        List<DataField> dataFields = dataFieldService.listByData(dataId);
+        if (CollectionUtil.isEmpty(dataFields)) {
+            error("保存业务数据失败：标准数据没有字段");
+            throw new RuntimeException("保存业务数据失败：标准数据没有字段");
+        }
+        dataFieldMap.put(dataId, dataFields);
+
+        return dataFields;
     }
 
     /**

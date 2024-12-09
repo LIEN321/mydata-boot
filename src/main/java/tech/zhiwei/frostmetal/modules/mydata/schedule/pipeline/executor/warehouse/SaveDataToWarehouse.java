@@ -65,11 +65,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         // 标准数据字段列表
-        List<DataField> dataFields = dataFieldService.listByData(dataId);
-        if (CollectionUtil.isEmpty(dataFields)) {
-            error("保存业务数据失败：标准数据没有字段");
-            throw new RuntimeException("保存业务数据失败：标准数据没有字段");
-        }
+        List<DataField> dataFields = getDataFields(dataId);
 
         // 从字段列表提取标识字段
         List<DataField> idFields = dataFields.stream().filter(DataField::getIsId).toList();

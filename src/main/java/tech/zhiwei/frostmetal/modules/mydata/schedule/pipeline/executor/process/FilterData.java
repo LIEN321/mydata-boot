@@ -6,13 +6,11 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,6 @@ import java.util.stream.Collectors;
  * @since 2024/12/7
  */
 public class FilterData extends TaskExecutor {
-    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
 
     public FilterData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -73,11 +70,7 @@ public class FilterData extends TaskExecutor {
         }
 
         // 标准数据字段列表
-        List<DataField> dataFields = dataFieldService.listByData(dataId);
-        if (CollectionUtil.isEmpty(dataFields)) {
-            error("保存业务数据失败：标准数据没有字段");
-            throw new RuntimeException("保存业务数据失败：标准数据没有字段");
-        }
+        List<DataField> dataFields = getDataFields(dataId);
 
         // 字段编号-字段类型
         Map<String, String> fieldTypeMapping = dataFields.stream()
