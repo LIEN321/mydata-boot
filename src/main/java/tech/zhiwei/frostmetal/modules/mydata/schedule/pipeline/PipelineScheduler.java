@@ -48,7 +48,7 @@ public class PipelineScheduler {
             schedulePipeline(pipeline);
         } else {
             // 若未启用，则移出调度
-            stopPipeline(pipelineId);
+            deletePipeline(pipelineId);
         }
     }
 
