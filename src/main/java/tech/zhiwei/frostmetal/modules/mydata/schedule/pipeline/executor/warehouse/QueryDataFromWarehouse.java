@@ -6,11 +6,11 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -28,9 +28,7 @@ import java.util.Map;
  * @since 2024/12/6
  */
 public class QueryDataFromWarehouse extends TaskExecutor {
-    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
-    private final IBizDataService bizDataService = SpringUtil.getBean(IBizDataService.class);
 
     public QueryDataFromWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -75,8 +73,13 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         log("查询结果：共 {} 条", bizDataList.size());
 
+        // 字段列表
+        List<DataField> dataFields = getDataFields(dataId);
         // 输出参数
-        jobContextData.put(bizDataKey, bizDataList);
+//        jobContextData.put(bizDataKey, bizDataList);
+        BizData bizData = new BizData(dataFields, bizDataList);
+        jobContextData.put(bizDataKey, bizData);
+
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, dataId);
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, dataCode);
     }

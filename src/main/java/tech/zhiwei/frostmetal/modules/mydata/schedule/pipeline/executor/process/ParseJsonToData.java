@@ -12,14 +12,13 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
-import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ParseJsonToData extends TaskExecutor {
-    private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
 
     public ParseJsonToData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -93,6 +91,10 @@ public class ParseJsonToData extends TaskExecutor {
 
         // 业务数据集合
         List<Map<String, Object>> bizDataList = CollUtil.newArrayList();
+        // 字段映射中用到的字段列表
+        List<DataField> usedDataFields = dataFields.stream()
+                .filter(field -> fieldMapping.containsKey(field.getFieldCode()))
+                .toList();
 
         int size = dataJsonList.size();
         for (int i = 0; i < size; i++) {
@@ -175,7 +177,10 @@ public class ParseJsonToData extends TaskExecutor {
         }
 
         // 数据存入任务上下文数据中
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+//        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
+        BizData bizData = new BizData(usedDataFields, bizDataList);
+        jobContextData.put(bizDataKey, bizData);
+
         log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
 
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());

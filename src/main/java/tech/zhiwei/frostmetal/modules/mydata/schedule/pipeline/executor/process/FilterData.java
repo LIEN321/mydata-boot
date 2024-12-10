@@ -6,6 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -36,12 +37,18 @@ public class FilterData extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("执行失败：未配置待过滤的业务数据变量，无法获取业务数据。");
-            throw new IllegalArgumentException("执行失败：未配置待过滤的业务数据变量，无法获取业务数据。");
+            error("执行失败：未配置待过滤的业务数据变量，无法获取业务数据");
+            throw new IllegalArgumentException("执行失败：未配置待过滤的业务数据变量，无法获取业务数据");
         }
 
         // 获取上下文的业务数据
-        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
+//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
+        BizData bizData = (BizData) jobContextData.get(bizDataKey);
+        if (bizData == null) {
+            error("执行失败：前置任务没有输出有效的业务数据");
+            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+        }
+        List<Map<String, Object>> bizDataList = bizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
             log("待过滤的数据为空，结束执行");
             return;
@@ -100,7 +107,9 @@ public class FilterData extends TaskExecutor {
         log("过滤数据结束，有效的业务数据 {} 条，被过滤拦截了 {} 条", validDataList.size(), blockedDataList.size());
 
         // 输出参数
-        jobContextData.put(bizDataKey, validDataList);
+//        jobContextData.put(bizDataKey, validDataList);
+        bizData.setBizData(validDataList);
+        jobContextData.put(bizDataKey, bizData);
         String blockedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_FILTER_BLOCKED_DATA);
         if (StringUtil.isNotEmpty(blockedDataKey)) {
             jobContextData.put(blockedDataKey, blockedDataList);
