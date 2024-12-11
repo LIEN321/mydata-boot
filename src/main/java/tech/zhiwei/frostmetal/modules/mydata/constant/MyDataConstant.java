@@ -7,6 +7,9 @@ package tech.zhiwei.frostmetal.modules.mydata.constant;
  * @since 2024/11/9
  */
 public interface MyDataConstant {
+    // 临时目录名
+    String TEMP_DIR = "mydata";
+
     // ------------------------------ 字段常量 ------------------------------
     /**
      * 编号长度
@@ -97,7 +100,7 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_OPERATE_DATA = "OPERATE_DATA";
     /**
-     * 任务类型：写入Excel文件
+     * 任务类型：数据写入Excel
      */
     String TASK_TYPE_WRITE_EXCEL = "WRITE_EXCEL";
     /**
@@ -266,6 +269,11 @@ public interface MyDataConstant {
      * 任务输出项：数据json
      */
     String JOB_DATA_KEY_DATA_JSON = "DATA_JSON";
+
+    /**
+     * Job上下文共享数据的标识：Excel文件
+     */
+    String JOB_DATA_KEY_EXCEL_FILE = "EXCEL_FILE";
 
     /**
      * Job触发类型：1-手动

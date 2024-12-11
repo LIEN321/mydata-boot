@@ -5,11 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.io.FileUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.util.EnumUtil;
 import tech.zhiwei.tool.util.NumberUtil;
+import tech.zhiwei.tool.util.SystemUtil;
 
+import java.io.File;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -195,5 +198,27 @@ public class MyDataUtil {
             default:
                 return "";
         }
+    }
+
+    /**
+     * 保存项目中 导出的excel文件
+     *
+     * @param tenantId    租户id
+     * @param projectCode 项目编号
+     * @param excelFile   excel文件
+     * @return 保存的excel文件
+     */
+    public static File saveExcelFile(String tenantId, String projectCode, File excelFile) {
+        File excelDir = new File(SystemUtil.getUserDir()
+                + FileUtil.FILE_SEPARATOR + "files"
+                + FileUtil.FILE_SEPARATOR + tenantId
+                + FileUtil.FILE_SEPARATOR + projectCode
+        );
+        if (!excelDir.exists()) {
+            excelDir.mkdirs();
+        }
+        File targetFile = new File(excelDir, excelFile.getName());
+        FileUtil.copy(excelFile, targetFile, true);
+        return targetFile;
     }
 }
