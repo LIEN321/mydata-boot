@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email.SendEmail;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
@@ -61,6 +62,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_SAVE_DATA -> new SaveDataToWarehouse(task, log);
             // 从数仓查询数据
             case MyDataConstant.TASK_TYPE_QUERY_DATA -> new QueryDataFromWarehouse(task, log);
+            // 发送邮件
+            case MyDataConstant.TASK_TYPE_SEND_EMAIL -> new SendEmail(task, log);
             default -> throw new IllegalArgumentException("不支持的任务类型: " + task.getTaskType());
         };
     }
