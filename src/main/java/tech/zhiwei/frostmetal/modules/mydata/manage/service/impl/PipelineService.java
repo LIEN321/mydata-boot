@@ -35,6 +35,7 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
         if (pipeline.getId() == null) {
             pipeline.setWebhookCode(RandomUtil.randomString(64));
+            pipeline.setDayOfWeek(new Integer[]{2, 3, 4, 5, 6});
             pipeline.setStartTime("00:00");
             pipeline.setEndTime("23:59");
             pipeline.setIntervalTime("00:15:00");
