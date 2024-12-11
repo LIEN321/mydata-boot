@@ -63,7 +63,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         // 标准数据id
-        Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
+        Long dataId = pipelineBizData.getDataId();
         if (ObjectUtil.isNull(dataId)) {
             error("保存业务数据失败：前置任务中没有选择标准数据");
             throw new RuntimeException("保存业务数据失败：前置任务中没有选择标准数据");
@@ -99,7 +99,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 数据仓库名称
         String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
         // 标准数据的编号
-        String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
+        String dataCode = pipelineBizData.getDataCode();
 
         // 遍历业务数据
         bizDataList.forEach(bizData -> {

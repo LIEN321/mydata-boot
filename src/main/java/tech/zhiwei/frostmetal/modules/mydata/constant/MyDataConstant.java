@@ -248,15 +248,6 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_FILTER_BLOCKED_DATA = "FILTER_BLOCKED_DATA";
 
     /**
-     * Job上下文共享数据的标识：标准数据的id
-     */
-    String JOB_DATA_KEY_DATA_ID = "DATA_ID";
-    /**
-     * Job上下文共享数据的标识：标准数据的编号
-     */
-    String JOB_DATA_KEY_DATA_CODE = "DATA_CODE";
-
-    /**
      * Job上下文共享数据的标识：保存的业务数据
      */
     String JOB_DATA_KEY_SAVED_DATA = "SAVED_DATA";

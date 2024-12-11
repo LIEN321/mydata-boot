@@ -62,7 +62,7 @@ public class FilterData extends TaskExecutor {
             throw new RuntimeException("执行失败：未配置过滤条件，结束执行");
         }
 
-        Long dataId = (Long) jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_ID);
+        Long dataId = pipelineBizData.getDataId();
         if (ObjectUtil.isNull(dataId)) {
             error("执行失败：前置任务未选择标准数据，结束执行");
             throw new RuntimeException("执行失败：前置任务未选择标准数据，结束执行");

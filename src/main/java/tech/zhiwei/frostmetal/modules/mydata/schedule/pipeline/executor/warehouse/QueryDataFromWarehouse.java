@@ -77,11 +77,8 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         List<DataField> dataFields = getDataFields(dataId);
         // 输出参数
 //        jobContextData.put(bizDataKey, bizDataList);
-        PipelineBizData pipelineBizData = new PipelineBizData(dataFields, bizDataList);
+        PipelineBizData pipelineBizData = new PipelineBizData(dataId, dataCode, dataFields, bizDataList);
         jobContextData.put(bizDataKey, pipelineBizData);
-
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, dataId);
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, dataCode);
     }
 
     private List<BizDataFilter> convertBizDataFilter(List<Map<String, Object>> dataFilterList) {

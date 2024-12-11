@@ -17,6 +17,16 @@ import java.util.Map;
 @AllArgsConstructor
 public class PipelineBizData {
     /**
+     * 数据id
+     */
+    private Long dataId;
+
+    /**
+     * 数据编号
+     */
+    private String dataCode;
+
+    /**
      * 配置关联的字段列表
      */
     private List<DataField> dataFields;

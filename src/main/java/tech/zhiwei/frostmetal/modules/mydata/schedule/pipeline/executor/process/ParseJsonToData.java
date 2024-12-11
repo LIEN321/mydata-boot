@@ -178,12 +178,9 @@ public class ParseJsonToData extends TaskExecutor {
 
         // 数据存入任务上下文数据中
 //        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
-        PipelineBizData pipelineBizData = new PipelineBizData(usedDataFields, bizDataList);
+        PipelineBizData pipelineBizData = new PipelineBizData(dataId, data.getDataCode(), usedDataFields, bizDataList);
         jobContextData.put(bizDataKey, pipelineBizData);
 
         log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
-
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_ID, pipelineTask.getDataId());
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_DATA_CODE, data.getDataCode());
     }
 }
