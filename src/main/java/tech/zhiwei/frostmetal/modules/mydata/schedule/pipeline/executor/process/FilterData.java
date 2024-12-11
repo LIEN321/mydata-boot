@@ -77,7 +77,7 @@ public class FilterData extends TaskExecutor {
         }
 
         // 标准数据字段列表
-        List<DataField> dataFields = getDataFields(dataId);
+        List<DataField> dataFields = pipelineBizData.getDataFields();
 
         // 字段编号-字段类型
         Map<String, String> fieldTypeMapping = dataFields.stream()

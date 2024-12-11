@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -21,7 +22,7 @@ import java.util.Map;
  * @since 2024/11/28
  */
 @Slf4j
-public class GetJsonFromWebhook extends GetJsonFromApi {
+public class GetJsonFromWebhook extends TaskExecutor {
 
     public GetJsonFromWebhook(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);

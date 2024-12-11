@@ -70,7 +70,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         // 标准数据字段列表
-        List<DataField> dataFields = getDataFields(dataId);
+        List<DataField> dataFields = pipelineBizData.getDataFields();
 
         // 从字段列表提取标识字段
         List<DataField> idFields = dataFields.stream().filter(DataField::getIsId).toList();
