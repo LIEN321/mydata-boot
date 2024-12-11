@@ -8,7 +8,7 @@ import cn.hutool.core.io.file.FileNameUtil;
  * @author LIEN
  * @since 2024/9/1
  */
-public class FileUtil {
+public class FileUtil extends cn.hutool.core.io.FileUtil {
     /**
      * 获取文件的扩展名（不带“.”)
      *
