@@ -11,7 +11,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -49,12 +49,12 @@ public class SendDataToApi extends TaskExecutor {
 
         // 获取业务数据
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        BizData bizData = (BizData) jobContextData.get(bizDataKey);
-        if (bizData == null) {
+        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        if (pipelineBizData == null) {
             error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
-        List<Map<String, Object>> bizDataList = bizData.getBizData();
+        List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
             error("没有业务数据，结束执行。");
             return;
@@ -66,7 +66,7 @@ public class SendDataToApi extends TaskExecutor {
 
         // 根据字段映射 转换为接口结构的数据
         List<Map<String, Object>> apiDataList = CollectionUtil.newArrayList();
-        bizDataList.forEach(data -> {
+        bizDataList.forEach(bizData -> {
             Map<String, Object> apiData = MapUtil.newHashMap();
             // 根据映射关系 将数据转换为api的数据结构
             fieldMapping.forEach((standardCode, apiCode) -> {
@@ -74,7 +74,7 @@ public class SendDataToApi extends TaskExecutor {
                 if (StrUtil.isEmpty(apiCode)) {
                     return;
                 }
-                apiData.put(apiCode, data.get(standardCode));
+                apiData.put(apiCode, bizData.get(standardCode));
             });
 
             apiDataList.add(apiData);

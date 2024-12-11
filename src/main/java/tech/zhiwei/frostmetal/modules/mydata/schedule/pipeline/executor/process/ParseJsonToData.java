@@ -12,7 +12,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -178,8 +178,8 @@ public class ParseJsonToData extends TaskExecutor {
 
         // 数据存入任务上下文数据中
 //        jobContextData.put(MyDataConstant.JOB_DATA_KEY_BIZ_DATA, bizDataList);
-        BizData bizData = new BizData(usedDataFields, bizDataList);
-        jobContextData.put(bizDataKey, bizData);
+        PipelineBizData pipelineBizData = new PipelineBizData(usedDataFields, bizDataList);
+        jobContextData.put(bizDataKey, pipelineBizData);
 
         log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
 

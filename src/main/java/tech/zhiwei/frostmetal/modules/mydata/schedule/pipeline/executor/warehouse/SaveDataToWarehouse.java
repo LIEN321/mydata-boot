@@ -8,7 +8,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -51,12 +51,12 @@ public class SaveDataToWarehouse extends TaskExecutor {
 
         // 业务数据集合
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        BizData bizData = (BizData) jobContextData.get(bizDataKey);
-        if (bizData == null) {
+        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        if (pipelineBizData == null) {
             error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
-        List<Map<String, Object>> bizDataList = bizData.getBizData();
+        List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
             log("没有待保存的业务数据，结束执行。");
             return;
@@ -102,12 +102,12 @@ public class SaveDataToWarehouse extends TaskExecutor {
         String dataCode = jobContextData.get(MyDataConstant.JOB_DATA_KEY_DATA_CODE).toString();
 
         // 遍历业务数据
-        bizDataList.forEach(data -> {
+        bizDataList.forEach(bizData -> {
             // 标识字段 键值对
             Map<String, Object> idMap = MapUtil.newHashMap();
             for (DataField idField : idFields) {
                 String idCode = idField.getFieldCode();
-                Object idFieldValue = data.get(idCode);
+                Object idFieldValue = bizData.get(idCode);
                 idMap.put(idCode, idFieldValue);
             }
 
@@ -116,16 +116,16 @@ public class SaveDataToWarehouse extends TaskExecutor {
 
             if (queryData == null) {
                 // 未查到数据，则新增
-                queryData = data;
+                queryData = bizData;
                 // 存入待新增列表
                 dataInsertList.add(queryData);
             } else {
                 // 查到数据
                 // 检测数据 是否需要变更，若有则更新 否则不更新
                 boolean isSame = true;
-                Set<String> keys = data.keySet();
+                Set<String> keys = bizData.keySet();
                 for (String key : keys) {
-                    Object produceDataValue = data.get(key);
+                    Object produceDataValue = bizData.get(key);
                     Object queryDataValue = queryData.get(key);
 
                     // 将保存的数据 按最新配置的类型转换对比
@@ -143,7 +143,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
                 }
 
                 // 将业务数据 覆盖更新 查询的数据
-                queryData.putAll(data);
+                queryData.putAll(bizData);
                 // 存入待更新列表
                 dataUpdateList.add(queryData);
             }
@@ -160,15 +160,15 @@ public class SaveDataToWarehouse extends TaskExecutor {
 
         // 更新数据仓库的数据
         if (!dataUpdateList.isEmpty()) {
-            dataUpdateList.forEach(data -> {
+            dataUpdateList.forEach(bizData -> {
                 Map<String, Object> idMap = MapUtil.newHashMap();
                 for (DataField idField : idFields) {
                     String idCode = idField.getFieldCode();
-                    Object dataIdValue = data.get(idCode);
+                    Object dataIdValue = bizData.get(idCode);
                     idMap.put(idCode, dataIdValue);
                 }
 
-                bizDataDAO.update(warehouseName, dataCode, idMap, data);
+                bizDataDAO.update(warehouseName, dataCode, idMap, bizData);
             });
             savedDataList.addAll(dataUpdateList);
 
@@ -184,8 +184,8 @@ public class SaveDataToWarehouse extends TaskExecutor {
         String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
         if (StringUtil.isNotEmpty(savedDataKey)) {
 //            jobContextData.put(savedDataKey, savedDataList);
-            bizData.setBizData(savedDataList);
-            jobContextData.put(savedDataKey, bizData);
+            pipelineBizData.setBizData(savedDataList);
+            jobContextData.put(savedDataKey, pipelineBizData);
         }
 
         bizDataService.updateDataCount(dataId);

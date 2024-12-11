@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @Data
 @AllArgsConstructor
-public class BizData {
+public class PipelineBizData {
     /**
      * 配置关联的字段列表
      */

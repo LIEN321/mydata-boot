@@ -6,7 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -43,12 +43,12 @@ public class FilterData extends TaskExecutor {
 
         // 获取上下文的业务数据
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        BizData bizData = (BizData) jobContextData.get(bizDataKey);
-        if (bizData == null) {
+        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        if (pipelineBizData == null) {
             error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
-        List<Map<String, Object>> bizDataList = bizData.getBizData();
+        List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
             log("待过滤的数据为空，结束执行");
             return;
@@ -93,14 +93,14 @@ public class FilterData extends TaskExecutor {
         // 过滤被拦截的无效数据
         List<Map<String, Object>> blockedDataList = CollectionUtil.toList();
         // 遍历数据，并进行过滤
-        bizDataList.forEach(data -> {
+        bizDataList.forEach(bizData -> {
 
             // 当数据未被过滤，则添加到过滤结果
 //            if (checkIdValue(data, dataIdCodes) && filterDataValues(data, fieldTypeMapping, dataFilters)) {
-            if (filterDataValues(data, fieldTypeMapping, dataFilters)) {
-                validDataList.add(data);
+            if (filterDataValues(bizData, fieldTypeMapping, dataFilters)) {
+                validDataList.add(bizData);
             } else {
-                blockedDataList.add(data);
+                blockedDataList.add(bizData);
             }
         });
 
@@ -108,8 +108,8 @@ public class FilterData extends TaskExecutor {
 
         // 输出参数
 //        jobContextData.put(bizDataKey, validDataList);
-        bizData.setBizData(validDataList);
-        jobContextData.put(bizDataKey, bizData);
+        pipelineBizData.setBizData(validDataList);
+        jobContextData.put(bizDataKey, pipelineBizData);
         String blockedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_FILTER_BLOCKED_DATA);
         if (StringUtil.isNotEmpty(blockedDataKey)) {
             jobContextData.put(blockedDataKey, blockedDataList);
