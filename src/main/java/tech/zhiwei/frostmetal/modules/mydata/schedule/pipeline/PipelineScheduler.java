@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.quartz.QuartzService;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.util.RandomUtil;
 
 import java.time.LocalTime;
 import java.util.Collection;
@@ -82,6 +83,7 @@ public class PipelineScheduler {
         // 开始时间
         String startTime = pipeline.getStartTime();
         Date dStartTime = DateUtil.parse(startTime, MyDataConstant.TASK_TIME_FORMAT);
+        dStartTime = DateUtil.updateTime(dStartTime, null, null, RandomUtil.randomInt(60));
         // 结束时间
         String endTime = pipeline.getEndTime();
         Date dEndTime = DateUtil.parse(endTime, MyDataConstant.TASK_TIME_FORMAT);

@@ -83,7 +83,7 @@ public class QuartzService {
         TriggerBuilder<DailyTimeIntervalTrigger> triggerBuilder = TriggerBuilder.newTrigger()
                 .withIdentity(sPipelineId)
                 .withSchedule(DailyTimeIntervalScheduleBuilder.dailyTimeIntervalSchedule()
-                        .startingDailyAt(TimeOfDay.hourAndMinuteFromDate(startTime))
+                        .startingDailyAt(TimeOfDay.hourAndMinuteAndSecondFromDate(startTime))
                         .endingDailyAt(TimeOfDay.hourAndMinuteFromDate(endTime))
                         .withIntervalInSeconds(intervalSeconds)
                         .withRepeatCount(repeatCount))
