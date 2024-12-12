@@ -98,7 +98,7 @@ public interface MyDataConstant {
     /**
      * 任务类型：处理数据
      */
-    String TASK_TYPE_OPERATE_DATA = "OPERATE_DATA";
+    String TASK_TYPE_PROCESS_DATA = "PROCESS_DATA";
     /**
      * 任务类型：数据写入Excel
      */

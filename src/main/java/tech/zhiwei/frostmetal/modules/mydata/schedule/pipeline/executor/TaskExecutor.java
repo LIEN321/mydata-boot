@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.Send
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email.SendEmail;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
@@ -56,6 +57,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
             // 过滤数据
             case MyDataConstant.TASK_TYPE_FILTER_DATA -> new FilterData(task, log);
+            // 处理数据
+            case MyDataConstant.TASK_TYPE_PROCESS_DATA -> new ProcessData(task, log);
             // 数据写入Excel
             case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> new WriteDataToExcel(task, log);
             // 保存数据到数仓

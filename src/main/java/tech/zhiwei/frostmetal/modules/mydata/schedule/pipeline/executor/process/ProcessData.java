@@ -1,0 +1,219 @@
+package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process;
+
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.CalendarUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.MD5;
+import cn.hutool.extra.expression.ExpressionUtil;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizDataProcess;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
+import tech.zhiwei.tool.lang.StringUtil;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * 处理数据
+ *
+ * @author LIEN
+ * @since 2024/12/12
+ */
+public class ProcessData extends TaskExecutor {
+
+    public ProcessData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+        super(pipelineTask, pipelineLog);
+    }
+
+    @Override
+    public void doExecute(Map<String, Object> jobContextData) {
+        PipelineTask pipelineTask = getPipelineTask();
+
+        // 输入参数
+        Map<String, String> inputMap = getInputMap();
+        String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(bizDataKey)) {
+            error("执行失败：未配置待处理的业务数据变量，无法获取业务数据");
+            throw new IllegalArgumentException("执行失败：未配置待处理的业务数据变量，无法获取业务数据");
+        }
+
+        // 获取上下文的业务数据
+        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        if (pipelineBizData == null) {
+            error("执行失败：前置任务没有输出有效的业务数据");
+            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+        }
+        List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
+        if (CollectionUtil.isEmpty(bizDataList)) {
+            log("待处理的数据为空，结束执行");
+            return;
+        }
+
+        // 处理方式
+        List<Map<String, Object>> dataProcessConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_PROCESS");
+        List<BizDataProcess> dataProcesses = convertBizDataProcess(dataProcessConfig);
+        if (CollectionUtil.isEmpty(dataProcesses)) {
+            error("执行失败：未配置处理方式，结束执行");
+            throw new RuntimeException("执行失败：未配置处理方式，结束执行");
+        }
+
+        Long dataId = pipelineBizData.getDataId();
+        if (ObjectUtil.isNull(dataId)) {
+            error("执行失败：前置任务未选择标准数据，结束执行");
+            throw new RuntimeException("执行失败：前置任务未选择标准数据，结束执行");
+        }
+
+        // 输出参数
+        Map<String, String> outputMap = getOutputMap();
+        String filteredDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(filteredDataKey)) {
+            error("执行失败：无效的输出设置，未配置处理结果的变量名");
+            throw new RuntimeException("执行失败：无效的输出设置，未配置处理结果的变量名");
+        }
+
+        // 标准数据字段列表
+        List<DataField> dataFields = pipelineBizData.getDataFields();
+
+        // 字段编号-字段类型
+        Map<String, String> fieldTypeMapping = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+
+        log("处理数据开始...");
+
+        // 遍历数据，并进行处理
+        bizDataList.forEach(bizData -> {
+            processBizData(bizData, fieldTypeMapping, dataProcesses);
+        });
+
+        log("处理数据结束");
+
+        // 输出参数
+        jobContextData.put(bizDataKey, pipelineBizData);
+    }
+
+    private List<BizDataProcess> convertBizDataProcess(List<Map<String, Object>> dataProcessConfig) {
+        if (CollUtil.isEmpty(dataProcessConfig)) {
+            return null;
+        }
+
+        List<BizDataProcess> bizDataProcessList = CollUtil.newArrayList();
+        for (Map<String, Object> map : dataProcessConfig) {
+            BizDataProcess bizDataProcess = new BizDataProcess();
+            bizDataProcess.setKey(map.get("k").toString());
+            bizDataProcess.setOp(map.get("op").toString());
+            bizDataProcess.setValue(map.get("v"));
+
+            if (StringUtil.isEmpty(bizDataProcess.getOp())) {
+                error("字段{} 未配置处理方式", bizDataProcess.getKey());
+                throw new IllegalArgumentException(StringUtil.format("字段{} 未配置处理方式", bizDataProcess.getKey()));
+            }
+
+            bizDataProcessList.add(bizDataProcess);
+        }
+
+        return bizDataProcessList;
+    }
+
+    private void processBizData(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
+        for (BizDataProcess bizDataProcess : bizDataProcessList) {
+            String key = bizDataProcess.getKey();
+            Object opValue = bizDataProcess.getValue();
+            String op = bizDataProcess.getOp();
+
+            // 当数据中 不包含 处理的字段名，则执行下一项
+            if (!data.containsKey(key)) {
+                continue;
+            }
+
+            // 当数据中 指定字段的值 无效，则过滤该数据
+            Object dataValue = data.get(key);
+
+            // 若字段值无效
+            if (ObjectUtil.isNull(dataValue)) {
+                continue;
+            }
+
+            // 优先处理 置空 操作
+            if (isSetNull(op)) {
+                data.put(key, null);
+                continue;
+            }
+            // TODO
+            /*
+            // 先解析 {{$field}}
+            opValue = JobVarService.parseExistedDataVar(opValue, originData, taskJob.getFieldTypeMapping());
+            // 再解析 {{field}}
+            opValue = JobVarService.parseDataFieldVar(opValue, processedData, taskJob.getFieldTypeMapping());
+             */
+            try {
+                Object newValue = processValue(dataValue, op, opValue, data);
+                data.put(key, newValue);
+            } catch (Exception e) {
+                error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
+                throw new RuntimeException(StringUtil.format("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage()), e);
+            }
+        }
+    }
+
+    /**
+     * 根据op类型 结合opValue和originData  处理originValue
+     *
+     * @param originValue 处理前的数据值
+     * @param op          操作类型
+     * @param opValue     操作值
+     * @param originData  处理前业务数据
+     * @return 处理后的数据
+     */
+    private Object processValue(Object originValue, String op, Object opValue, Map<String, Object> originData) {
+        switch (op) {
+            // 数值运算： + - * /
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+                if (cn.hutool.core.util.ObjectUtil.isNull(opValue)) {
+                    return originValue;
+                }
+                return ExpressionUtil.eval(StrUtil.toString(originValue) + op + opValue, originData);
+            // 字符串：md5，base64，prepend，append，set empty
+            case "md5":
+                return MD5.create().digestHex(StrUtil.toString(originValue));
+            case "base64":
+                return Base64.encode(StrUtil.toString(originValue));
+            case "prepend":
+                return StrUtil.prependIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+            case "append":
+                return StrUtil.appendIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+            case "set empty":
+                return StrUtil.EMPTY;
+            // 日期：add second
+            case "add second":
+                Date date = DateUtil.parse(StrUtil.toString(originValue));
+                Calendar calendar = CalendarUtil.calendar(date);
+                calendar.add(Calendar.SECOND, NumberUtil.parseInt(StrUtil.toString(opValue)));
+                return calendar.getTime();
+        }
+        return originValue;
+    }
+
+    /**
+     * 判断指定处理类型 是否为置空null
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetNull(String targetOp) {
+        return "null".equals(targetOp);
+    }
+}
