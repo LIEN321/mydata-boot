@@ -113,6 +113,7 @@ public class ProcessData extends TaskExecutor {
             bizDataProcess.setKey(map.get("k").toString());
             bizDataProcess.setOp(map.get("op").toString());
             bizDataProcess.setValue(map.get("v"));
+            bizDataProcess.setType(map.get("t"));
 
             if (StringUtil.isEmpty(bizDataProcess.getOp())) {
                 error("字段{} 未配置处理方式", bizDataProcess.getKey());
@@ -127,9 +128,14 @@ public class ProcessData extends TaskExecutor {
 
     private void processBizData(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
         for (BizDataProcess bizDataProcess : bizDataProcessList) {
+            // 处理的字段编号
             String key = bizDataProcess.getKey();
-            Object opValue = bizDataProcess.getValue();
+            // 处理
             String op = bizDataProcess.getOp();
+            // 处理值
+            Object opValue = bizDataProcess.getValue();
+            // 处理类型
+            Object type = bizDataProcess.getType();
 
             // 当数据中 不包含 处理的字段名，则执行下一项
             if (!data.containsKey(key)) {
@@ -195,10 +201,10 @@ public class ProcessData extends TaskExecutor {
                 return StrUtil.prependIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
             case "append":
                 return StrUtil.appendIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
-            case "set empty":
+            case "empty":
                 return StrUtil.EMPTY;
             // 日期：add second
-            case "add second":
+            case "addSecond":
                 Date date = DateUtil.parse(StrUtil.toString(originValue));
                 Calendar calendar = CalendarUtil.calendar(date);
                 calendar.add(Calendar.SECOND, NumberUtil.parseInt(StrUtil.toString(opValue)));
