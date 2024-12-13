@@ -163,6 +163,10 @@ public class ProcessData extends TaskExecutor {
             opValue = JobVarService.parseDataFieldVar(opValue, processedData, taskJob.getFieldTypeMapping());
              */
             try {
+                if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
+                    // 处理值是字段，从数据中取出字段的值
+                    opValue = data.get(opValue);
+                }
                 Object newValue = processValue(dataValue, op, opValue, data);
                 data.put(key, newValue);
             } catch (Exception e) {
