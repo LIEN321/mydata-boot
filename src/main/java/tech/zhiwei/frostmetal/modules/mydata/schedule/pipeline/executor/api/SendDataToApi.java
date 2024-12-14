@@ -177,8 +177,8 @@ public class SendDataToApi extends TaskExecutor {
     }
 
     private void send(String method, String url, Map<String, String> reqParams, Map<String, String> reqHeaders, String reqBodyRaw, JSON json) {
-        // 将json字符串 替换${data}占位符
-        String reqBody = StringUtil.substitute(reqBodyRaw, MyDataConstant.JOB_DATA_KEY_BIZ_DATA, json.toString());
+        // 将json字符串 替换${DATA_JSON}占位符
+        String reqBody = StringUtil.substitute(reqBodyRaw, MyDataConstant.JOB_DATA_KEY_DATA_JSON, json.toString());
 
         log("调用接口 [{}] {}", method, url);
         log("\trequest param：{}", reqParams);
