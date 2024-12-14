@@ -60,7 +60,7 @@ public class GetJsonFromApi extends TaskExecutor {
         // 分批模式的参数配置
         Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
         // 是否启用分批模式
-        boolean isBatch = batchConfig.get("ENABLE") != null ? (boolean) batchConfig.get("ENABLE") : false;
+        boolean isBatch = batchConfig.get("ENABLE") != null && (boolean) batchConfig.get("ENABLE");
         // 分批的请求参数
         List<Map<String, Object>> batchParamList = (List<Map<String, Object>>) batchConfig.get("PARAMS");
         // 分批的间隔
