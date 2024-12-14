@@ -70,8 +70,8 @@ public class FilterData extends TaskExecutor {
 
         // 输出参数
         Map<String, String> outputMap = getOutputMap();
-        String filteredDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
-        if (StringUtil.isEmpty(filteredDataKey)) {
+        String validDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
+        if (StringUtil.isEmpty(validDataKey)) {
             error("执行失败：无效的输出设置，未配置过滤结果的变量名");
             throw new RuntimeException("执行失败：无效的输出设置，未配置过滤结果的变量名");
         }
@@ -109,7 +109,7 @@ public class FilterData extends TaskExecutor {
         // 输出参数
 //        jobContextData.put(bizDataKey, validDataList);
         pipelineBizData.setBizData(validDataList);
-        jobContextData.put(bizDataKey, pipelineBizData);
+        jobContextData.put(validDataKey, pipelineBizData);
         String blockedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_FILTER_BLOCKED_DATA);
         if (StringUtil.isNotEmpty(blockedDataKey)) {
             jobContextData.put(blockedDataKey, blockedDataList);
