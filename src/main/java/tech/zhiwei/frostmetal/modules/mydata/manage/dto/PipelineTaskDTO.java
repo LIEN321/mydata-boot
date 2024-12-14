@@ -17,7 +17,7 @@ public class PipelineTaskDTO {
 
     @Schema(description = "所属项目")
     private Long projectId;
-    
+
     @Schema(description = "所属流水线")
     private Long pipelineId;
 
@@ -38,8 +38,4 @@ public class PipelineTaskDTO {
 
     @Schema(description = "任务配置")
     private Map<String, Object> taskConfig;
-
-    @Schema(description = "数据仓库名称")
-    private String warehouse;
-
 }

@@ -51,8 +51,4 @@ public class PipelineTaskVO extends BaseVO {
 
     @Schema(description = "任务配置")
     private Map<String, Object> taskConfig;
-
-    @Schema(description = "数据仓库名称")
-    private String warehouse;
-
 }

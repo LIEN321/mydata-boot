@@ -63,9 +63,4 @@ public class PipelineTask extends TenantEntity {
      */
     @TableField(typeHandler = Fastjson2TypeHandler.class)
     private Map<String, Object> taskConfig;
-
-    /**
-     * 数据仓库名称
-     */
-    private String warehouse;
 }
