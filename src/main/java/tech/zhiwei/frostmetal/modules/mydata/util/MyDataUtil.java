@@ -221,4 +221,27 @@ public class MyDataUtil {
         FileUtil.copy(excelFile, targetFile, true);
         return targetFile;
     }
+
+    /**
+     * 过滤业务数据中 特定类型数据的格式
+     *
+     * @param bizDataList 业务数据集合
+     */
+    public static void parseBizData(List<Map<String, Object>> bizDataList) {
+        if (CollectionUtil.isEmpty(bizDataList)) {
+            return;
+        }
+
+        bizDataList.forEach(bizData -> {
+            if (MapUtil.isEmpty(bizData)) {
+                return;
+            }
+
+            bizData.forEach((k, v) -> {
+                if (v instanceof Date) {
+                    bizData.put(k, DateUtil.formatDateTime((Date) v));
+                }
+            });
+        });
+    }
 }
