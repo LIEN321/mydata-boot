@@ -92,6 +92,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_JSON_TO_DATA = "JSON_TO_DATA";
     /**
+     * 任务类型：JSON转数据
+     */
+    String TASK_TYPE_DATA_TO_JSON = "DATA_TO_JSON";
+    /**
      * 任务类型：过滤数据
      */
     String TASK_TYPE_FILTER_DATA = "FILTER_DATA";

@@ -12,6 +12,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJ
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email.SendEmail;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseDataToJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
@@ -55,6 +56,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
             // JSON转数据
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
+            // 数据转JSON
+            case MyDataConstant.TASK_TYPE_DATA_TO_JSON -> new ParseDataToJson(task, log);
             // 过滤数据
             case MyDataConstant.TASK_TYPE_FILTER_DATA -> new FilterData(task, log);
             // 处理数据
