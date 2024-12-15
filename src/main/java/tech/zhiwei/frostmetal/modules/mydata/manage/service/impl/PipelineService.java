@@ -62,4 +62,11 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
         queryWrapper.eq(Pipeline::getIsSchedule, SysConstant.STATUS_ENABLED);
         return list(queryWrapper);
     }
+
+    @Override
+    public List<Pipeline> listByProject(Long projectId) {
+        LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Pipeline::getProjectId, projectId);
+        return list(queryWrapper);
+    }
 }
