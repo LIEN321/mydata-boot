@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -123,5 +125,11 @@ public class PipelineController {
 
         pipelineScheduler.stopPipeline(id);
         return R.success();
+    }
+
+    @GetMapping("/select")
+    @Operation(summary = "查询流水线", operationId = "pipelineSelect")
+    public List<SelectVO> select(@RequestParam Long projectId) {
+        return PipelineWrapper.getInstance().selectVOList(pipelineService.listByProject(projectId));
     }
 }
