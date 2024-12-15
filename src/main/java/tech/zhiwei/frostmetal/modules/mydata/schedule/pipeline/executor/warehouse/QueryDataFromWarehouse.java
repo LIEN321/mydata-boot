@@ -70,6 +70,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         log("查询条件：{}", CollectionUtil.emptyIfNull(dataFilters));
         // 查询业务数据
         List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters);
+        MyDataUtil.parseBizData(bizDataList);
         if (CollectionUtil.isNotEmpty(bizDataList)) {
             bizDataList.forEach(bizData -> {
                 bizData.remove(MyDataConstant.DATA_COLUMN_DATA_ID);
