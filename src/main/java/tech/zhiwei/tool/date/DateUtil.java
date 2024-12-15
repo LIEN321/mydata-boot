@@ -1,5 +1,6 @@
 package tech.zhiwei.tool.date;
 
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.format.FastDateFormat;
 
 import java.util.Calendar;
@@ -67,5 +68,14 @@ public class DateUtil extends cn.hutool.core.date.DateUtil {
         }
 
         return calendar.getTime();
+    }
+
+    /**
+     * 获取当前时间，精确到毫秒
+     *
+     * @return 当前时间
+     */
+    public static String nowInMillis() {
+        return format(new Date(), DatePattern.NORM_DATETIME_MS_PATTERN);
     }
 }
