@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.WebhookCallPipeline;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email.SendEmail;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseDataToJson;
@@ -54,6 +55,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_API_SEND_DATA -> new SendDataToApi(task, log);
             // 从Webhook接收JSON
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
+            // 用Webhook触发流水线
+            case MyDataConstant.TASK_TYPE_WEBHOOK_CALL_PIPELINE -> new WebhookCallPipeline(task, log);
             // JSON转数据
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
             // 数据转JSON
@@ -138,19 +141,28 @@ public abstract class TaskExecutor {
     }
 
     /**
-     * 获取任务配置中的 输入 变量名配置
+     * 获取任务配置
      *
-     * @return 输入变量名配置
+     * @return 任务配置
      */
-    protected Map<String, String> getInputMap() {
+    protected Map<String, Object> getTaskConfig() {
         if (pipelineTask == null) {
             return MapUtil.empty();
         }
         if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
             return MapUtil.empty();
         }
+        return pipelineTask.getTaskConfig();
+    }
 
-        return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_INPUT);
+    /**
+     * 获取任务配置中的 输入 变量名配置
+     *
+     * @return 输入变量名配置
+     */
+    protected Map<String, String> getInputMap() {
+        Map<String, Object> taskConfig = getTaskConfig();
+        return (Map<String, String>) taskConfig.get(MyDataConstant.TASK_CONFIG_KEY_INPUT);
     }
 
     /**
@@ -178,7 +190,7 @@ public abstract class TaskExecutor {
     protected void log(String message, Object... params) {
         if (pipelineLog != null) {
             String existingLog = pipelineLog.getTaskLog();
-            pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.now() + "] [INFO] " + StringUtil.format(message, params));
+            pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [INFO] " + StringUtil.format(message, params));
         }
         log.info(message, params);
     }
@@ -192,7 +204,7 @@ public abstract class TaskExecutor {
     protected void error(String message, Object... params) {
         if (pipelineLog != null) {
             String existingLog = pipelineLog.getTaskLog();
-            pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.now() + "] [ERROR] " + StringUtil.format(message, params));
+            pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [ERROR] " + StringUtil.format(message, params));
         }
         log.error(message, params);
     }

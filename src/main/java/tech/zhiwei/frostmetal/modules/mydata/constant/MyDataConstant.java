@@ -75,6 +75,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_WEBHOOK_GET_JSON = "WEBHOOK_GET_JSON";
     /**
+     * 任务类型：用Webhook触发流水线
+     */
+    String TASK_TYPE_WEBHOOK_CALL_PIPELINE = "WEBHOOK_CALL_PIPELINE";
+    /**
      * 任务类型：从API获取参数
      */
     String TASK_TYPE_API_GET_VAR = "API_GET_VAR";
