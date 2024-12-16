@@ -98,7 +98,11 @@ public class SendDataToApi extends TaskExecutor {
         // API 请求参数
         Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
         // API 请求Header
-        Map<String, String> reqHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+        Map<String, String> apiHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+        // APP 全局Header
+        Map<String, String> appHeaders = MyDataUtil.parseToKvMapObj(app.getReqHeaders());
+        // API Header 并入 全局Header
+        Map<String, String> reqHeaders = MapUtil.union(appHeaders, apiHeaders);
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {

@@ -88,7 +88,12 @@ public class GetJsonFromApi extends TaskExecutor {
 
             // API的请求参数
             Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
-            Map<String, String> reqHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+            // API 请求Header
+            Map<String, String> apiHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
+            // APP 全局Header
+            Map<String, String> appHeaders = MyDataUtil.parseToKvMapObj(app.getReqHeaders());
+            // API Header 并入 全局Header
+            Map<String, String> reqHeaders = MapUtil.union(appHeaders, apiHeaders);
             Map<String, String> reqForm = null;
             String reqBody = null;
             // 根据请求体类型 初始对应的数据
@@ -103,7 +108,6 @@ public class GetJsonFromApi extends TaskExecutor {
                 Map<String, String> batchParams = jobBatchService.parseToMap(batchParamList);
                 reqParams = MapUtil.union(reqParams, batchParams);
             }
-
 
             log("第{}次调用接口 [{}] {}", loopCount, api.getApiMethod(), apiUrl);
             log("\trequest param：{}", reqParams);
