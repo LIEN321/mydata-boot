@@ -12,7 +12,7 @@ import java.util.Map;
 public class MapUtil extends cn.hutool.core.map.MapUtil {
     public static <K, V> Map<K, V> union(Map<K, V> map1, Map<K, V> map2) {
         if (map1 == null && map2 == null) {
-            return new HashMap<>();
+            return empty();
         }
 
         if (map1 == null) {
@@ -20,7 +20,7 @@ public class MapUtil extends cn.hutool.core.map.MapUtil {
         } else if (map2 == null) {
             return map1;
         }
-        
+
         Map<K, V> result = new HashMap<>(map1);
         result.putAll(map2);
         return result;
