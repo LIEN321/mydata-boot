@@ -1,7 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +12,11 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
-import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.tool.collection.CollectionUtil;
-import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.spring.SpringUtil;
 import tech.zhiwei.tool.thread.ThreadUtil;
 
 import java.util.List;
@@ -32,6 +31,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class SendDataToApi extends TaskExecutor {
+    private final JobApiService jobApiService = SpringUtil.getBean(JobApiService.class);
+
     public SendDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }
@@ -89,20 +90,9 @@ public class SendDataToApi extends TaskExecutor {
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
-        String apiPrefix = app.getApiPrefix();
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
-        final String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
-
-        // API 请求参数
-        Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
-        // API 请求Header
-        Map<String, String> apiHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
-        // APP 全局Header
-        Map<String, String> appHeaders = MyDataUtil.parseToKvMapObj(app.getReqHeaders());
-        // API Header 并入 全局Header
-        Map<String, String> reqHeaders = MapUtil.union(appHeaders, apiHeaders);
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
@@ -152,11 +142,8 @@ public class SendDataToApi extends TaskExecutor {
                         log("不分批，全部数据：{}", apiDataList);
                     }
 
-                    // api中的原始body
-                    String reqBodyRaw = api.getReqBodyRaw();
-
                     // 发送数据
-                    send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqBodyRaw, jsonArray);
+                    jobApiService.callApi(app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString()));
 
                     if (isBatch) {
                         // 暂停间隔
@@ -168,29 +155,12 @@ public class SendDataToApi extends TaskExecutor {
         } else {
             // 单数据模式，逐个调API推送数据
             apiDataList.forEach(apiData -> {
-                // api中的原始body
-                String reqBodyRaw = api.getReqBodyRaw();
-
                 // 单条数据 转为 json对象
                 JSONObject jsonObject = new JSONObject(apiData);
 
                 // 发送数据
-                send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqBodyRaw, jsonObject);
+                jobApiService.callApi(app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString()));
             });
         }
-    }
-
-    private void send(String method, String url, Map<String, String> reqParams, Map<String, String> reqHeaders, String reqBodyRaw, JSON json) {
-        // 将json字符串 替换${DATA_JSON}占位符
-        String reqBody = StringUtil.substitute(reqBodyRaw, MyDataConstant.JOB_DATA_KEY_DATA_JSON, json.toString());
-
-        log("调用接口 [{}] {}", method, url);
-        log("\trequest param：{}", reqParams);
-        log("\trequest header：{}", reqHeaders);
-        log("\trequest body：{}", reqBody);
-
-        // 调用api
-        String responseBody = HttpUtil.send(method, url, reqParams, reqHeaders, null, reqBody);
-        log("调用返回：{}", responseBody);
     }
 }

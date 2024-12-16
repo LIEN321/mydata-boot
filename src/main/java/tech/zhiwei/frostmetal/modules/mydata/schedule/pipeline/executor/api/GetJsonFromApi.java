@@ -12,13 +12,11 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
-import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
-import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 import tech.zhiwei.tool.thread.ThreadUtil;
 
@@ -36,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class GetJsonFromApi extends TaskExecutor {
 
     private final JobBatchService jobBatchService = SpringUtil.getBean(JobBatchService.class);
+    private final JobApiService jobApiService = SpringUtil.getBean(JobApiService.class);
 
     public GetJsonFromApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -47,15 +46,13 @@ public class GetJsonFromApi extends TaskExecutor {
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
-        String apiPrefix = app.getApiPrefix();
 
         log("将调用应用 {} 的接口", app.getAppName());
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
-        final String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
-        log("接口地址：{}", apiUrl);
+//        log("接口地址：{}", apiUrl);
 
         // 分批模式的参数配置
         Map<String, Object> batchConfig = (Map<String, Object>) pipelineTask.getTaskConfig().get("BATCH");
@@ -77,7 +74,7 @@ public class GetJsonFromApi extends TaskExecutor {
         long lastJsonHash = -1L;
 
         // 循环计数器，超过最大数则结束，避免死循环
-        int loopCount = 1;
+        int loopCount = 0;
 
         do {
             loopCount++;
@@ -86,38 +83,21 @@ public class GetJsonFromApi extends TaskExecutor {
                 break;
             }
 
-            // API的请求参数
-            Map<String, String> reqParams = MyDataUtil.parseToKvMapObj(api.getReqParams());
-            // API 请求Header
-            Map<String, String> apiHeaders = MyDataUtil.parseToKvMapObj(api.getReqHeaders());
-            // APP 全局Header
-            Map<String, String> appHeaders = MyDataUtil.parseToKvMapObj(app.getReqHeaders());
-            // API Header 并入 全局Header
-            Map<String, String> reqHeaders = MapUtil.union(appHeaders, apiHeaders);
-            Map<String, String> reqForm = null;
-            String reqBody = null;
-            // 根据请求体类型 初始对应的数据
-            if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(api.getReqBodyType())) {
-                reqForm = MyDataUtil.parseToKvMapObj(api.getReqBodyForm());
-            } else {
-                reqBody = api.getReqBodyRaw();
-            }
-
+            Map<String, String> batchParams = null;
             // 若启用分批，则将分批参数加入请求参数中
             if (isBatch) {
-                Map<String, String> batchParams = jobBatchService.parseToMap(batchParamList);
-                reqParams = MapUtil.union(reqParams, batchParams);
+                batchParams = jobBatchService.parseToMap(batchParamList);
             }
 
-            log("第{}次调用接口 [{}] {}", loopCount, api.getApiMethod(), apiUrl);
-            log("\trequest param：{}", reqParams);
-            log("\trequest header：{}", reqHeaders);
-            log("\trequest form：{}", reqForm);
-            log("\trequest body：{}", reqBody);
+//            log("第{}次调用接口 [{}] {}", loopCount, api.getApiMethod(), apiUrl);
+//            log("\trequest param：{}", reqParams);
+//            log("\trequest header：{}", reqHeaders);
+//            log("\trequest form：{}", reqForm);
+//            log("\trequest body：{}", reqBody);
 
             // 调用接口 获取json
-            String originJsonString = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
-            log("\t返回JSON：{}", originJsonString);
+            String originJsonString = jobApiService.callApi(app, api, batchParams, null);
+            log("\t获得JSON：{}", originJsonString);
 
             // json为空则结束
             if (StringUtil.isEmpty(originJsonString)) {
