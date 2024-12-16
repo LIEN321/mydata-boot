@@ -48,12 +48,22 @@ public class StringUtil extends StrUtil {
      * @return 替换后的字符串
      */
     public static String substitute(String source, String key, String value) {
-        if (isBlank(source) || isBlank(key) || value == null) {
-            return source;
-        }
-
         Map<String, String> map = MapUtil.newHashMap();
         map.put(key, value);
+        return substitute(source, map);
+    }
+
+    /**
+     * 将${}格式的 ${key} 替换为 value
+     *
+     * @param source 原始字符串
+     * @param map    替换的键值对
+     * @return 替换后的字符串
+     */
+    public static String substitute(String source, Map<String, String> map) {
+        if (isBlank(source) || MapUtil.isEmpty(map)) {
+            return source;
+        }
 
         StringSubstitutor stringSubstitutor = new StringSubstitutor(map);
         return stringSubstitutor.replace(source);
