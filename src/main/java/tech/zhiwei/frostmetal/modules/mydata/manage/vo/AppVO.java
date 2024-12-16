@@ -5,6 +5,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * 应用 VO
@@ -13,9 +17,11 @@ import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
  * @since 2024/11/11
  */
 @Data
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "应用")
 public class AppVO extends BaseVO {
+    @Serial
+    private static final long serialVersionUID = 6926325855168098414L;
     @Schema(description = "应用编号")
     private String appCode;
 
@@ -34,4 +40,6 @@ public class AppVO extends BaseVO {
     @Schema(description = "接口数量")
     private Integer apiCount;
 
+    @Schema(description = "请求Header")
+    private List<Map<String, Object>> reqHeaders;
 }

@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
 
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * 应用 DTO
@@ -34,4 +37,6 @@ public class AppDTO extends BaseDTO {
     @Schema(description = "接口数量")
     private Integer apiCount;
 
+    @Schema(description = "请求Header")
+    private List<Map<String, Object>> reqHeaders;
 }
