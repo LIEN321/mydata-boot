@@ -24,6 +24,7 @@ import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
+import tech.zhiwei.tool.util.ArrayUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -189,6 +190,11 @@ public abstract class TaskExecutor {
      */
     protected void log(String message, Object... params) {
         if (pipelineLog != null) {
+            if (ArrayUtil.isNotEmpty(params)) {
+                for (int i = 0; i < params.length; i++) {
+                    params[i] = StringUtil.sub(StringUtil.toStringOrEmpty(params[i]), 0, 10000);
+                }
+            }
             String existingLog = pipelineLog.getTaskLog();
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [INFO] " + StringUtil.format(message, params));
         }
@@ -203,6 +209,11 @@ public abstract class TaskExecutor {
      */
     protected void error(String message, Object... params) {
         if (pipelineLog != null) {
+            if (ArrayUtil.isNotEmpty(params)) {
+                for (int i = 0; i < params.length; i++) {
+                    params[i] = StringUtil.sub(StringUtil.toStringOrEmpty(params[i]), 0, 10000);
+                }
+            }
             String existingLog = pipelineLog.getTaskLog();
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [ERROR] " + StringUtil.format(message, params));
         }
