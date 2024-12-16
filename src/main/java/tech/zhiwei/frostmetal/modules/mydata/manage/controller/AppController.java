@@ -19,6 +19,7 @@ import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IAppService;
@@ -45,7 +46,11 @@ public class AppController {
     @PostMapping
     @Operation(summary = "新增或更新应用", operationId = "saveApp")
     public R<Long> save(@RequestBody AppDTO appDTO) {
-        return R.data(appService.saveApp(appDTO));
+        Long id = appService.saveApp(appDTO);
+        if (id != null) {
+            MyDataCache.removeApp(id);
+        }
+        return R.data(id);
     }
 
     @GetMapping("/page")
@@ -80,13 +85,21 @@ public class AppController {
     @Operation(summary = "单个删除应用", operationId = "deleteApp")
     @Parameter(name = "id", description = "记录id")
     public R<Boolean> delete(@PathVariable Long id) {
-        return R.status(appService.remove(id));
+        boolean result = appService.remove(id);
+        if (result) {
+            MyDataCache.removeApp(id);
+        }
+        return R.status(result);
     }
 
     @DeleteMapping
     @Operation(summary = "批量删除应用", operationId = "deleteApps")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
-        return R.status(appService.remove(ids));
+        boolean result = appService.remove(ids);
+        if (result) {
+            ids.forEach(MyDataCache::removeApi);
+        }
+        return R.status(result);
     }
 
     @GetMapping("/select")
