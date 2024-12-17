@@ -56,8 +56,8 @@ public class ParseDataToJson extends TaskExecutor {
             throw new RuntimeException("执行失败：无效的输出设置，未配置JSON的变量名");
         }
 
-        // 业务数据
-        List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
+        // 复制上下文的业务数据
+        List<Map<String, Object>> bizDataList = ObjectUtil.cloneByStream(pipelineBizData.getBizData());
         log("业务数据：{}", bizDataList);
         JSON dataJson = JsonUtil.parse(bizDataList);
 
