@@ -7,7 +7,9 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 
 import java.util.List;
@@ -48,6 +50,9 @@ public class ParseDataToJson extends TaskExecutor {
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
 
+        // 字段映射
+        Map<String, String> fieldMapping = getFieldMapping();
+
         // 输出配置
         Map<String, String> outputMap = getOutputMap();
         String dataJsonKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
@@ -58,6 +63,22 @@ public class ParseDataToJson extends TaskExecutor {
 
         // 复制上下文的业务数据
         List<Map<String, Object>> bizDataList = ObjectUtil.cloneByStream(pipelineBizData.getBizData());
+        // 如果字段映射有效，则根据字段映射 修改业务数据的key
+        if (CollectionUtil.isNotEmpty(fieldMapping)) {
+            bizDataList.forEach(bizData -> {
+                fieldMapping.forEach((dataFiledCode, jsonFieldCode) -> {
+                    // 若数据字段没有配置映射的json属性，则不作为结果返回
+                    // 先取出数据
+                    Object value = bizData.remove(dataFiledCode);
+                    // 若配置json属性，则写入
+                    if (StringUtil.isNotEmpty(jsonFieldCode)) {
+                        // 业务数据字段值 转移到 json属性名下
+                        bizData.put(jsonFieldCode, value);
+                    }
+                });
+            });
+        }
+
         log("业务数据：{}", bizDataList);
         JSON dataJson = JsonUtil.parse(bizDataList);
 
