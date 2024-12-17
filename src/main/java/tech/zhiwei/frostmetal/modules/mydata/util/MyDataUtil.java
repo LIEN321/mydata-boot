@@ -223,11 +223,12 @@ public class MyDataUtil {
     }
 
     /**
-     * 过滤业务数据中 特定类型数据的格式
+     * 处理业务数据中 特定类型数据的格式
+     * 清除系统字段
      *
      * @param bizDataList 业务数据集合
      */
-    public static void parseBizData(List<Map<String, Object>> bizDataList) {
+    public static void processBizData(List<Map<String, Object>> bizDataList) {
         if (CollectionUtil.isEmpty(bizDataList)) {
             return;
         }
@@ -236,6 +237,10 @@ public class MyDataUtil {
             if (MapUtil.isEmpty(bizData)) {
                 return;
             }
+
+            bizData.remove(MyDataConstant.MONGODB_OBJECT_ID);
+            bizData.remove(MyDataConstant.DATA_COLUMN_DATA_ID);
+            bizData.remove(MyDataConstant.DATA_COLUMN_UPDATE_TIME);
 
             bizData.forEach((k, v) -> {
                 if (v instanceof Date) {

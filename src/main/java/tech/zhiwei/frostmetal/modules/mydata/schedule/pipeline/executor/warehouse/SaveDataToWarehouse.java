@@ -183,6 +183,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
         if (StringUtil.isNotEmpty(savedDataKey)) {
+            MyDataUtil.processBizData(savedDataList);
 //            jobContextData.put(savedDataKey, savedDataList);
             pipelineBizData.setBizData(savedDataList);
             jobContextData.put(savedDataKey, pipelineBizData);
