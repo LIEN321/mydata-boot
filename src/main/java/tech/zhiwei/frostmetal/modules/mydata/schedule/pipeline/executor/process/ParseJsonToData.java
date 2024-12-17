@@ -96,6 +96,14 @@ public class ParseJsonToData extends TaskExecutor {
                 .filter(field -> fieldMapping.containsKey(field.getFieldCode()))
                 .toList();
 
+        // 用户新配置的 标识字段
+        List<String> newIdFields = (List<String>) getTaskConfig().get("ID_FIELD");
+        if (CollectionUtil.isNotEmpty(newIdFields)) {
+            usedDataFields.forEach(dataField -> {
+                dataField.setIsId(newIdFields.contains(dataField.getFieldCode()));
+            });
+        }
+
         int size = dataJsonList.size();
         for (int i = 0; i < size; i++) {
             String dataJsonString = dataJsonList.get(i);
