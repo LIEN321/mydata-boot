@@ -22,35 +22,37 @@ import java.util.Map;
 public class JobVarService {
 
     /**
-     * 系统内置变量 {$sys_var}
+     * 系统内置变量 {{sys_var}}
      */
-    private static final String SYS_VAR_PATTERN = "\\{\\$([^}]*)\\}";
+    private static final String SYS_VAR_PATTERN = "\\{\\{([^}]*)\\}\\}";
+    private static final String SYS_VAR_PATTERN_PREFIX = "{{";
+    private static final String SYS_VAR_PATTERN_SUFFIX = "}}";
 
     /**
      * 解析处理map值中的系统内置变量
      *
      * @param map Map对象
      */
-    public void replaceSysVarValues(Map<String, String> map) {
+    public void processSysVarValues(Map<String, String> map) {
         if (MapUtil.isEmpty(map)) {
             return;
         }
 
         map.forEach((k, v) -> {
             // 替换用户自定义变量
-            map.put(k, replaceSysVarValue(v));
+            map.put(k, processSysVarValue(v));
         });
     }
 
     /**
-     * 解析处理系统内置变量 {$var}
+     * 解析处理系统内置变量 {{var}}
      *
      * @param string 被解析的字符串
      * @return 替换后的字符串
      */
-    public String replaceSysVarValue(String string) {
+    public String processSysVarValue(String string) {
         // 解析系统内置变量
-        List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN, "{$", "}");
+        List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN, SYS_VAR_PATTERN_PREFIX, SYS_VAR_PATTERN_SUFFIX);
         if (CollectionUtil.isEmpty(sysVarNames)) {
             return string;
         }
@@ -70,8 +72,8 @@ public class JobVarService {
         }
 
         StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
-        stringSubstitutor.setVariablePrefix("{$");
-        stringSubstitutor.setVariableSuffix("}");
+        stringSubstitutor.setVariablePrefix(SYS_VAR_PATTERN_PREFIX);
+        stringSubstitutor.setVariableSuffix(SYS_VAR_PATTERN_SUFFIX);
         return stringSubstitutor.replace(string);
     }
 
