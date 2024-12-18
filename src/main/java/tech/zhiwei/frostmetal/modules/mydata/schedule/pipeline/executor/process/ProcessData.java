@@ -8,16 +8,22 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.MD5;
 import cn.hutool.extra.expression.ExpressionUtil;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizDataProcess;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
+import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -32,6 +38,8 @@ import java.util.stream.Collectors;
  * @since 2024/12/12
  */
 public class ProcessData extends TaskExecutor {
+    private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
+    private final JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
 
     public ProcessData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -83,8 +91,11 @@ public class ProcessData extends TaskExecutor {
             throw new RuntimeException("执行失败：无效的输出设置，未配置处理结果的变量名");
         }
 
+        Data data = MyDataCache.getData(dataId);
         // 标准数据字段列表
         List<DataField> dataFields = pipelineBizData.getDataFields();
+        // 从字段列表提取标识字段
+        List<DataField> idFields = dataFields.stream().filter(DataField::getIsId).toList();
 
         // 字段编号-字段类型
         Map<String, String> fieldTypeMapping = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
@@ -93,7 +104,7 @@ public class ProcessData extends TaskExecutor {
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
-            processBizData(bizData, fieldTypeMapping, dataProcesses);
+            processBizData(data, bizData, idFields, fieldTypeMapping, dataProcesses);
         });
 
         log("处理数据结束");
@@ -102,6 +113,12 @@ public class ProcessData extends TaskExecutor {
         jobContextData.put(bizDataKey, pipelineBizData);
     }
 
+    /**
+     * 将数据的处理配置 转为BizDataProcess对象
+     *
+     * @param dataProcessConfig 数据的处理配置
+     * @return 数据处理方式集合
+     */
     private List<BizDataProcess> convertBizDataProcess(List<Map<String, Object>> dataProcessConfig) {
         if (CollUtil.isEmpty(dataProcessConfig)) {
             return null;
@@ -126,7 +143,14 @@ public class ProcessData extends TaskExecutor {
         return bizDataProcessList;
     }
 
-    private void processBizData(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
+    /**
+     * 根据配置 处理业务数据
+     *
+     * @param bizData            待处理的业务数据
+     * @param fieldTypeMapping   数据字段类型
+     * @param bizDataProcessList 处理方式
+     */
+    private void processBizData(Data data, Map<String, Object> bizData, List<DataField> idFields, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
         for (BizDataProcess bizDataProcess : bizDataProcessList) {
             // 处理的字段编号
             String key = bizDataProcess.getKey();
@@ -138,12 +162,12 @@ public class ProcessData extends TaskExecutor {
             Object type = bizDataProcess.getType();
 
             // 当数据中 不包含 处理的字段名，则执行下一项
-            if (!data.containsKey(key)) {
+            if (!bizData.containsKey(key)) {
                 continue;
             }
 
             // 当数据中 指定字段的值 无效，则过滤该数据
-            Object dataValue = data.get(key);
+            Object dataValue = bizData.get(key);
 
             // 若字段值无效
             if (ObjectUtil.isNull(dataValue)) {
@@ -152,23 +176,36 @@ public class ProcessData extends TaskExecutor {
 
             // 优先处理 置空 操作
             if (isSetNull(op)) {
-                data.put(key, null);
+                bizData.put(key, null);
                 continue;
             }
             // TODO
+            try {
+                // 标识字段 键值对
+                Map<String, Object> idMap = MapUtil.newHashMap();
+                for (DataField idField : idFields) {
+                    String idCode = idField.getFieldCode();
+                    Object idFieldValue = bizData.get(idCode);
+                    idMap.put(idCode, idFieldValue);
+                }
+
+                // 根据唯一标识 查询原有的业务数据
+                Map<String, Object> queryData = bizDataDAO.findByIds(getWarehouseName(), data.getDataCode(), idMap);
+
+                if (MapUtil.isNotEmpty(queryData)) {
+                    // 先解析 {$field}
+                    opValue = jobVarService.processExistedDataVar(opValue.toString(), queryData, fieldTypeMapping);
+                }
             /*
-            // 先解析 {{$field}}
-            opValue = JobVarService.parseExistedDataVar(opValue, originData, taskJob.getFieldTypeMapping());
-            // 再解析 {{field}}
+            // 再解析 ${field}
             opValue = JobVarService.parseDataFieldVar(opValue, processedData, taskJob.getFieldTypeMapping());
              */
-            try {
                 if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
                     // 处理值是字段，从数据中取出字段的值
-                    opValue = data.get(opValue);
+                    opValue = bizData.get(opValue);
                 }
-                Object newValue = processValue(dataValue, op, opValue, data);
-                data.put(key, newValue);
+                Object newValue = processValue(dataValue, op, opValue, bizData);
+                bizData.put(key, newValue);
             } catch (Exception e) {
                 error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
                 throw new RuntimeException(StringUtil.format("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage()), e);

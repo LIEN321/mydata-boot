@@ -1,11 +1,12 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service;
 
 import cn.hutool.core.util.ReUtil;
-import cn.hutool.core.util.StrUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.List;
@@ -27,6 +28,13 @@ public class JobVarService {
     private static final String SYS_VAR_PATTERN = "\\{\\{([^}]*)\\}\\}";
     private static final String SYS_VAR_PATTERN_PREFIX = "{{";
     private static final String SYS_VAR_PATTERN_SUFFIX = "}}";
+
+    /**
+     * 仓库已有数据字段 {$field}
+     */
+    private static final String EXISTED_DATA_FIELD_PATTERN = "\\{\\$([^}]*)\\}";
+    private static final String EXISTED_DATA_FIELD_PATTERN_PREFIX = "{$";
+    private static final String EXISTED_DATA_FIELD_PATTERN_SUFFIX = "}";
 
     /**
      * 解析处理map值中的系统内置变量
@@ -78,6 +86,50 @@ public class JobVarService {
     }
 
     /**
+     * 解析处理 字符串中 {$field} 格式的数据变量
+     *
+     * @param string  字符串
+     * @param bizData 数据
+     * @return 解析后的字符串
+     */
+    public static String processExistedDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
+        return parseDataVar(string, bizData, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, EXISTED_DATA_FIELD_PATTERN_PREFIX, EXISTED_DATA_FIELD_PATTERN_SUFFIX);
+    }
+
+    private static String parseDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
+        if (StringUtil.isEmpty(string)) {
+            return string;
+        }
+        // 解析字符串中的属性变量名 {{field}}
+        List<String> fieldNames = parseVarNames(string, pattern, prefix, suffix);
+        // 若解析为空，则结束
+        if (CollectionUtil.isEmpty(fieldNames)) {
+            return string;
+        }
+        // 替换映射
+        Map<String, String> replaceMap = MapUtil.newHashMap();
+        for (String field : fieldNames) {
+            // 尝试获取数据的类型，若没有则默认为字符串
+            String targetType = fieldTypeMapping.get(field);
+
+            String value = "";
+            if (MapUtil.isEmpty(bizData) || !bizData.containsKey(field)) {
+                value = MyDataUtil.defaultValue(targetType);
+            } else {
+                // 从数据中 取出数据 并存入替换映射
+                value = MyDataUtil.formatData(bizData.get(field), targetType);
+            }
+            replaceMap.put(field, value);
+        }
+
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(replaceMap);
+        stringSubstitutor.setVariablePrefix(prefix);
+        stringSubstitutor.setVariableSuffix(suffix);
+        // 替换变量值
+        return stringSubstitutor.replace(string);
+    }
+
+    /**
      * 从字符串中 解析指定表达式中的变量名
      *
      * @param string  字符串
@@ -85,7 +137,7 @@ public class JobVarService {
      * @return 变量名列表
      */
     public static List<String> parseVarNames(String string, String pattern, String prefix, String suffix) {
-        if (StrUtil.isEmpty(string)) {
+        if (StringUtil.isEmpty(string)) {
             return CollectionUtil.newArrayList();
         }
 
