@@ -1,11 +1,5 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process;
 
-import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.CalendarUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.MD5;
 import cn.hutool.extra.expression.ExpressionUtil;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
@@ -19,11 +13,15 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizDataProce
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
+import tech.zhiwei.tool.codec.Base64;
 import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.date.CalendarUtil;
+import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
+import tech.zhiwei.tool.util.NumberUtil;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -104,7 +102,7 @@ public class ProcessData extends TaskExecutor {
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
-            processBizData(data, bizData, idFields, fieldTypeMapping, dataProcesses);
+            processBizData(data, bizData, jobContextData, idFields, fieldTypeMapping, dataProcesses);
         });
 
         log("处理数据结束");
@@ -120,11 +118,11 @@ public class ProcessData extends TaskExecutor {
      * @return 数据处理方式集合
      */
     private List<BizDataProcess> convertBizDataProcess(List<Map<String, Object>> dataProcessConfig) {
-        if (CollUtil.isEmpty(dataProcessConfig)) {
+        if (CollectionUtil.isEmpty(dataProcessConfig)) {
             return null;
         }
 
-        List<BizDataProcess> bizDataProcessList = CollUtil.newArrayList();
+        List<BizDataProcess> bizDataProcessList = CollectionUtil.newArrayList();
         for (Map<String, Object> map : dataProcessConfig) {
             BizDataProcess bizDataProcess = new BizDataProcess();
             bizDataProcess.setKey(map.get("k").toString());
@@ -150,7 +148,7 @@ public class ProcessData extends TaskExecutor {
      * @param fieldTypeMapping   数据字段类型
      * @param bizDataProcessList 处理方式
      */
-    private void processBizData(Data data, Map<String, Object> bizData, List<DataField> idFields, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
+    private void processBizData(Data data, Map<String, Object> bizData, Map<String, Object> jobContextData, List<DataField> idFields, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
         for (BizDataProcess bizDataProcess : bizDataProcessList) {
             // 处理的字段编号
             String key = bizDataProcess.getKey();
@@ -179,7 +177,6 @@ public class ProcessData extends TaskExecutor {
                 bizData.put(key, null);
                 continue;
             }
-            // TODO
             try {
                 // 标识字段 键值对
                 Map<String, Object> idMap = MapUtil.newHashMap();
@@ -193,13 +190,12 @@ public class ProcessData extends TaskExecutor {
                 Map<String, Object> queryData = bizDataDAO.findByIds(getWarehouseName(), data.getDataCode(), idMap);
 
                 if (MapUtil.isNotEmpty(queryData)) {
-                    // 先解析 {$field}
-                    opValue = jobVarService.processExistedDataVar(opValue.toString(), queryData, fieldTypeMapping);
+                    // 解析 {$field}
+                    opValue = JobVarService.processExistedDataVar(opValue.toString(), queryData, fieldTypeMapping);
                 }
-            /*
-            // 再解析 ${field}
-            opValue = JobVarService.parseDataFieldVar(opValue, processedData, taskJob.getFieldTypeMapping());
-             */
+                // 解析 ${field}
+                opValue = JobVarService.parseDataFieldVar(opValue.toString(), MapUtil.union(bizData, jobContextData), fieldTypeMapping);
+
                 if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
                     // 处理值是字段，从数据中取出字段的值
                     opValue = bizData.get(opValue);
@@ -232,23 +228,23 @@ public class ProcessData extends TaskExecutor {
                 if (cn.hutool.core.util.ObjectUtil.isNull(opValue)) {
                     return originValue;
                 }
-                return ExpressionUtil.eval(StrUtil.toString(originValue) + op + opValue, originData);
+                return ExpressionUtil.eval(StringUtil.toString(originValue) + op + opValue, originData);
             // 字符串：md5，base64，prepend，append，set empty
             case "md5":
-                return MD5.create().digestHex(StrUtil.toString(originValue));
+                return MD5.create().digestHex(StringUtil.toString(originValue));
             case "base64":
-                return Base64.encode(StrUtil.toString(originValue));
+                return Base64.encode(StringUtil.toString(originValue));
             case "prepend":
-                return StrUtil.prependIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+                return StringUtil.prependIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
             case "append":
-                return StrUtil.appendIfMissing(StrUtil.toString(originValue), StrUtil.toString(opValue));
+                return StringUtil.appendIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
             case "empty":
-                return StrUtil.EMPTY;
+                return StringUtil.EMPTY;
             // 日期：add second
             case "addSecond":
-                Date date = DateUtil.parse(StrUtil.toString(originValue));
+                Date date = DateUtil.parse(StringUtil.toString(originValue));
                 Calendar calendar = CalendarUtil.calendar(date);
-                calendar.add(Calendar.SECOND, NumberUtil.parseInt(StrUtil.toString(opValue)));
+                calendar.add(Calendar.SECOND, NumberUtil.parseInt(StringUtil.toString(opValue)));
                 return calendar.getTime();
         }
         return originValue;
