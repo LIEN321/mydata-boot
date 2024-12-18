@@ -2,10 +2,12 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
@@ -19,6 +21,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -98,6 +101,16 @@ public abstract class TaskExecutor {
      * 执行任务的抽象方法，子类实现具体逻辑
      */
     public abstract void doExecute(Map<String, Object> jobContextData);
+
+    /**
+     * 获取当前任务 操作数据的数据仓库名称
+     *
+     * @return 数据仓库名称
+     */
+    protected String getWarehouseName() {
+        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
+        return MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
+    }
 
     /**
      * 获取任务配置中的字段映射
