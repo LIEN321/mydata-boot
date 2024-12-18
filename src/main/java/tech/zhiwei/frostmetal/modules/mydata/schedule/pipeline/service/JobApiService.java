@@ -75,6 +75,8 @@ public class JobApiService {
             reqBody = jobVarService.processSysVarValue(reqBody);
         }
 
+        // TODO 解析替换业务数据变量
+
         // 发送请求
         return HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
     }

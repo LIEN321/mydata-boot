@@ -44,6 +44,8 @@ public class GetJsonFromApi extends TaskExecutor {
     public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
 
+        // TODO 增加输入变量：业务数据
+
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
 
