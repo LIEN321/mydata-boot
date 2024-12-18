@@ -30,6 +30,13 @@ public class JobVarService {
     private static final String SYS_VAR_PATTERN_SUFFIX = "}}";
 
     /**
+     * 接口数据属性 ${field}
+     */
+    private static final String DATA_FIELD_PATTERN = "\\$\\{([^}]*)\\}";
+    private static final String DATA_FIELD_PATTERN_PREFIX = "${";
+    private static final String DATA_FIELD_PATTERN_SUFFIX = "}";
+
+    /**
      * 仓库已有数据字段 {$field}
      */
     private static final String EXISTED_DATA_FIELD_PATTERN = "\\{\\$([^}]*)\\}";
@@ -94,6 +101,17 @@ public class JobVarService {
      */
     public static String processExistedDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
         return parseDataVar(string, bizData, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, EXISTED_DATA_FIELD_PATTERN_PREFIX, EXISTED_DATA_FIELD_PATTERN_SUFFIX);
+    }
+
+    /**
+     * 解析 字符串中${field}格式的数据变量
+     *
+     * @param string 字符串
+     * @param data   数据
+     * @return 解析后的字符串
+     */
+    public static String parseDataFieldVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
+        return parseDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, DATA_FIELD_PATTERN_PREFIX, DATA_FIELD_PATTERN_SUFFIX);
     }
 
     private static String parseDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
