@@ -67,12 +67,12 @@ public class JobApiService {
         String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
         // 解析替换系统变量值
-        apiUrl = jobVarService.replaceSysVarValue(apiUrl);
-        jobVarService.replaceSysVarValues(reqParams);
-        jobVarService.replaceSysVarValues(reqHeaders);
-        jobVarService.replaceSysVarValues(reqForm);
+        apiUrl = jobVarService.processSysVarValue(apiUrl);
+        jobVarService.processSysVarValues(reqParams);
+        jobVarService.processSysVarValues(reqHeaders);
+        jobVarService.processSysVarValues(reqForm);
         if (reqBody != null) {
-            reqBody = jobVarService.replaceSysVarValue(reqBody);
+            reqBody = jobVarService.processSysVarValue(reqBody);
         }
 
         // 发送请求
