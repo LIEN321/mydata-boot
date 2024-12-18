@@ -1,12 +1,10 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse;
 
-import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
@@ -92,12 +90,8 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 实际入库的业务数据
         List<Map<String, Object>> savedDataList = CollectionUtil.newArrayList();
 
-        // 当前流水线
-        PipelineTask pipelineTask = getPipelineTask();
-        // 所属项目
-        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
         // 数据仓库名称
-        String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
+        String warehouseName = getWarehouseName();
         // 标准数据的编号
         String dataCode = pipelineBizData.getDataCode();
 

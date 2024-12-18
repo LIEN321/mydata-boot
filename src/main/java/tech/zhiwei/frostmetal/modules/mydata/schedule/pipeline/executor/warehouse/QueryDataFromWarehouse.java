@@ -9,7 +9,6 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -58,11 +57,9 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         // 标准数据
         Data data = MyDataCache.getData(dataId);
-        // 所属项目
-        Project project = MyDataCache.getProject(pipelineTask.getProjectId());
 
         // 数据仓库名称
-        String warehouseName = MyDataUtil.getBizDbCode(pipelineTask.getTenantId(), project.getProjectCode());
+        String warehouseName = getWarehouseName();
         // 标准数据的编号
         String dataCode = data.getDataCode();
 
