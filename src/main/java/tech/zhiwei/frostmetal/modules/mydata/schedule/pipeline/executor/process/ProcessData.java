@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
  */
 public class ProcessData extends TaskExecutor {
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
-    private final JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
 
     public ProcessData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -194,7 +193,7 @@ public class ProcessData extends TaskExecutor {
                     opValue = JobVarService.processExistedDataVar(opValue.toString(), queryData, fieldTypeMapping);
                 }
                 // 解析 ${field}
-                opValue = JobVarService.parseDataFieldVar(opValue.toString(), MapUtil.union(bizData, jobContextData), fieldTypeMapping);
+                opValue = JobVarService.processDataFieldVar(opValue.toString(), MapUtil.union(bizData, jobContextData), fieldTypeMapping);
 
                 if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
                     // 处理值是字段，从数据中取出字段的值
