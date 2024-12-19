@@ -269,9 +269,13 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_TRIGGER_TYPE = "TRIGGER_TYPE";
 
     /**
+     * 任务输出项：流水线json
+     */
+    String JOB_DATA_KEY_PIPELINE_JSON = "PIPELINE_JSON";
+    /**
      * 任务输出项：原始json
      */
-    String JOB_DATA_KEY_ORIGIN_JSON = "ORIGIN_JSON";
+//    String JOB_DATA_KEY_ORIGIN_JSON = "ORIGIN_JSON";
 
     /**
      * 任务输出项：数据json
