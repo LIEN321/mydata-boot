@@ -48,7 +48,7 @@ public class JobVarService {
      *
      * @param map Map对象
      */
-    public void processSysVarValues(Map<String, String> map) {
+    public static void processSysVarValues(Map<String, String> map) {
         if (MapUtil.isEmpty(map)) {
             return;
         }
@@ -65,7 +65,7 @@ public class JobVarService {
      * @param string 被解析的字符串
      * @return 替换后的字符串
      */
-    public String processSysVarValue(String string) {
+    public static String processSysVarValue(String string) {
         // 解析系统内置变量
         List<String> sysVarNames = parseVarNames(string, SYS_VAR_PATTERN, SYS_VAR_PATTERN_PREFIX, SYS_VAR_PATTERN_SUFFIX);
         if (CollectionUtil.isEmpty(sysVarNames)) {
@@ -100,7 +100,25 @@ public class JobVarService {
      * @return 解析后的字符串
      */
     public static String processExistedDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
-        return parseDataVar(string, bizData, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, EXISTED_DATA_FIELD_PATTERN_PREFIX, EXISTED_DATA_FIELD_PATTERN_SUFFIX);
+        return processDataVar(string, bizData, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, EXISTED_DATA_FIELD_PATTERN_PREFIX, EXISTED_DATA_FIELD_PATTERN_SUFFIX);
+    }
+
+    /**
+     * 解析 字符串中${field}格式的数据变量
+     *
+     * @param map
+     * @param data 数据
+     * @return 解析后的字符串
+     */
+    public static void processDataFieldVar(Map<String, String> map, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
+        if (MapUtil.isEmpty(map)) {
+            return;
+        }
+
+        map.forEach((k, v) -> {
+            // 替换用户自定义变量
+            map.put(k, processDataVar(v, data, fieldTypeMapping, DATA_FIELD_PATTERN, DATA_FIELD_PATTERN_PREFIX, DATA_FIELD_PATTERN_SUFFIX));
+        });
     }
 
     /**
@@ -110,11 +128,11 @@ public class JobVarService {
      * @param data   数据
      * @return 解析后的字符串
      */
-    public static String parseDataFieldVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
-        return parseDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, DATA_FIELD_PATTERN_PREFIX, DATA_FIELD_PATTERN_SUFFIX);
+    public static String processDataFieldVar(String string, Map<String, Object> data, Map<String, String> fieldTypeMapping) {
+        return processDataVar(string, data, fieldTypeMapping, DATA_FIELD_PATTERN, DATA_FIELD_PATTERN_PREFIX, DATA_FIELD_PATTERN_SUFFIX);
     }
 
-    private static String parseDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
+    private static String processDataVar(String string, Map<String, Object> bizData, Map<String, String> fieldTypeMapping, String pattern, String prefix, String suffix) {
         if (StringUtil.isEmpty(string)) {
             return string;
         }
@@ -169,6 +187,16 @@ public class JobVarService {
             }
         }
         return varNames;
+    }
+
+    /**
+     * 字符串是否为 属性表达式 {{field}}
+     *
+     * @param string 字符串
+     * @return true-是属性表达式，false-不是
+     */
+    public static boolean isFieldExp(String string) {
+        return ReUtil.isMatch(DATA_FIELD_PATTERN, string);
     }
 
     private static String getKey(String g, int prefix, int suffix) {

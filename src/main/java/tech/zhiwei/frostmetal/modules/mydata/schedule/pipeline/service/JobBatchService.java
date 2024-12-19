@@ -1,7 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service;
 
 import cn.hutool.core.collection.CollUtil;
-import org.springframework.stereotype.Component;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.util.NumberUtil;
@@ -16,7 +15,6 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/12/3
  */
-@Component
 public class JobBatchService {
     private static final String OP_INC = "inc";
 
@@ -26,7 +24,7 @@ public class JobBatchService {
      * @param batchParams 分批参数
      * @return 请求参数
      */
-    public Map<String, String> parseToMap(List<Map<String, Object>> batchParams) {
+    public static Map<String, String> parseToMap(List<Map<String, Object>> batchParams) {
         if (CollUtil.isEmpty(batchParams)) {
             return null;
         }
@@ -45,7 +43,7 @@ public class JobBatchService {
      *
      * @param batchParams 分批参数
      */
-    public void incBatchParam(List<Map<String, Object>> batchParams) {
+    public static void incBatchParam(List<Map<String, Object>> batchParams) {
         if (CollectionUtil.isEmpty(batchParams)) {
             return;
         }

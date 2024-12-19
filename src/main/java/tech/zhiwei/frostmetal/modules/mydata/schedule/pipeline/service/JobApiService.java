@@ -1,16 +1,15 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service;
 
-import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
-import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.util.Map;
 
@@ -20,10 +19,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/12/16
  */
-@Component
 public class JobApiService {
-    private final JobVarService jobVarService = SpringUtil.getBean(JobVarService.class);
-
     /**
      * 调用应用的接口
      *
@@ -31,7 +27,7 @@ public class JobApiService {
      * @param api 接口
      * @return 接口响应内容
      */
-    public String callApi(App app, AppApi api, Map<String, String> batchParams, Map<String, String> bodyVarMap) {
+    public static String callApi(TaskExecutor taskExecutor, App app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
         AssertUtil.notNull(app);
         AssertUtil.notNull(api);
 
@@ -56,8 +52,8 @@ public class JobApiService {
             reqForm = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqBodyForm()));
         } else {
             reqBody = ObjectUtil.cloneByStream(api.getReqBodyRaw());
-            if (MapUtil.isNotEmpty(bodyVarMap)) {
-                reqBody = StringUtil.substitute(reqBody, bodyVarMap);
+            if (MapUtil.isNotEmpty(bizData)) {
+                reqBody = StringUtil.substitute(reqBody, bizData);
             }
         }
 
@@ -67,16 +63,23 @@ public class JobApiService {
         String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
         // 解析替换系统变量值
-        apiUrl = jobVarService.processSysVarValue(apiUrl);
-        jobVarService.processSysVarValues(reqParams);
-        jobVarService.processSysVarValues(reqHeaders);
-        jobVarService.processSysVarValues(reqForm);
-        if (reqBody != null) {
-            reqBody = jobVarService.processSysVarValue(reqBody);
-        }
+        apiUrl = JobVarService.processSysVarValue(apiUrl);
+        JobVarService.processSysVarValues(reqParams);
+        JobVarService.processSysVarValues(reqHeaders);
+        JobVarService.processSysVarValues(reqForm);
+        reqBody = JobVarService.processSysVarValue(reqBody);
 
         // TODO 解析替换业务数据变量
+        apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
+        JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
+        JobVarService.processDataFieldVar(reqHeaders, bizData, fieldTypeMapping);
+        JobVarService.processDataFieldVar(reqForm, bizData, fieldTypeMapping);
+        reqBody = JobVarService.processDataFieldVar(reqBody, bizData, fieldTypeMapping);
 
+        taskExecutor.log("\trequest param：{}", reqParams);
+        taskExecutor.log("\trequest header：{}", reqHeaders);
+        taskExecutor.log("\trequest form：{}", reqForm);
+        taskExecutor.log("\trequest body：{}", reqBody);
         // 发送请求
         return HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
     }
