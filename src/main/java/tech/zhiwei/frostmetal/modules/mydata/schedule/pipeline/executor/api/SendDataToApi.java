@@ -16,7 +16,6 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiSer
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
-import tech.zhiwei.tool.spring.SpringUtil;
 import tech.zhiwei.tool.thread.ThreadUtil;
 
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class SendDataToApi extends TaskExecutor {
-    private final JobApiService jobApiService = SpringUtil.getBean(JobApiService.class);
 
     public SendDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -65,29 +63,6 @@ public class SendDataToApi extends TaskExecutor {
         Map<String, String> fieldMapping = getFieldMapping();
         log("字段映射配置：{}", fieldMapping);
 
-        // 根据字段映射 转换为接口结构的数据
-        List<Map<String, Object>> apiDataList = CollectionUtil.newArrayList();
-        bizDataList.forEach(bizData -> {
-            Map<String, Object> apiData = MapUtil.newHashMap();
-            // 根据映射关系 将数据转换为api的数据结构
-            fieldMapping.forEach((standardCode, apiCode) -> {
-                // 若字段映射中 未设置api参数名，则跳过处理；
-                if (StrUtil.isEmpty(apiCode)) {
-                    return;
-                }
-                apiData.put(apiCode, bizData.get(standardCode));
-            });
-
-            apiDataList.add(apiData);
-        });
-        log("转换后的业务数据：{}", apiDataList);
-
-        // 判断业务数据是否有效，若无效则结束
-        if (CollectionUtil.isEmpty(apiDataList)) {
-            error("业务数据为空，结束执行。");
-            return;
-        }
-
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
 
@@ -96,6 +71,28 @@ public class SendDataToApi extends TaskExecutor {
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
+            List<Map<String, Object>> apiDataList = CollectionUtil.newArrayList();
+            bizDataList.forEach(bizData -> {
+                Map<String, Object> apiData = MapUtil.newHashMap();
+                // 根据映射关系 将数据转换为api的数据结构
+                fieldMapping.forEach((standardCode, apiCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiCode)) {
+                        return;
+                    }
+                    apiData.put(apiCode, bizData.get(standardCode));
+                });
+
+                apiDataList.add(apiData);
+            });
+
+            log("转换后的业务数据：{}", apiDataList);
+
+            // 判断业务数据是否有效，若无效则结束
+            if (CollectionUtil.isEmpty(apiDataList)) {
+                error("业务数据为空，结束执行。");
+                return;
+            }
 
             String reqBodyType = api.getReqBodyType();
             if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(reqBodyType)) {
@@ -143,7 +140,7 @@ public class SendDataToApi extends TaskExecutor {
                     }
 
                     // 发送数据
-                    jobApiService.callApi(app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString()));
+                    JobApiService.callApi(this, app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString()), fieldMapping);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -154,12 +151,27 @@ public class SendDataToApi extends TaskExecutor {
             }
         } else {
             // 单数据模式，逐个调API推送数据
-            apiDataList.forEach(apiData -> {
+            bizDataList.forEach(bizData -> {
+                Map<String, Object> apiData = MapUtil.newHashMap();
+                // 根据映射关系 将数据转换为api的数据结构
+                fieldMapping.forEach((standardCode, apiCode) -> {
+                    // 若字段映射中 未设置api参数名，则跳过处理；
+                    if (StrUtil.isEmpty(apiCode)) {
+                        return;
+                    }
+                    apiData.put(apiCode, bizData.get(standardCode));
+                });
+
+                if (MapUtil.isEmpty(apiData)) {
+                    error("业务数据转换的JSON为空 跳过发送，业务数据：{}", bizData);
+                    return;
+                }
+
                 // 单条数据 转为 json对象
                 JSONObject jsonObject = new JSONObject(apiData);
-
+                bizData.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString());
                 // 发送数据
-                jobApiService.callApi(app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString()));
+                JobApiService.callApi(this, app, api, null, bizData, fieldMapping);
             });
         }
     }
