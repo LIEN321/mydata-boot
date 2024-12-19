@@ -1,6 +1,10 @@
 package tech.zhiwei.tool.json;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import tech.zhiwei.tool.lang.StringUtil;
 
 import java.util.Map;
 
@@ -30,5 +34,39 @@ public class JsonUtil extends JSONUtil {
      */
     public static Map<String, Object> parseToMap(Object obj) {
         return JSONUtil.parseObj(obj);
+    }
+
+    /**
+     * 判断json对象是否为空，包括：null、空字符串、{}、[]
+     *
+     * @param json json对象
+     * @return 是否为空json
+     */
+    public static boolean isEmpty(JSON json) {
+        if (json == null) {
+            return true;
+        }
+
+        if (json instanceof JSONObject && ((JSONObject) json).isEmpty()) {
+            return true;
+        }
+
+        return json instanceof JSONArray && ((JSONArray) json).isEmpty();
+    }
+
+    /**
+     * 判断字符串是否为空的json，包括：null、空字符串、{}、[]
+     *
+     * @param jsonStr json字符串
+     * @return 是否为空json
+     */
+    public static boolean isEmpty(String jsonStr) {
+        if (StringUtil.isEmpty(jsonStr)) {
+            return true;
+        }
+
+        JSON json = JSONUtil.parse(jsonStr);
+
+        return isEmpty(json);
     }
 }
