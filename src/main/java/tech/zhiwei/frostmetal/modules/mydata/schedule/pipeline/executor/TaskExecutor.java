@@ -201,7 +201,7 @@ public abstract class TaskExecutor {
      * @param message 日志内容
      * @param params  占位符参数值
      */
-    protected void log(String message, Object... params) {
+    public void log(String message, Object... params) {
         if (pipelineLog != null) {
             if (ArrayUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.length; i++) {
@@ -220,7 +220,7 @@ public abstract class TaskExecutor {
      * @param message 日志内容
      * @param params  占位符参数值
      */
-    protected void error(String message, Object... params) {
+    public void error(String message, Object... params) {
         if (pipelineLog != null) {
             if (ArrayUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.length; i++) {
