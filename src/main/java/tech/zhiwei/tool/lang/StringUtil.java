@@ -47,8 +47,8 @@ public class StringUtil extends StrUtil {
      * @param value  要替换的值
      * @return 替换后的字符串
      */
-    public static String substitute(String source, String key, String value) {
-        Map<String, String> map = MapUtil.newHashMap();
+    public static String substitute(String source, String key, Object value) {
+        Map<String, Object> map = MapUtil.newHashMap();
         map.put(key, value);
         return substitute(source, map);
     }
@@ -60,7 +60,7 @@ public class StringUtil extends StrUtil {
      * @param map    替换的键值对
      * @return 替换后的字符串
      */
-    public static String substitute(String source, Map<String, String> map) {
+    public static String substitute(String source, Map<String, Object> map) {
         if (isBlank(source) || MapUtil.isEmpty(map)) {
             return source;
         }
