@@ -8,10 +8,12 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,14 @@ public class FilterData extends TaskExecutor {
             return;
         }
 
+        // 获参数数据的key
+        String paramDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_PARAM_DATA);
+        PipelineBizData paramBizData = null;
+        if (StringUtil.isNotEmpty(paramDataKey)) {
+            // 上下文业务数据
+            paramBizData = (PipelineBizData) jobContextData.get(paramDataKey);
+        }
+
         // 过滤条件
         List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
         List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
@@ -76,6 +86,26 @@ public class FilterData extends TaskExecutor {
             throw new RuntimeException("执行失败：无效的输出设置，未配置过滤结果的变量名");
         }
 
+        // 处理查询条件中的上下文变量
+        if (paramBizData != null) {
+            if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
+                log("没有业务数据可作为参数，结束执行");
+                return;
+            } else {
+                Map<String, Object> bizDataMap = MapUtil.newHashMap();
+                // 字段编号-字段类型
+                Map<String, String> fieldTypeMapping = paramBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                bizDataMap.putAll(paramBizData.getBizData().get(0));
+
+                dataFilters.forEach(filter -> {
+                    if (JobVarService.isFieldExp(filter.getValue().toString())) {
+                        String filterValue = JobVarService.processDataFieldVar(filter.getValue().toString(), bizDataMap, fieldTypeMapping);
+                        filter.setValue(filterValue);
+                    }
+                });
+            }
+        }
+
         // 标准数据字段列表
         List<DataField> dataFields = pipelineBizData.getDataFields();
 
@@ -94,7 +124,6 @@ public class FilterData extends TaskExecutor {
         List<Map<String, Object>> blockedDataList = CollectionUtil.toList();
         // 遍历数据，并进行过滤
         bizDataList.forEach(bizData -> {
-
             // 当数据未被过滤，则添加到过滤结果
 //            if (checkIdValue(data, dataIdCodes) && filterDataValues(data, fieldTypeMapping, dataFilters)) {
             if (filterDataValues(bizData, fieldTypeMapping, dataFilters)) {
