@@ -43,7 +43,6 @@ public class GetJsonFromApi extends TaskExecutor {
     public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
 
-        // TODO 增加输入变量：业务数据
         // 输入参数
         Map<String, String> inputMap = getInputMap();
         // 获业务数据的key

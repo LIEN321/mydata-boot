@@ -69,7 +69,7 @@ public class JobApiService {
         JobVarService.processSysVarValues(reqForm);
         reqBody = JobVarService.processSysVarValue(reqBody);
 
-        // TODO 解析替换业务数据变量
+        // 解析替换业务数据变量
         apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
         JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
         JobVarService.processDataFieldVar(reqHeaders, bizData, fieldTypeMapping);
