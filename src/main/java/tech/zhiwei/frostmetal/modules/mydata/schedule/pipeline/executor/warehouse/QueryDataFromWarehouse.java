@@ -43,11 +43,11 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 输入参数
         Map<String, String> inputMap = getInputMap();
         // 获业务数据的key
-        String inputBizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
-        PipelineBizData inputBizData = null;
-        if (StringUtil.isNotEmpty(inputBizDataKey)) {
+        String paramBizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_PARAM_DATA);
+        PipelineBizData paramBizData = null;
+        if (StringUtil.isNotEmpty(paramBizDataKey)) {
             // 上下文业务数据
-            inputBizData = (PipelineBizData) jobContextData.get(inputBizDataKey);
+            paramBizData = (PipelineBizData) jobContextData.get(paramBizDataKey);
         }
 
         Long dataId = pipelineTask.getDataId();
@@ -70,15 +70,15 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         dataFilters = CollectionUtil.emptyIfNull(dataFilters);
 
         // 处理查询条件中的上下文变量
-        if (inputBizData != null) {
-            if (CollectionUtil.isEmpty(inputBizData.getBizData())) {
+        if (paramBizData != null) {
+            if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
                 log("没有业务数据可作为参数，结束执行");
                 return;
             } else {
                 Map<String, Object> bizDataMap = MapUtil.newHashMap();
                 // 字段编号-字段类型
-                Map<String, String> fieldTypeMapping = inputBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                bizDataMap.putAll(inputBizData.getBizData().get(0));
+                Map<String, String> fieldTypeMapping = paramBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                bizDataMap.putAll(paramBizData.getBizData().get(0));
 
                 dataFilters.forEach(filter -> {
                     if (JobVarService.isFieldExp(filter.getValue().toString())) {

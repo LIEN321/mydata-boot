@@ -254,6 +254,11 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_BIZ_DATA = "BIZ_DATA";
 
     /**
+     * Job上下文共享数据的标识：参数数据
+     */
+    String JOB_DATA_KEY_PARAM_DATA = "PARAM_DATA";
+
+    /**
      * Job上下文共享数据的标识：过滤拦截的数据
      */
     String JOB_DATA_KEY_FILTER_BLOCKED_DATA = "FILTER_BLOCKED_DATA";

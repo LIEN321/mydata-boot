@@ -46,11 +46,11 @@ public class GetJsonFromApi extends TaskExecutor {
         // 输入参数
         Map<String, String> inputMap = getInputMap();
         // 获业务数据的key
-        String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
-        PipelineBizData pipelineBizData = null;
-        if (StringUtil.isNotEmpty(bizDataKey)) {
+        String paramBizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_PARAM_DATA);
+        PipelineBizData paramBizData = null;
+        if (StringUtil.isNotEmpty(paramBizDataKey)) {
             // 上下文业务数据
-            pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+            paramBizData = (PipelineBizData) jobContextData.get(paramBizDataKey);
         }
 
         // 获取应用信息
@@ -100,14 +100,14 @@ public class GetJsonFromApi extends TaskExecutor {
 
             Map<String, Object> bizDataMap = MapUtil.newHashMap();
             Map<String, String> fieldTypeMapping = null;
-            if (pipelineBizData != null) {
-                if (CollectionUtil.isEmpty(pipelineBizData.getBizData())) {
+            if (paramBizData != null) {
+                if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
                     log("没有业务数据可作为参数，结束执行");
                     return;
                 } else {
                     // 字段编号-字段类型
-                    fieldTypeMapping = pipelineBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
-                    bizDataMap.putAll(pipelineBizData.getBizData().get(0));
+                    fieldTypeMapping = paramBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                    bizDataMap.putAll(paramBizData.getBizData().get(0));
                 }
             }
 
