@@ -44,6 +44,7 @@ public class AppApiWrapper extends BaseWrapper<AppApi, AppApiVO> {
         if (CollectionUtil.isNotEmpty(entityList)) {
             for (AppApi api : entityList) {
                 SelectVO selectVO = new SelectVO();
+                selectVO.setId(api.getId());
                 selectVO.setLabel(api.getApiName());
                 selectVO.setValue(String.valueOf(api.getId()));
                 selectVOList.add(selectVO);

@@ -34,6 +34,7 @@ public class AppWrapper extends BaseWrapper<App, AppVO> {
         if (CollectionUtil.isNotEmpty(entityList)) {
             for (App app : entityList) {
                 SelectVO selectVO = new SelectVO();
+                selectVO.setId(app.getId());
                 selectVO.setLabel(app.getAppName());
                 selectVO.setValue(String.valueOf(app.getId()));
                 selectVOList.add(selectVO);

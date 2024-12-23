@@ -34,6 +34,7 @@ public class ProjectWrapper extends BaseWrapper<Project, ProjectVO> {
         if (CollectionUtil.isNotEmpty(entityList)) {
             for (Project project : entityList) {
                 SelectVO selectVO = new SelectVO();
+                selectVO.setId(project.getId());
                 selectVO.setLabel(project.getProjectName());
                 selectVO.setValue(String.valueOf(project.getId()));
                 selectVOList.add(selectVO);

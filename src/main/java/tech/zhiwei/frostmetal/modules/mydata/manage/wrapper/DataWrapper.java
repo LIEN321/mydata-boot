@@ -44,6 +44,7 @@ public class DataWrapper extends BaseWrapper<Data, DataVO> {
         if (CollectionUtil.isNotEmpty(entityList)) {
             for (Data data : entityList) {
                 SelectVO selectVO = new SelectVO();
+                selectVO.setId(data.getId());
                 selectVO.setLabel(data.getDataName());
                 selectVO.setValue(String.valueOf(data.getId()));
                 selectVOList.add(selectVO);

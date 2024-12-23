@@ -53,6 +53,7 @@ public class PipelineWrapper extends BaseWrapper<Pipeline, PipelineVO> {
         if (CollectionUtil.isNotEmpty(entityList)) {
             for (Pipeline pipeline : entityList) {
                 SelectVO selectVO = new SelectVO();
+                selectVO.setId(pipeline.getId());
                 selectVO.setLabel(pipeline.getPipelineName());
                 selectVO.setValue(String.valueOf(pipeline.getId()));
                 selectVOList.add(selectVO);
