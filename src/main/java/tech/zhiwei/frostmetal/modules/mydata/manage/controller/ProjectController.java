@@ -15,14 +15,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import tech.zhiwei.frostmetal.auth.util.AuthUtil;
 import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.ProjectDTO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.dto.UserConfigDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IProjectService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IUserConfigService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.ProjectVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.ProjectWrapper;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -42,6 +45,7 @@ import java.util.List;
 @Tag(name = "project", description = "项目API")
 public class ProjectController {
     private IProjectService projectService;
+    private IUserConfigService userConfigService;
 
     @PostMapping
     @Operation(summary = "新增或更新项目", operationId = "saveProject")
@@ -49,6 +53,11 @@ public class ProjectController {
         Long id = projectService.saveProject(projectDTO);
         if (id != null) {
             MyDataCache.removeProject(projectDTO.getId());
+
+            UserConfigDTO userConfigDTO = new UserConfigDTO();
+            userConfigDTO.setUserId(AuthUtil.getUserId());
+            userConfigDTO.setLatestProjectId(id);
+            userConfigService.saveUserConfig(userConfigDTO);
         }
         return R.data(id);
     }
