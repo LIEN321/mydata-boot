@@ -20,6 +20,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.util.ArrayUtil;
+import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.Date;
 import java.util.Map;
@@ -129,8 +130,10 @@ public class QuartzService {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
+        String identity = sPipelineId + ":" + RandomUtil.randomString(16);
+
         JobBuilder jobBuilder = JobBuilder.newJob(PipelineJob.class)
-                .withIdentity(sPipelineId, group)
+                .withIdentity(identity, group)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, triggerType);
 
@@ -142,7 +145,7 @@ public class QuartzService {
         JobDetail job = jobBuilder.build();
 
         Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(sPipelineId, group)
+                .withIdentity(identity, group)
                 .startNow()
                 .build();
 
