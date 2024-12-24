@@ -107,7 +107,10 @@ public class PipelineController {
     @Operation(summary = "执行流水线", operationId = "executePipeline")
     public R<Boolean> execute(@PathVariable Long id) {
         PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
-        if (pipelineHistory != null && MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()) {
+        if (pipelineHistory != null
+                && MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()
+                && MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(pipelineHistory.getTriggerType())
+        ) {
             return R.fail("执行失败：流水线正在运行中，请稍后再试！");
         }
 
