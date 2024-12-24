@@ -60,7 +60,7 @@ public abstract class TaskExecutor {
             // 从Webhook接收JSON
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
             // 用Webhook触发流水线
-            case MyDataConstant.TASK_TYPE_WEBHOOK_CALL_PIPELINE -> new WebhookCallPipeline(task, log);
+            case MyDataConstant.TASK_TYPE_TRIGGER_PIPELINE -> new WebhookCallPipeline(task, log);
             // JSON转数据
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
             // 数据转JSON

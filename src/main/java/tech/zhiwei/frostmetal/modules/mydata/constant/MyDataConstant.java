@@ -77,7 +77,7 @@ public interface MyDataConstant {
     /**
      * 任务类型：用Webhook触发流水线
      */
-    String TASK_TYPE_WEBHOOK_CALL_PIPELINE = "WEBHOOK_CALL_PIPELINE";
+    String TASK_TYPE_TRIGGER_PIPELINE = "TRIGGER_PIPELINE";
     /**
      * 任务类型：从API获取参数
      */
