@@ -69,4 +69,24 @@ public class JsonUtil extends JSONUtil {
 
         return isEmpty(json);
     }
+
+    /**
+     * 判断json对象是否不为空
+     *
+     * @param json json对象
+     * @return 是否不为空json
+     */
+    public static boolean isNotEmpty(JSON json) {
+        return !isEmpty(json);
+    }
+
+    /**
+     * 判断json对象是否不为空
+     *
+     * @param jsonStr json字符串
+     * @return 是否不为空json
+     */
+    public static boolean isNotEmpty(String jsonStr) {
+        return !isEmpty(jsonStr);
+    }
 }
