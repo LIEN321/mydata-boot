@@ -43,17 +43,30 @@ public class JobJsonService {
 //            log("数据所在层级：{}，提取的数据JSON：{}", fieldPrefix, dataJson);
 
             // 使用数组模式 兼容单个对象和数组模式
-            JSONArray dataJsonArray;
-            if (dataJson instanceof JSONArray) {
-                dataJsonArray = (JSONArray) dataJson;
-            } else {
-                dataJsonArray = new JSONArray();
-                dataJsonArray.add(dataJson);
-            }
 
-            PipelineJson pipelineJson = new PipelineJson(baseJson, dataJsonArray);
+            PipelineJson pipelineJson = new PipelineJson(baseJson, dataJson);
             pipelineJsons.add(pipelineJson);
         });
         return pipelineJsons;
+    }
+
+    /**
+     * 判断流水线json是否没有数据
+     *
+     * @param pipelineJsons 流水线json集合
+     * @return 是否没有数据
+     */
+    public static boolean isAllEmpty(List<PipelineJson> pipelineJsons) {
+        if (CollectionUtil.isEmpty(pipelineJsons)) {
+            return true;
+        }
+
+        for (PipelineJson pipelineJson : pipelineJsons) {
+            if (JsonUtil.isNotEmpty(pipelineJson.getDataJson())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

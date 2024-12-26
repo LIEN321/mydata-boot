@@ -1,6 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean;
 
-import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,7 +25,7 @@ public class PipelineJson implements Serializable {
     private JSONObject originJson;
 
     /**
-     * 数据json数组
+     * 数据json
      */
-    private JSONArray dataJsons;
+    private JSON dataJson;
 }

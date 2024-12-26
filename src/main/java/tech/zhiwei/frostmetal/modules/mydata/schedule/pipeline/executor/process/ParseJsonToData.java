@@ -2,6 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -99,11 +100,18 @@ public class ParseJsonToData extends TaskExecutor {
 
         for (PipelineJson pipelineJson : pipelineJsons) {
             JSONObject originJson = pipelineJson.getOriginJson();
-            JSONArray dataJsons = pipelineJson.getDataJsons();
+            JSON dataJson = pipelineJson.getDataJson();
+
+            JSONArray dataJsons = new JSONArray();
+            if (dataJson instanceof JSONObject) {
+                dataJsons.add(dataJson);
+            } else if (dataJson instanceof JSONArray) {
+                dataJsons = (JSONArray) dataJson;
+            }
 
             // 根据映射 解析出json中的数据 并存入数据
-            dataJsons.forEach(jsonObject -> {
-                JSONObject dataJson = (JSONObject) jsonObject;
+            dataJsons.forEach(o -> {
+                JSONObject jsonObject = (JSONObject) o;
                 Map<String, Object> produceData = MapUtil.newHashMap();
                 fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
                     // 若字段映射中 未设置api参数名，则跳过处理；
@@ -117,7 +125,7 @@ public class ParseJsonToData extends TaskExecutor {
                     if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
                         value = originJson.getByPath(apiFieldCode.substring(MyDataConstant.FIELD_MAPPING_ROOT.length()));
                     } else {
-                        value = dataJson.getByPath(apiFieldCode);
+                        value = jsonObject.getByPath(apiFieldCode);
                     }
                     // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
 //                    if (value == null && JobVarService.isFieldExp(apiCode)) {
@@ -132,8 +140,8 @@ public class ParseJsonToData extends TaskExecutor {
                     try {
                         produceData.put(dataFieldCode, MyDataUtil.convertDataType(value, targetType));
                     } catch (Exception e) {
-                        error("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", dataJson, dataFieldCode, targetType, e.getMessage());
-                        throw new RuntimeException(StringUtil.format("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", dataJson, dataFieldCode, targetType, e.getMessage()));
+                        error("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", jsonObject, dataFieldCode, targetType, e.getMessage());
+                        throw new RuntimeException(StringUtil.format("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", jsonObject, dataFieldCode, targetType, e.getMessage()));
                     }
                 });
 
