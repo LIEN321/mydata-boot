@@ -79,10 +79,6 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_TRIGGER_PIPELINE = "TRIGGER_PIPELINE";
     /**
-     * 任务类型：从API获取参数
-     */
-    String TASK_TYPE_API_GET_VAR = "API_GET_VAR";
-    /**
      * 任务类型：保存数据到数仓
      */
     String TASK_TYPE_SAVE_DATA = "SAVE_DATA";
@@ -115,6 +111,10 @@ public interface MyDataConstant {
      * 任务类型：发送邮件
      */
     String TASK_TYPE_SEND_EMAIL = "SEND_EMAIL";
+    /**
+     * 任务类型：JSON值存入变量
+     */
+    String TASK_TYPE_JSON_TO_VAR = "JSON_TO_VAR";
 
     /**
      * 任务配置中的常量key：字段映射
@@ -291,6 +291,11 @@ public interface MyDataConstant {
      * Job上下文共享数据的标识：Excel文件
      */
     String JOB_DATA_KEY_EXCEL_FILE = "EXCEL_FILE";
+
+    /**
+     * Job上下文共享数据的标识：变量配置
+     */
+    String JOB_DATA_VAR_MAPPING = "VAR_MAPPING";
 
     /**
      * Job触发类型：1-手动
