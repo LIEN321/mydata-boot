@@ -71,10 +71,26 @@ public class JobApiService {
 
         // 解析替换业务数据变量
         apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
-        JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
-        JobVarService.processDataFieldVar(reqHeaders, bizData, fieldTypeMapping);
-        JobVarService.processDataFieldVar(reqForm, bizData, fieldTypeMapping);
-        reqBody = JobVarService.processDataFieldVar(reqBody, bizData, fieldTypeMapping);
+        try {
+            JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
+        } catch (Exception e) {
+            throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            JobVarService.processDataFieldVar(reqHeaders, bizData, fieldTypeMapping);
+        } catch (Exception e) {
+            throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            JobVarService.processDataFieldVar(reqForm, bizData, fieldTypeMapping);
+        } catch (Exception e) {
+            throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            reqBody = JobVarService.processDataFieldVar(reqBody, bizData, fieldTypeMapping);
+        } catch (Exception e) {
+            throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
+        }
 
         taskExecutor.log("\trequest param：{}", reqParams);
         taskExecutor.log("\trequest header：{}", reqHeaders);

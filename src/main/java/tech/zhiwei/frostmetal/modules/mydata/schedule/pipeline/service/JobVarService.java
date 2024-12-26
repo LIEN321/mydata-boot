@@ -145,15 +145,22 @@ public class JobVarService {
         // 替换映射
         Map<String, String> replaceMap = MapUtil.newHashMap();
         for (String field : fieldNames) {
-            // 尝试获取数据的类型，若没有则默认为字符串
-            String targetType = fieldTypeMapping.get(field);
+            String value;
+            if (MapUtil.isNotEmpty(fieldTypeMapping)) {
+                // 尝试获取数据的类型，若没有则默认为字符串
+                String targetType = fieldTypeMapping.get(field);
 
-            String value = "";
-            if (MapUtil.isEmpty(bizData) || !bizData.containsKey(field)) {
-                value = MyDataUtil.defaultValue(targetType);
+                if (MapUtil.isEmpty(bizData) || !bizData.containsKey(field)) {
+                    value = MyDataUtil.defaultValue(targetType);
+                } else {
+                    // 从数据中 取出数据 并存入替换映射
+                    value = MyDataUtil.formatData(bizData.get(field), targetType);
+                }
             } else {
-                // 从数据中 取出数据 并存入替换映射
-                value = MyDataUtil.formatData(bizData.get(field), targetType);
+                value = StringUtil.toStringOrNull(bizData.get(field));
+            }
+            if (value == null) {
+                throw new IllegalArgumentException(StringUtil.format("无法获取参数 {} 的值"));
             }
             replaceMap.put(field, value);
         }
