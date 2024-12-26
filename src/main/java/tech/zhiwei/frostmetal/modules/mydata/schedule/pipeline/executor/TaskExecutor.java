@@ -166,9 +166,6 @@ public abstract class TaskExecutor {
         if (pipelineTask == null) {
             return MapUtil.empty();
         }
-        if (MapUtil.isEmpty(pipelineTask.getTaskConfig())) {
-            return MapUtil.empty();
-        }
         return pipelineTask.getTaskConfig();
     }
 
