@@ -1,6 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api;
 
-import cn.hutool.core.util.HashUtil;
+import cn.hutool.json.JSON;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
@@ -80,7 +80,8 @@ public class GetJsonFromApi extends TaskExecutor {
         List<PipelineJson> pipelineJsons = CollectionUtil.newArrayList();
 
         // 分批模式 记录上一次数据，用于对比两次数据，若重复 则结束，避免死循环
-        long lastJsonHash = -1L;
+//        long lastJsonHash = -1L;
+        List<JSON> lastDataJsons = null;
 
         // 循环计数器，超过最大数则结束，避免死循环
         int loopCount = 0;
@@ -123,18 +124,25 @@ public class GetJsonFromApi extends TaskExecutor {
                 break;
             }
 
+            // 将json字符串转 提取业务数据
+            List<PipelineJson> subPipelineJsons = JobJsonService.pipelineJson(originJsonString, fieldPrefix);
+
+            if (JobJsonService.isAllEmpty(subPipelineJsons)) {
+                error("没有有效的业务数据，结束执行");
+            }
+
             // 对比上一次数据
-            if (lastJsonHash != -1L) {
-                if (lastJsonHash == HashUtil.mixHash(originJsonString)) {
+            List<JSON> dataJsons = subPipelineJsons.stream().map(PipelineJson::getDataJson).toList();
+            if (lastDataJsons != null) {
+                if (lastDataJsons.equals(dataJsons)) {
                     error("本次结果与前一次 完全一样，结束执行。");
                     break;
                 }
             }
             // 记录最新json的hash
-            lastJsonHash = HashUtil.mixHash(originJsonString);
+            lastDataJsons = dataJsons;
 
-            // 将json字符串转为流水线json对象
-            pipelineJsons.addAll(JobJsonService.pipelineJson(originJsonString, fieldPrefix));
+            pipelineJsons.addAll(subPipelineJsons);
 
             if (isBatch) {
                 // 分批模式
