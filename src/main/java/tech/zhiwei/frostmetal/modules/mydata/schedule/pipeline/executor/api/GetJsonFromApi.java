@@ -17,8 +17,8 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchS
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
-import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.thread.ThreadUtil;
 
 import java.util.List;
@@ -98,7 +98,7 @@ public class GetJsonFromApi extends TaskExecutor {
                 batchParams = JobBatchService.parseToMap(batchParamList);
             }
 
-            Map<String, Object> bizDataMap = MapUtil.newHashMap();
+            Map<String, Object> bizDataMap = ObjectUtil.cloneByStream(jobContextData);
             Map<String, String> fieldTypeMapping = null;
             if (paramBizData != null) {
                 if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
