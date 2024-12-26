@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service;
 
+import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
@@ -19,6 +20,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/12/16
  */
+@Slf4j
 public class JobApiService {
     /**
      * 调用应用的接口
@@ -74,21 +76,25 @@ public class JobApiService {
         try {
             JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqHeaders, bizData, fieldTypeMapping);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqForm, bizData, fieldTypeMapping);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
         }
         try {
             reqBody = JobVarService.processDataFieldVar(reqBody, bizData, fieldTypeMapping);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
