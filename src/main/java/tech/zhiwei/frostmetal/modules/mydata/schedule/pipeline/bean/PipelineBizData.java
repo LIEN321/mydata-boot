@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +17,9 @@ import java.util.Map;
  */
 @Data
 @AllArgsConstructor
-public class PipelineBizData {
+public class PipelineBizData implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 3924358131844617413L;
     /**
      * 数据id
      */

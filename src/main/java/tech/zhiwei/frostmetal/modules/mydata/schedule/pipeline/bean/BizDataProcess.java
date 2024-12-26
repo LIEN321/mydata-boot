@@ -3,6 +3,9 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean;
 import lombok.Data;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 /**
  * 数据处理方式
  *
@@ -10,7 +13,9 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
  * @since 2024/12/12
  */
 @Data
-public class BizDataProcess {
+public class BizDataProcess implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1671863660704301677L;
     /**
      * 条件key
      */

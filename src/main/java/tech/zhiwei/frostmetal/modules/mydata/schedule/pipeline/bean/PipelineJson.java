@@ -5,6 +5,9 @@ import cn.hutool.json.JSONObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 /**
  * 流水线中的业务数据JSON
  *
@@ -13,7 +16,9 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class PipelineJson {
+public class PipelineJson implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 3367393394544398794L;
     /**
      * 原始json对象
      */
