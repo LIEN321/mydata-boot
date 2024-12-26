@@ -159,9 +159,9 @@ public class JobVarService {
             } else {
                 value = StringUtil.toStringOrNull(bizData.get(field));
             }
-            if (value == null) {
-                throw new IllegalArgumentException(StringUtil.format("无法获取参数 {} 的值"));
-            }
+//            if (value == null) {
+//                 throw new IllegalArgumentException(StringUtil.format("无法获取参数 {} 的值", field));
+//            }
             replaceMap.put(field, value);
         }
 
