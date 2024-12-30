@@ -69,6 +69,9 @@ public class SendDataToApi extends TaskExecutor {
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
 
+        Map<String, Object> map = MapUtil.newHashMap();
+        map.putAll(jobContextData);
+
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {
             List<Map<String, Object>> apiDataList = CollectionUtil.newArrayList();
@@ -140,7 +143,8 @@ public class SendDataToApi extends TaskExecutor {
                     }
 
                     // 发送数据
-                    JobApiService.callApi(this, app, api, null, MapUtil.of(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString()), fieldMapping);
+                    map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString());
+                    JobApiService.callApi(this, app, api, null, map, fieldMapping);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -169,9 +173,10 @@ public class SendDataToApi extends TaskExecutor {
 
                 // 单条数据 转为 json对象
                 JSONObject jsonObject = new JSONObject(apiData);
-                bizData.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString());
+                map.putAll(bizData);
+                map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString());
                 // 发送数据
-                JobApiService.callApi(this, app, api, null, bizData, fieldMapping);
+                JobApiService.callApi(this, app, api, null, map, fieldMapping);
             });
         }
     }
