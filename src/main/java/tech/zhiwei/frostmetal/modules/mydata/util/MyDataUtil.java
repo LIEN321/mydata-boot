@@ -188,16 +188,12 @@ public class MyDataUtil {
     }
 
     public static String defaultValue(String targetType) {
-        switch (targetType) {
-            case MyDataConstant.DATA_TYPE_INT:
-            case MyDataConstant.DATA_TYPE_NUMBER:
-                return "0";
+        return switch (targetType) {
+            case MyDataConstant.DATA_TYPE_INT, MyDataConstant.DATA_TYPE_NUMBER -> "0";
 //            case MdConstant.DATA_TYPE_STRING:
-            case MyDataConstant.DATA_TYPE_DATE:
-                return DateUtil.formatDateTime(new Date());
-            default:
-                return "";
-        }
+            case MyDataConstant.DATA_TYPE_DATE -> DateUtil.formatDateTime(new Date());
+            default -> "";
+        };
     }
 
     /**
