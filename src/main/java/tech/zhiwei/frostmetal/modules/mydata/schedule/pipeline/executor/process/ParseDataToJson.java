@@ -11,6 +11,7 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
+import tech.zhiwei.tool.map.MapUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -46,8 +47,10 @@ public class ParseDataToJson extends TaskExecutor {
         // 上下文业务数据
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-            error("执行失败：前置任务没有输出有效的业务数据");
-            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+//            error("执行失败：前置任务没有输出有效的业务数据");
+//            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+            log("待处理的数据为空，结束执行");
+            return;
         }
 
         // 字段映射
@@ -87,7 +90,13 @@ public class ParseDataToJson extends TaskExecutor {
         log("JSON模板：{}", jsonTemplate);
 
         // 将json字符串 替换${DATA_JSON}占位符
-        String json = StringUtil.substitute(jsonTemplate, MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
+        Map<String, Object> map = MapUtil.newHashMap();
+        map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
+        if (CollectionUtil.isNotEmpty(bizDataList) && bizDataList.size() == 1) {
+            map.putAll(bizDataList.get(0));
+        }
+        map.putAll(jobContextData);
+        String json = StringUtil.substitute(jsonTemplate, map);
 
         // 数据存入任务上下文数据中
         jobContextData.put(dataJsonKey, json);
