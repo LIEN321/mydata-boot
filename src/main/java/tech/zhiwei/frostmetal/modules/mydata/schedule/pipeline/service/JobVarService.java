@@ -146,7 +146,7 @@ public class JobVarService {
         Map<String, String> replaceMap = MapUtil.newHashMap();
         for (String field : fieldNames) {
             String value;
-            if (MapUtil.isNotEmpty(fieldTypeMapping)) {
+            if (MapUtil.isNotEmpty(fieldTypeMapping) && fieldTypeMapping.containsKey(field)) {
                 // 尝试获取数据的类型，若没有则默认为字符串
                 String targetType = fieldTypeMapping.get(field);
 
