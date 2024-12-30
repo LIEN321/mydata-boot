@@ -47,8 +47,10 @@ public class FilterData extends TaskExecutor {
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-            error("执行失败：前置任务没有输出有效的业务数据");
-            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+//            error("执行失败：前置任务没有输出有效的业务数据");
+//            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+            log("待过滤的数据为空，结束执行");
+            return;
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
