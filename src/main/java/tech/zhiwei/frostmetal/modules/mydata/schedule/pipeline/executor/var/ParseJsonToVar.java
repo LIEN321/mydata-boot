@@ -8,6 +8,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 
 import java.util.List;
@@ -55,13 +56,18 @@ public class ParseJsonToVar extends TaskExecutor {
 
         for (PipelineJson pipelineJson : pipelineJsons) {
             JSONObject originJson = pipelineJson.getOriginJson();
+            log("从json提取值到变量，json = {}", originJson);
 
             varMappings.forEach(varMapping -> {
                 String varCode = varMapping.get("varCode");
                 String jsonField = varMapping.get("jsonField");
                 Object varValue = originJson.getByPath(jsonField);
-                jobContextData.put(varCode, varValue);
-                log("设置变量 {} = {}", varCode, varValue);
+                if (ObjectUtil.isNotNull(varValue)) {
+                    jobContextData.put(varCode, varValue);
+                    log("设置变量成功：{} = {}", varCode, varValue);
+                } else {
+                    log("设置变量失败：{} = null", varCode);
+                }
             });
         }
     }
