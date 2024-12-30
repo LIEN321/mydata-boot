@@ -97,13 +97,14 @@ public class ProcessData extends TaskExecutor {
         // 字段编号-字段类型
         Map<String, String> fieldTypeMapping = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
 
+        log("处理前的数据：{}", bizDataList);
         log("处理数据开始...");
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
             processBizData(data, bizData, jobContextData, idFields, fieldTypeMapping, dataProcesses);
         });
-
+        log("处理后的数据：{}", bizDataList);
         log("处理数据结束");
 
         // 输出参数
@@ -158,6 +159,16 @@ public class ProcessData extends TaskExecutor {
             // 处理类型
             Object type = bizDataProcess.getType();
 
+            // 优先处理 置空 操作
+            if (isSetNull(op)) {
+                bizData.put(key, null);
+                continue;
+            }
+            if (isSetEmpty(op)) {
+                bizData.put(key, StringUtil.EMPTY);
+                continue;
+            }
+
             // 当数据中 不包含 处理的字段名，则执行下一项
             if (!bizData.containsKey(key)) {
                 continue;
@@ -168,12 +179,6 @@ public class ProcessData extends TaskExecutor {
 
             // 若字段值无效
             if (ObjectUtil.isNull(dataValue)) {
-                continue;
-            }
-
-            // 优先处理 置空 操作
-            if (isSetNull(op)) {
-                bizData.put(key, null);
                 continue;
             }
             try {
@@ -257,5 +262,15 @@ public class ProcessData extends TaskExecutor {
      */
     public static boolean isSetNull(String targetOp) {
         return "null".equals(targetOp);
+    }
+
+    /**
+     * 判断指定处理类型 是否为置空empty
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetEmpty(String targetOp) {
+        return "empty".equals(targetOp);
     }
 }
