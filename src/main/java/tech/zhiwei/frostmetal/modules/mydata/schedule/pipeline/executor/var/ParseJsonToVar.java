@@ -48,7 +48,7 @@ public class ParseJsonToVar extends TaskExecutor {
         }
 
         // 变量配置
-        List<Map<String, String>> varMappings = (List<Map<String, String>>) getTaskConfig().get(MyDataConstant.JOB_DATA_VAR_MAPPING);
+        List<Map<String, Object>> varMappings = (List<Map<String, Object>>) getTaskConfig().get(MyDataConstant.JOB_DATA_VAR_MAPPING);
         if (CollectionUtil.isEmpty(varMappings)) {
             error("变量配置为空，结束执行。");
             throw new IllegalArgumentException("字段映射为空，结束执行。");
@@ -59,14 +59,20 @@ public class ParseJsonToVar extends TaskExecutor {
             log("从json提取值到变量，json = {}", originJson);
 
             varMappings.forEach(varMapping -> {
-                String varCode = varMapping.get("varCode");
-                String jsonField = varMapping.get("jsonField");
+                String varCode = (String) varMapping.get("varCode");
+                String jsonField = (String) varMapping.get("jsonField");
+                Boolean switchEmpty = ObjectUtil.defaultIfNull((Boolean) varMapping.get("switchEmpty"), false);
                 Object varValue = originJson.getByPath(jsonField);
                 if (ObjectUtil.isNotNull(varValue)) {
                     jobContextData.put(varCode, varValue);
                     log("设置变量成功：{} = {}", varCode, varValue);
                 } else {
-                    log("设置变量失败：{} = null", varCode);
+                    if (switchEmpty) {
+                        jobContextData.put(varCode, "");
+                        log("设置变量为空：{} = \"\"", varCode);
+                    } else {
+                        log("设置变量失败：{} = null", varCode);
+                    }
                 }
             });
         }
