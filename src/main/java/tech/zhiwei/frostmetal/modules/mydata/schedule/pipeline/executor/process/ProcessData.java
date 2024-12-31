@@ -169,17 +169,18 @@ public class ProcessData extends TaskExecutor {
                 continue;
             }
 
-            // 当数据中 不包含 处理的字段名，则执行下一项
-            if (!bizData.containsKey(key)) {
-                continue;
-            }
-
-            // 当数据中 指定字段的值 无效，则过滤该数据
+            // 当数据中 指定字段的值无效，则过滤该数据
             Object dataValue = bizData.get(key);
 
             // 若字段值无效
             if (ObjectUtil.isNull(dataValue)) {
-                continue;
+                // 需要设置为空字符串
+                if (isSetEmptyIfNull(op)) {
+                    dataValue = StringUtil.EMPTY;
+                } else {
+                    // 跳过不处理
+                    continue;
+                }
             }
             try {
                 // 标识字段 键值对
@@ -233,7 +234,7 @@ public class ProcessData extends TaskExecutor {
                     return originValue;
                 }
                 return ExpressionUtil.eval(StringUtil.toString(originValue) + op + opValue, originData);
-            // 字符串：md5，base64，prepend，append，set empty
+            // 字符串：md5，base64，prepend，append
             case "md5":
                 return MD5.create().digestHex(StringUtil.toString(originValue));
             case "base64":
@@ -242,8 +243,6 @@ public class ProcessData extends TaskExecutor {
                 return StringUtil.prependIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
             case "append":
                 return StringUtil.appendIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
-            case "empty":
-                return StringUtil.EMPTY;
             // 日期：add second
             case "addSecond":
                 Date date = DateUtil.parse(StringUtil.toString(originValue));
@@ -272,5 +271,15 @@ public class ProcessData extends TaskExecutor {
      */
     public static boolean isSetEmpty(String targetOp) {
         return "empty".equals(targetOp);
+    }
+
+    /**
+     * 判断指定处理类型 是否为置空empty
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetEmptyIfNull(String targetOp) {
+        return "emptyIfNull".equals(targetOp);
     }
 }
