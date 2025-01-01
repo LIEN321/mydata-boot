@@ -46,7 +46,7 @@ public class ParseDataToJson extends TaskExecutor {
 
         // 上下文业务数据
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
-        if (pipelineBizData == null) {
+        if (pipelineBizData == null || CollectionUtil.isEmpty(pipelineBizData.getBizData())) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
             log("待处理的数据为空，结束执行");
