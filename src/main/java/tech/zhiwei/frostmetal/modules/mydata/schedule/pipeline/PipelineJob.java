@@ -43,7 +43,7 @@ public class PipelineJob implements InterruptableJob {
     private volatile boolean interrupted = false;
 
     // Job执行过程中的变量
-    private final Map<String, Object> jobContextData = new HashMap<String, Object>();
+    private final Map<String, Object> jobContextData = new HashMap<>();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -59,7 +59,7 @@ public class PipelineJob implements InterruptableJob {
         // 查询流水线记录
         Pipeline pipeline = pipelineService.getById(pipelineId);
         if (pipeline == null) {
-            throw new JobExecutionException(StringUtil.format("Job执行失败：流水线不存在，id={}！", pipelineId));
+            throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
         }
 
         // 创建流水线的执行记录

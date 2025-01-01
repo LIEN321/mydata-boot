@@ -42,16 +42,18 @@ public class SendDataToApi extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-//            error("执行失败：未配置业务数据变量，无法获取业务数据。");
-            throw new IllegalArgumentException("执行失败：未配置业务数据变量，无法获取业务数据。");
+            error("执行失败：未配置业务数据变量，无法获取业务数据。");
+//            throw new IllegalArgumentException("执行失败：未配置业务数据变量，无法获取业务数据。");
+            return;
         }
 
         // 获取业务数据
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-//            error("执行失败：前置任务没有输出有效的业务数据");
-            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+            error("执行失败：前置任务没有输出有效的业务数据");
+//            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
+            return;
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
