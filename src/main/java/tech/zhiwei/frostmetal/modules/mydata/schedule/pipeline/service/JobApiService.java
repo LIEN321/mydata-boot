@@ -103,6 +103,8 @@ public class JobApiService {
         taskExecutor.log("\trequest form：{}", reqForm);
         taskExecutor.log("\trequest body：{}", reqBody);
         // 发送请求
-        return HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
+        String response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
+        taskExecutor.log("\tresponse : {}", response);
+        return response;
     }
 }
