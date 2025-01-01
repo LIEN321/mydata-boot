@@ -26,25 +26,25 @@ public class SendEmail extends TaskExecutor {
         PipelineTask pipelineTask = getPipelineTask();
         Map<String, String> emailConfig = (Map<String, String>) pipelineTask.getTaskConfig().get("EMAIL");
         if (MapUtil.isEmpty(emailConfig)) {
-            error("发送邮件失败，缺少邮件配置");
+//            error("发送邮件失败，缺少邮件配置");
             throw new IllegalArgumentException("发送邮件失败，缺少邮件配置");
         }
 
         String address = emailConfig.get("ADDRESS");
         if (StringUtil.isEmpty(address)) {
-            error("发送邮件失败，收件人地址无效");
+//            error("发送邮件失败，收件人地址无效");
             throw new IllegalArgumentException("发送邮件失败，收件人地址无效");
         }
 
         String subject = emailConfig.get("SUBJECT");
         if (StringUtil.isEmpty(subject)) {
-            error("发送邮件失败，邮件主题无效");
+//            error("发送邮件失败，邮件主题无效");
             throw new IllegalArgumentException("发送邮件失败，邮件主题无效");
         }
 
         String content = emailConfig.get("CONTENT");
         if (StringUtil.isEmpty(content)) {
-            error("发送邮件失败，邮件内容无效");
+//            error("发送邮件失败，邮件内容无效");
             throw new IllegalArgumentException("发送邮件失败，邮件内容无效");
         }
 

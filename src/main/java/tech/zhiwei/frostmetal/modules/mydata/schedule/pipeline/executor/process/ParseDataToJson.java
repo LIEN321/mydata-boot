@@ -40,7 +40,7 @@ public class ParseDataToJson extends TaskExecutor {
         // 获取转换数据的key
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("执行失败：未配置待转换的业务数据变量，无法获取业务数据");
+//            error("执行失败：未配置待转换的业务数据变量，无法获取业务数据");
             throw new IllegalArgumentException("执行失败：未配置待转换的业务数据变量，无法获取业务数据");
         }
 
@@ -60,7 +60,7 @@ public class ParseDataToJson extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String dataJsonKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
         if (StringUtil.isEmpty(dataJsonKey)) {
-            error("执行失败：无效的输出设置，未配置JSON的变量名");
+//            error("执行失败：无效的输出设置，未配置JSON的变量名");
             throw new RuntimeException("执行失败：无效的输出设置，未配置JSON的变量名");
         }
 
@@ -97,6 +97,13 @@ public class ParseDataToJson extends TaskExecutor {
         }
         map.putAll(jobContextData);
         String json = StringUtil.substitute(jsonTemplate, map);
+        try {
+            // 预先检测json字符串是否有效
+            JsonUtil.parse(json);
+        } catch (Exception e) {
+//            error("转换后的json无效，结束执行，json={}", json);
+            throw new RuntimeException(StringUtil.format("转换后的json无效，结束执行，json={}", json));
+        }
 
         // 数据存入任务上下文数据中
         jobContextData.put(dataJsonKey, json);

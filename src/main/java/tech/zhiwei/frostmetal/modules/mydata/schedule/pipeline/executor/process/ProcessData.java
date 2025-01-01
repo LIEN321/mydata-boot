@@ -50,14 +50,14 @@ public class ProcessData extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("执行失败：未配置待处理的业务数据变量，无法获取业务数据");
+//            error("执行失败：未配置待处理的业务数据变量，无法获取业务数据");
             throw new IllegalArgumentException("执行失败：未配置待处理的业务数据变量，无法获取业务数据");
         }
 
         // 获取上下文的业务数据
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-            error("执行失败：前置任务没有输出有效的业务数据");
+//            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
@@ -70,13 +70,13 @@ public class ProcessData extends TaskExecutor {
         List<Map<String, Object>> dataProcessConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_PROCESS");
         List<BizDataProcess> dataProcesses = convertBizDataProcess(dataProcessConfig);
         if (CollectionUtil.isEmpty(dataProcesses)) {
-            error("执行失败：未配置处理方式，结束执行");
+//            error("执行失败：未配置处理方式，结束执行");
             throw new RuntimeException("执行失败：未配置处理方式，结束执行");
         }
 
         Long dataId = pipelineBizData.getDataId();
         if (ObjectUtil.isNull(dataId)) {
-            error("执行失败：前置任务未选择标准数据，结束执行");
+//            error("执行失败：前置任务未选择标准数据，结束执行");
             throw new RuntimeException("执行失败：前置任务未选择标准数据，结束执行");
         }
 
@@ -84,7 +84,7 @@ public class ProcessData extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String filteredDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(filteredDataKey)) {
-            error("执行失败：无效的输出设置，未配置处理结果的变量名");
+//            error("执行失败：无效的输出设置，未配置处理结果的变量名");
             throw new RuntimeException("执行失败：无效的输出设置，未配置处理结果的变量名");
         }
 
@@ -131,7 +131,7 @@ public class ProcessData extends TaskExecutor {
             bizDataProcess.setType(map.get("t"));
 
             if (StringUtil.isEmpty(bizDataProcess.getOp())) {
-                error("字段{} 未配置处理方式", bizDataProcess.getKey());
+//                error("字段{} 未配置处理方式", bizDataProcess.getKey());
                 throw new IllegalArgumentException(StringUtil.format("字段{} 未配置处理方式", bizDataProcess.getKey()));
             }
 
@@ -208,7 +208,7 @@ public class ProcessData extends TaskExecutor {
                 Object newValue = processValue(dataValue, op, opValue, bizData);
                 bizData.put(key, newValue);
             } catch (Exception e) {
-                error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
+//                error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
                 throw new RuntimeException(StringUtil.format("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage()), e);
             }
         }

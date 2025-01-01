@@ -39,7 +39,7 @@ public class WebhookCallPipeline extends TaskExecutor {
         // 获取待解析json的key
         String dataJsonKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
         if (StringUtil.isEmpty(dataJsonKey)) {
-            error("JSON变量名为空，结束执行。");
+//            error("JSON变量名为空，结束执行。");
             throw new IllegalArgumentException("JSON变量名为空，结束执行。");
         }
 

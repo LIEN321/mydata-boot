@@ -43,7 +43,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 获业务数据的key
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("业务数据的变量名为空，结束执行。");
+//            error("业务数据的变量名为空，结束执行。");
             throw new IllegalArgumentException("业务数据的变量名为空，结束执行。");
         }
 
@@ -65,7 +65,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 标准数据id
         Long dataId = pipelineBizData.getDataId();
         if (ObjectUtil.isNull(dataId)) {
-            error("保存业务数据失败：前置任务中没有选择标准数据");
+//            error("保存业务数据失败：前置任务中没有选择标准数据");
             throw new RuntimeException("保存业务数据失败：前置任务中没有选择标准数据");
         }
 
@@ -75,7 +75,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
         // 从字段列表提取标识字段
         List<DataField> idFields = dataFields.stream().filter(DataField::getIsId).toList();
         if (CollectionUtil.isEmpty(idFields)) {
-            error("保存业务数据失败：标准数据没有标识字段");
+//            error("保存业务数据失败：标准数据没有标识字段");
             throw new RuntimeException("保存业务数据失败：标准数据没有标识字段");
         }
 

@@ -44,14 +44,14 @@ public class WriteDataToExcel extends TaskExecutor {
         // 获业务数据的key
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("业务数据的变量名为空，结束执行。");
+//            error("业务数据的变量名为空，结束执行。");
             throw new IllegalArgumentException("业务数据的变量名为空，结束执行。");
         }
 
         // 业务数据集合
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-            error("执行失败：前置任务没有输出有效的业务数据");
+//            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();

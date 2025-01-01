@@ -39,7 +39,7 @@ public class FilterData extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("执行失败：未配置待过滤的业务数据变量，无法获取业务数据");
+//            error("执行失败：未配置待过滤的业务数据变量，无法获取业务数据");
             throw new IllegalArgumentException("执行失败：未配置待过滤的业务数据变量，无法获取业务数据");
         }
 
@@ -70,13 +70,13 @@ public class FilterData extends TaskExecutor {
         List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
         List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
         if (CollectionUtil.isEmpty(dataFilters)) {
-            error("执行失败：未配置过滤条件，结束执行");
+//            error("执行失败：未配置过滤条件，结束执行");
             throw new RuntimeException("执行失败：未配置过滤条件，结束执行");
         }
 
         Long dataId = pipelineBizData.getDataId();
         if (ObjectUtil.isNull(dataId)) {
-            error("执行失败：前置任务未选择标准数据，结束执行");
+//            error("执行失败：前置任务未选择标准数据，结束执行");
             throw new RuntimeException("执行失败：前置任务未选择标准数据，结束执行");
         }
 
@@ -84,7 +84,7 @@ public class FilterData extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String validDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(validDataKey)) {
-            error("执行失败：无效的输出设置，未配置过滤结果的变量名");
+//            error("执行失败：无效的输出设置，未配置过滤结果的变量名");
             throw new RuntimeException("执行失败：无效的输出设置，未配置过滤结果的变量名");
         }
 

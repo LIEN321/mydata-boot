@@ -52,7 +52,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         Long dataId = pipelineTask.getDataId();
         if (ObjectUtil.isNull(dataId)) {
-            error("查询失败：未选择数据标准");
+//            error("查询失败：未选择数据标准");
             throw new RuntimeException("查询失败：未选择数据标准");
         }
 
@@ -60,7 +60,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String outputBizDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(outputBizDataKey)) {
-            error("查询失败：无效的输出设置，未配置查询结果的变量名");
+//            error("查询失败：无效的输出设置，未配置查询结果的变量名");
             throw new RuntimeException("查询失败：无效的输出设置，未配置查询结果的变量名");
         }
 

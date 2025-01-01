@@ -42,7 +42,7 @@ public class SendDataToApi extends TaskExecutor {
         Map<String, String> inputMap = getInputMap();
         String bizDataKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("执行失败：未配置业务数据变量，无法获取业务数据。");
+//            error("执行失败：未配置业务数据变量，无法获取业务数据。");
             throw new IllegalArgumentException("执行失败：未配置业务数据变量，无法获取业务数据。");
         }
 
@@ -50,7 +50,7 @@ public class SendDataToApi extends TaskExecutor {
 //        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
         PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
         if (pipelineBizData == null) {
-            error("执行失败：前置任务没有输出有效的业务数据");
+//            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
@@ -100,7 +100,7 @@ public class SendDataToApi extends TaskExecutor {
             String reqBodyType = api.getReqBodyType();
             if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(reqBodyType)) {
                 // 暂不支持form模式发送多条数据
-                error("暂不支持form模式发送多条数据");
+//                error("暂不支持form模式发送多条数据");
                 throw new IllegalArgumentException("接口{}的请求体类型是form，暂不支持form模式发送多条数据。");
             } else if (MyDataConstant.API_REQUEST_BODY_TYPE_JSON.equals(reqBodyType)) {
                 // 分批模式的参数配置

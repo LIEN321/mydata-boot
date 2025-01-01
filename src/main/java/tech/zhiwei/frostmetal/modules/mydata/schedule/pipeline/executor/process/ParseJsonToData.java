@@ -48,7 +48,7 @@ public class ParseJsonToData extends TaskExecutor {
         // 获取待解析json的key
         String pipelineJsonKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
         if (StringUtil.isEmpty(pipelineJsonKey)) {
-            error("JSON变量名为空，结束执行。");
+//            error("JSON变量名为空，结束执行。");
             throw new IllegalArgumentException("JSON变量名为空，结束执行。");
         }
 
@@ -63,7 +63,7 @@ public class ParseJsonToData extends TaskExecutor {
         // 字段映射
         Map<String, String> fieldMapping = getFieldMapping();
         if (CollectionUtil.isEmpty(fieldMapping)) {
-            error("字段映射为空，结束执行。");
+//            error("字段映射为空，结束执行。");
             throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
 
@@ -71,7 +71,7 @@ public class ParseJsonToData extends TaskExecutor {
         Map<String, String> outputMap = getOutputMap();
         String bizDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_BIZ_DATA);
         if (StringUtil.isEmpty(bizDataKey)) {
-            error("输出设置中的业务数据变量名为空，结束执行。");
+//            error("输出设置中的业务数据变量名为空，结束执行。");
             throw new IllegalArgumentException("输出设置中的业务数据变量名为空，结束执行。");
         }
 
@@ -140,7 +140,7 @@ public class ParseJsonToData extends TaskExecutor {
                     try {
                         produceData.put(dataFieldCode, MyDataUtil.convertDataType(value, targetType));
                     } catch (Exception e) {
-                        error("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", jsonObject, dataFieldCode, targetType, e.getMessage());
+//                        error("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", jsonObject, dataFieldCode, targetType, e.getMessage());
                         throw new RuntimeException(StringUtil.format("转换业务数据出错，数据：{}，字段 {} 转为目标类型 {} 时出错：{}", jsonObject, dataFieldCode, targetType, e.getMessage()));
                     }
                 });
