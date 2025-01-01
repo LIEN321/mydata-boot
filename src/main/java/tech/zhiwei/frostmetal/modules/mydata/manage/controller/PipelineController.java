@@ -23,6 +23,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
@@ -31,6 +32,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineTaskWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
+import tech.zhiwei.tool.collection.CollectionUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -106,6 +108,12 @@ public class PipelineController {
     @GetMapping("/execute/{id}")
     @Operation(summary = "执行流水线", operationId = "executePipeline")
     public R<Boolean> execute(@PathVariable Long id) {
+        // 查询流水线任务列表
+        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(id);
+        if (CollectionUtil.isEmpty(tasks)) {
+            return R.fail("执行失败：流水线任务列表为空，请先配置！");
+        }
+
         PipelineHistory pipelineHistory = pipelineHistoryService.latestHistory(id);
         if (pipelineHistory != null
                 && MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING == pipelineHistory.getExecutionStatus()
