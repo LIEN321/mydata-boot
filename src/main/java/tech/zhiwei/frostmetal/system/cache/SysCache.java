@@ -7,7 +7,6 @@ import tech.zhiwei.frostmetal.system.entity.Menu;
 import tech.zhiwei.frostmetal.system.entity.Role;
 import tech.zhiwei.frostmetal.system.entity.RoleMenu;
 import tech.zhiwei.frostmetal.system.entity.SysApi;
-import tech.zhiwei.frostmetal.system.entity.Tenant;
 import tech.zhiwei.frostmetal.system.service.IDepartmentService;
 import tech.zhiwei.frostmetal.system.service.IMenuService;
 import tech.zhiwei.frostmetal.system.service.IRoleMenuService;
@@ -178,17 +177,5 @@ public class SysCache {
      */
     public static SysApi getSysApi(String method, String path) {
         return CacheUtil.get(SYS_CACHE_PREFIX, CACHE_SYS_API, method + ":" + path, () -> sysApiService.findByRequest(method, path));
-    }
-
-    // ---------------------------------------- 接口缓存 ----------------------------------------
-
-    /**
-     * 根据租户code获取租户信息
-     *
-     * @param tenantCode 租户code
-     * @return 租户
-     */
-    public static Tenant getTenant(String tenantCode) {
-        return CacheUtil.get(SYS_CACHE_PREFIX, CACHE_TENANT, tenantCode, () -> tenantService.findByCode(tenantCode));
     }
 }

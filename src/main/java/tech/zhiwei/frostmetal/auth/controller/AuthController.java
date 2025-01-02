@@ -12,9 +12,9 @@ import tech.zhiwei.frostmetal.auth.bean.AuthUser;
 import tech.zhiwei.frostmetal.auth.dto.LoginDTO;
 import tech.zhiwei.frostmetal.auth.util.AuthUtil;
 import tech.zhiwei.frostmetal.core.base.common.R;
-import tech.zhiwei.frostmetal.system.cache.SysCache;
 import tech.zhiwei.frostmetal.system.entity.Tenant;
 import tech.zhiwei.frostmetal.system.entity.User;
+import tech.zhiwei.frostmetal.system.service.ITenantService;
 import tech.zhiwei.frostmetal.system.service.IUserService;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
@@ -31,11 +31,12 @@ import tech.zhiwei.tool.lang.AssertUtil;
 @Tag(name = "auth", description = "auth api")
 public class AuthController {
     private final IUserService userService;
+    private final ITenantService tenantService;
 
     @PostMapping("/login")
     @Operation(summary = "账号登录", operationId = "login")
     public R<Object> login(@RequestBody LoginDTO loginDTO) {
-        Tenant tenant = SysCache.getTenant(loginDTO.getCode());
+        Tenant tenant = tenantService.findByCode(loginDTO.getCode());
         AssertUtil.notNull(tenant, "登录失败，请检查登录账号！");
         User user = userService.verify(tenant.getTenantId(), loginDTO.getUsername(), loginDTO.getPassword());
         if (user != null) {
