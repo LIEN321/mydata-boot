@@ -133,10 +133,10 @@ public interface SysConstant {
 
     List<String> DEFAULT_MENU_ID_LIST = CollectionUtil.newArrayList(
             // mydata
-            "warehouse", "project", "data", "app", "api"
+            "mydata", "warehouse", "project", "data", "app", "api"
             // 组织管理
-            , "department", "role", "user", "account"
+            , "organization", "department", "role", "user", "account"
             // 开发工具
-            , "dev_entity"
+            , "dev", "dev_entity"
     );
 }
