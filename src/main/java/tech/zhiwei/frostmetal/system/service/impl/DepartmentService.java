@@ -30,7 +30,13 @@ public class DepartmentService extends TreeService<DepartmentMapper, Department>
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long saveDepartment(DepartmentDTO departmentDTO) {
+        return saveTenantDepartment(null, departmentDTO);
+    }
+
+    @Override
+    public Long saveTenantDepartment(String tenantId, DepartmentDTO departmentDTO) {
         Department department = BeanUtil.copyProperties(departmentDTO, Department.class);
+        department.setTenantId(tenantId);
         saveOrUpdate(department);
         return department.getId();
     }

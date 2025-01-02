@@ -36,4 +36,12 @@ public interface IMenuService extends ITreeService<Menu> {
      * @return 菜单列表
      */
     List<Menu> listByRole(Long roleId);
+
+    /**
+     * 根据编号集合 查询菜单列表
+     *
+     * @param codes 编号集合
+     * @return 菜单列表
+     */
+    List<Menu> listByCodes(List<String> codes);
 }

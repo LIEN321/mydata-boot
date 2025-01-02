@@ -22,6 +22,15 @@ public interface IRoleService extends IBaseService<Role> {
     Long saveRole(RoleDTO roleDTO);
 
     /**
+     * 在指定租户下 新增角色
+     *
+     * @param tenantId 租户id
+     * @param roleDTO  角色信息
+     * @return 角色id
+     */
+    Long saveTenantRole(String tenantId, RoleDTO roleDTO);
+
+    /**
      * 为角色分配权限
      *
      * @param roleIds 角色id

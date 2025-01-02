@@ -1,5 +1,7 @@
 package tech.zhiwei.frostmetal.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,5 +87,12 @@ public class MenuService extends TreeService<MenuMapper, Menu> implements IMenuS
 
         // 查询用户可见菜单
         return listByIds(uniqueMenuIds);
+    }
+
+    @Override
+    public List<Menu> listByCodes(List<String> codes) {
+        LambdaQueryWrapper<Menu> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(Menu::getCode, codes);
+        return list(queryWrapper);
     }
 }

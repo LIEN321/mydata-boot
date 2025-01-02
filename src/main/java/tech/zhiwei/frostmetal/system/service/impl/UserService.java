@@ -31,10 +31,17 @@ public class UserService extends BaseService<UserMapper, User> implements IUserS
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long saveUser(UserDTO userDTO) {
+        return saveTenantUser(null, userDTO);
+    }
+
+    @Override
+    public Long saveTenantUser(String tenantId, UserDTO userDTO) {
         // 校验信息
-        checkUserInfo(userDTO.getId(), userDTO.getLoginName());
+        checkUserInfo(tenantId, userDTO.getId(), userDTO.getLoginName());
 
         User user = BeanUtil.copyProperties(userDTO, User.class);
+        user.setTenantId(tenantId);
+
         // 更新salt，加密登录密码
         if (StringUtil.isNotBlank(user.getLoginPassword())) {
             String salt = SysUtil.getSalt();
@@ -48,11 +55,7 @@ public class UserService extends BaseService<UserMapper, User> implements IUserS
 
     @Override
     public boolean updateBaseInfo(UserInfoDTO userInfoDTO) {
-        // 校验信息
-        checkUserInfo(userInfoDTO.getId(), null);
-
         User user = BeanUtil.copyProperties(userInfoDTO, User.class);
-
         return updateById(user);
     }
 
@@ -128,16 +131,19 @@ public class UserService extends BaseService<UserMapper, User> implements IUserS
     /**
      * 校验用户信息有效性
      *
+     * @param tenantId  租户id
      * @param userId    用户id
      * @param loginName 登录名
      */
-    private void checkUserInfo(Long userId, String loginName) {
+    private void checkUserInfo(String tenantId, Long userId, String loginName) {
         if (StringUtil.isNotEmpty(loginName)) {
             // 校验账号是否重复
             Long loginNameCount = baseMapper.selectCount(
                     Wrappers.<User>lambdaQuery()
                             .eq(User::getLoginName, loginName)
-                            .ne(userId != null, User::getId, userId));
+                            .ne(userId != null, User::getId, userId)
+                            .eq(StringUtil.isNotEmpty(tenantId), User::getTenantId, tenantId)
+            );
             if (loginNameCount > 0L) {
                 throw new ServiceException(StringUtil.format("登录账号 {} 已存在！", loginName));
             }

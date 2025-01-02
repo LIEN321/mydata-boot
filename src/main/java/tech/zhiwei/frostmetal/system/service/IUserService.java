@@ -21,6 +21,15 @@ public interface IUserService extends IBaseService<User> {
     Long saveUser(UserDTO userDTO);
 
     /**
+     * 在指定租户下 新增用户
+     *
+     * @param tenantId 租户id
+     * @param userDTO  用户信息
+     * @return 用户id
+     */
+    Long saveTenantUser(String tenantId, UserDTO userDTO);
+
+    /**
      * 更新用户基本信息
      *
      * @param userInfoDTO 基本信息

@@ -35,7 +35,13 @@ public class RoleService extends BaseService<RoleMapper, Role> implements IRoleS
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long saveRole(RoleDTO roleDTO) {
+        return saveTenantRole(null, roleDTO);
+    }
+
+    @Override
+    public Long saveTenantRole(String tenantId, RoleDTO roleDTO) {
         Role role = BeanUtil.copyProperties(roleDTO, Role.class);
+        role.setTenantId(tenantId);
         saveOrUpdate(role);
         return role.getId();
     }

@@ -20,6 +20,15 @@ public interface IDepartmentService extends ITreeService<Department> {
     Long saveDepartment(DepartmentDTO departmentDTO);
 
     /**
+     * 在指定租户下 新增部门
+     *
+     * @param tenantId      租户id
+     * @param departmentDTO 部门信息
+     * @return 部门id
+     */
+    Long saveTenantDepartment(String tenantId, DepartmentDTO departmentDTO);
+
+    /**
      * 删除部门
      *
      * @param id 部门id
