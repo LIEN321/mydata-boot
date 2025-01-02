@@ -1,6 +1,5 @@
 package tech.zhiwei.frostmetal.system.controller;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import tech.zhiwei.frostmetal.auth.util.AuthUtil;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.system.cache.SysCache;
@@ -63,11 +63,11 @@ public class MenuController {
     @GetMapping("/list")
     @Operation(summary = "查询菜单", operationId = "menuList")
     public R<List<MenuVO>> list(@RequestParam(required = false) String code,
-        @RequestParam(required = false) String name) {
+                                @RequestParam(required = false) String name) {
         LambdaQueryWrapper<Menu> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.like(StringUtil.isNotEmpty(code), Menu::getCode, code)
-            .like(StringUtil.isNotEmpty(name), Menu::getName, name)
-            .orderByAsc(Menu::getSort);
+                .like(StringUtil.isNotEmpty(name), Menu::getName, name)
+                .orderByAsc(Menu::getSort);
         List<MenuVO> list = MenuWrapper.getInstance().listVO(menuService.list(queryWrapper));
         return R.data(TreeUtil.convert(list));
     }
@@ -110,23 +110,16 @@ public class MenuController {
     @GetMapping("/tree")
     @Operation(summary = "菜单目录树", operationId = "menuTree")
     public List<MenuTreeVO> menuTree() {
-        // 先尝试从缓存获取，若有效则直接返回
-        List<MenuTreeVO> menuTreeList = SysCache.getMenuTree();
-        if (menuTreeList != null) {
-            return menuTreeList;
-        }
-
-        Wrapper<Menu> queryWrapper = Wrappers.<Menu>lambdaQuery().orderByAsc(Menu::getSort);
-        List<Menu> list = menuService.list(queryWrapper);
-        if (CollectionUtil.isEmpty(list)) {
+        Long roleId = AuthUtil.getRoleId();
+        // 查询当前用户角色的菜单
+        List<Menu> menus = menuService.listByRole(roleId);
+        if (CollectionUtil.isEmpty(menus)) {
             return null;
         }
 
-        menuTreeList = MenuWrapper.getInstance().menuTreeVOList(list);
+        List<MenuTreeVO> menuTreeList = MenuWrapper.getInstance().menuTreeVOList(menus);
         menuTreeList = TreeUtil.convert(menuTreeList);
 
-        // 存入缓存
-        SysCache.putMenuTree(menuTreeList);
         return menuTreeList;
     }
 
@@ -140,7 +133,7 @@ public class MenuController {
             List<Long> menuIds = roleMenus.stream().map(RoleMenu::getMenuId).toList();
             // 根据菜单id 查询叶子节点
             LambdaQueryWrapper<Menu> queryWrapper =
-                Wrappers.<Menu>lambdaQuery().in(Menu::getId, menuIds).eq(Menu::getIsLeaf, SysConstant.STATUS_ENABLED);
+                    Wrappers.<Menu>lambdaQuery().in(Menu::getId, menuIds).eq(Menu::getIsLeaf, SysConstant.STATUS_ENABLED);
 
             List<Menu> menus = menuService.list(queryWrapper);
             return menus.stream().map(Menu::getId).map(Object::toString).toList();
