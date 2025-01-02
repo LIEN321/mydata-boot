@@ -1,5 +1,9 @@
 package tech.zhiwei.frostmetal.core.constant;
 
+import tech.zhiwei.tool.collection.CollectionUtil;
+
+import java.util.List;
+
 /**
  * 系统常量
  *
@@ -120,4 +124,19 @@ public interface SysConstant {
      * 缓存统一前缀
      */
     String CACHE_PREFIX = "zhiwei:frostmetal:";
+
+    // -------------------- 枚举常量 --------------------
+    /**
+     * 机构类型：1-公司
+     */
+    int DEPARTMENT_TYPE_COMPANY = 1;
+
+    List<String> DEFAULT_MENU_ID_LIST = CollectionUtil.newArrayList(
+            // mydata
+            "warehouse", "project", "data", "app", "api"
+            // 组织管理
+            , "department", "role", "user", "account"
+            // 开发工具
+            , "dev_entity"
+    );
 }
