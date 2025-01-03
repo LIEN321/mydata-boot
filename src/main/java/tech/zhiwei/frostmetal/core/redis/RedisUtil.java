@@ -159,6 +159,16 @@ public class RedisUtil {
     /**
      * 递增
      *
+     * @param key 键
+     * @return long
+     */
+    public long incr(String key) {
+        return redisTemplate.opsForValue().increment(key);
+    }
+
+    /**
+     * 递增
+     *
      * @param key   键
      * @param delta 要增加几(大于0)
      * @return long
