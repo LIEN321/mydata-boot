@@ -2,6 +2,8 @@ package tech.zhiwei.frostmetal.core.error;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -31,6 +33,22 @@ public class GlobalExceptionHandler {
     public R<Object> handleException(ServiceException e) {
         log.error("业务异常", e);
         return R.fail(e.getMessage());
+    }
+
+    /**
+     * 参数校验异常
+     *
+     * @param ex MethodArgumentNotValidException
+     * @return R
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public R<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        // 提取第一个错误信息
+        FieldError fieldError = ex.getBindingResult().getFieldError();
+        String errorMessage = (fieldError != null) ? fieldError.getDefaultMessage() : "校验错误";
+
+        // 返回精简的错误信息
+        return R.fail(ResponseCode.PARAM_VALID_ERROR, errorMessage);
     }
 
     /**
