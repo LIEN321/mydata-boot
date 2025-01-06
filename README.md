@@ -29,7 +29,7 @@
 
 基于Web API、Excel实现数据集成，简化跨系统之间的数据对接；
 
-![对接结构](./doc/image/mydata_structure_v0.9.jpg)
+![对接结构](https://www.mydata.work/wp-content/uploads/2025/01/mydata_structure_v0.9.jpg)
 
 ### 适用场景
 
@@ -66,24 +66,30 @@
 
 ## 系统结构
 
-![系统结构](./doc/image//mydata_frame_0.9.jpg)
+![系统结构](https://www.mydata.work/wp-content/uploads/2025/01/mydata_frame_0.9.jpg)
 
 ## 功能模块
 
-![功能模块](./doc/image/mydata_funtion_v0.9.jpg)
+![功能模块](https://www.mydata.work/wp-content/uploads/2025/01/mydata_funtion_v0.9-scaled.jpg)
 
 # 界面截图
 
-* 集成管理
-    *
+* 定义数据标准
+  ![定义数据标准.png](https://www.mydata.work/wp-content/uploads/2025/01/定义数据标准.jpg)
+* 查看数仓业务数据
+  ![查看数仓业务数据.png](https://www.mydata.work/wp-content/uploads/2025/01/查看数仓业务数据.jpg)
+* 流水线管理
+  ![流水线管理.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线管理.jpg)
+* 流水线任务编排
+  ![流水线任务编排.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线任务编排.jpg)
+* 流水线执行记录
+  ![流水线执行记录.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线执行记录.jpg)
+* 执行过程日志
+  ![执行过程日志.png](https://www.mydata.work/wp-content/uploads/2025/01/执行过程日志.jpg)
 
 ## 使用手册
 
 * 使用手册：https://www.mydata.work/docs#/./manual/
-
-## 快速部署
-
-详见部署文档：https://www.mydata.work/docs#/./docker/
 
 # 试用体验
 
