@@ -1,1 +1,0 @@
-ALTER TABLE `md_data_field` ADD COLUMN `field_type` varchar(64) NULL DEFAULT '' COMMENT '字段类型';

@@ -1,1 +1,0 @@
-ALTER TABLE `md_task` ADD COLUMN `clean_html` int(0) NULL DEFAULT 0 COMMENT '是否清除HTML标签，0-不清除、1-清除';
