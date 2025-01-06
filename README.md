@@ -29,7 +29,7 @@
 
 基于Web API、Excel实现数据集成，简化跨系统之间的数据对接；
 
-![对接结构](./doc/image/mydata_structure_v0.8.jpg)
+![对接结构](https://www.mydata.work/wp-content/uploads/2025/01/mydata_structure_v0.9.jpg)
 
 ### 适用场景
 
@@ -54,8 +54,8 @@
 ### 技术选型
 
 * 采用前后端分离框架开发；
-    * mydata-blade是平台后端，基于 [SpringBlade](https://gitee.com/smallc/SpringBlade) 的boot版开发
-    * mydata-sword是平台前端，基于 [Sword](https://gitee.com/smallc/Sword) （React、Ant Design）开发；
+    * mydata-boot是平台后端，基于 [zhiwei_FrostMetal](https://gitee.com/LIEN321/zhiwei_FrostMetal) (SpringBoot v3)开发
+    * mydata-antd是平台前端，基于 [zhiwei_Gyrfalcon](https://gitee.com/LIEN321/zhiwei_Gyrfalcon) （Ant Design Pro v5）开发；
 * 依赖组件
     * MySQL：存储管理数据，主流数据库方便维护和使用；
     * MongoDB；存储业务数据；
@@ -66,22 +66,32 @@
 
 ## 系统结构
 
-![系统结构](./doc/image//mydata_frame_0.7.0.jpg)
+![系统结构](https://www.mydata.work/wp-content/uploads/2025/01/mydata_frame_0.9.jpg)
 
 ## 功能模块
 
-![功能模块](./doc/image/mydata_funtion_v0.7.0.jpg)
+![功能模块](https://www.mydata.work/wp-content/uploads/2025/01/mydata_funtion_v0.9-scaled.jpg)
 
-## 体验
+# 界面截图
 
-* Demo体验环境：http://www.mydata.work
+* 定义数据标准
+  ![定义数据标准.png](https://www.mydata.work/wp-content/uploads/2025/01/定义数据标准.jpg)
+* 查看数仓业务数据
+  ![查看数仓业务数据.png](https://www.mydata.work/wp-content/uploads/2025/01/查看数仓业务数据.jpg)
+* 流水线管理
+  ![流水线管理.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线管理.jpg)
+* 流水线任务编排
+  ![流水线任务编排.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线任务编排.jpg)
+* 流水线执行记录
+  ![流水线执行记录.png](https://www.mydata.work/wp-content/uploads/2025/01/流水线执行记录.jpg)
+* 执行过程日志
+  ![执行过程日志.png](https://www.mydata.work/wp-content/uploads/2025/01/执行过程日志.jpg)
+
+## 使用手册
+
 * 使用手册：https://www.mydata.work/docs#/./manual/
 
-## 快速部署
-
-详见部署文档：https://www.mydata.work/docs#/./docker/
-
-# 联系我们
+# 试用体验
 
 * 交流Q群：<a href="https://qm.qq.com/cgi-bin/qm/qr?k=OVVACmjDnrjQo6j9s7_fmv5Mwx1S_-MM&jump_from=webapi">
   <img src="https://img.shields.io/badge/QQ群-430089673-orange"/></a>
@@ -90,6 +100,56 @@
 ![联系作者](./doc/image/wechat.jpg)
 
 # 更新记录
+
+## 0.9.0（2025-01-05）
+
+### 新功能
+
+- 全新设计的流水线集成方案，支持更灵活、自由的编排；
+
+    - API
+
+        - 从API获取JSON
+
+        - 向API发送数据
+
+    - Webhook
+        - 从Webhook接收JSON
+
+    - 数据处理
+
+        - JSON转数据
+
+        - 数据转JSON
+
+        - 过滤数据
+
+        - 处理数据
+
+        - 数据写入Excel
+
+    - 数据仓库
+
+        - 保存业务数据到数据仓库
+
+        - 从数据仓库查询业务数据
+
+    - 邮件
+        - 发送邮件
+
+    - 流水线
+        - 触发流水线
+
+    - 参数变量
+        - JSON值存入变量
+
+    - 采用新的前后端框架重构系统；
+
+### 优化
+
+- 重构优化集成任务流程 ，提高稳定性、数据准确性、问题可追查性；
+- 改用Quartz实现定时任务调度；
+- 去掉环境管理，接口统一前缀转移到应用的基本信息里；
 
 ## 0.8.4（2024-08-08）
 
