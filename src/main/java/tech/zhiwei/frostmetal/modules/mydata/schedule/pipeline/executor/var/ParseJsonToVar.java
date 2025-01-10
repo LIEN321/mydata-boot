@@ -7,6 +7,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -66,18 +67,17 @@ public class ParseJsonToVar extends TaskExecutor {
             varMappings.forEach(varMapping -> {
                 String varCode = (String) varMapping.get("varCode");
                 String jsonField = (String) varMapping.get("jsonField");
-                Boolean switchEmpty = ObjectUtil.defaultIfNull((Boolean) varMapping.get("switchEmpty"), false);
+//                Boolean switchEmpty = ObjectUtil.defaultIfNull((Boolean) varMapping.get("switchEmpty"), false);
+                String op = (String) varMapping.get("op");
+
                 Object varValue = originJson.getByPath(jsonField);
+                varValue = ProcessData.processValue(varValue, op, null, null);
+
                 if (ObjectUtil.isNotNull(varValue)) {
                     jobContextData.put(varCode, varValue);
                     log("设置变量成功：{} = {}", varCode, varValue);
                 } else {
-                    if (switchEmpty) {
-                        jobContextData.put(varCode, "");
-                        log("设置变量为空：{} = \"\"", varCode);
-                    } else {
-                        log("设置变量失败：{} = null", varCode);
-                    }
+                    log("设置变量失败：{} = null", varCode);
                 }
             });
         }
