@@ -98,6 +98,7 @@ public class JobApiService {
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
+        taskExecutor.log("\trequest url：{}", apiUrl);
         taskExecutor.log("\trequest param：{}", reqParams);
         taskExecutor.log("\trequest header：{}", reqHeaders);
         taskExecutor.log("\trequest form：{}", reqForm);
