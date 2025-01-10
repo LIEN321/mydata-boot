@@ -174,9 +174,12 @@ public class ProcessData extends TaskExecutor {
 
             // 若字段值无效
             if (ObjectUtil.isNull(dataValue)) {
-                // 需要设置为空字符串
                 if (isSetEmptyIfNull(op)) {
+                    // 设置为空字符串
                     dataValue = StringUtil.EMPTY;
+                } else if (isSetZeroIfNull(op)) {
+                    // 设置为数字0
+                    dataValue = 0;
                 } else {
                     // 跳过不处理
                     continue;
@@ -281,5 +284,15 @@ public class ProcessData extends TaskExecutor {
      */
     public static boolean isSetEmptyIfNull(String targetOp) {
         return "emptyIfNull".equals(targetOp);
+    }
+
+    /**
+     * 判断指定处理类型 是否为置0
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetZeroIfNull(String targetOp) {
+        return "zeroIfNull".equals(targetOp);
     }
 }
