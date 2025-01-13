@@ -288,6 +288,11 @@ public interface MyDataConstant {
     String JOB_DATA_KEY_DATA_JSON = "DATA_JSON";
 
     /**
+     * 任务输出项：数据json
+     */
+    String JOB_KEY_JSON_TEMPLATE = "JSON_TEMPLATE";
+
+    /**
      * Job上下文共享数据的标识：Excel文件
      */
     String JOB_DATA_KEY_EXCEL_FILE = "EXCEL_FILE";
