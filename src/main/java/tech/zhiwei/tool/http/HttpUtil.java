@@ -17,8 +17,7 @@ import java.util.Map;
  */
 public class HttpUtil extends cn.hutool.http.HttpUtil {
 
-    public static String send(String method, String url, Map<String, String> params, Map<String, String> headers, Map<String, String> reqForms, String reqBody) {
-
+    public static HttpResponse send(String method, String url, Map<String, String> params, Map<String, String> headers, Map<String, String> reqForms, String reqBody) {
         // 拼接url后面的参数
         if (CollectionUtil.isNotEmpty(params)) {
             StringBuffer paramString = new StringBuffer();
@@ -42,8 +41,7 @@ public class HttpUtil extends cn.hutool.http.HttpUtil {
         if (StringUtil.isNotEmpty(reqBody)) {
             request.body(reqBody);
         }
-        HttpResponse response = request.execute();
-        return response.body();
+        return request.execute();
     }
 
 }
