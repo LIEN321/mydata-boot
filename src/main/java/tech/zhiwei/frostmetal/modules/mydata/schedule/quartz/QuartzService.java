@@ -16,6 +16,7 @@ import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.calendar.WeeklyCalendar;
 import org.springframework.stereotype.Service;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.tool.map.MapUtil;
@@ -55,7 +56,7 @@ public class QuartzService {
      *
      * @throws SchedulerException
      */
-    public void scheduleJob(Long pipelineId, Integer[] dayOfWeek, int intervalSeconds, Date startTime, Date endTime, int repeatCount) throws SchedulerException {
+    public void scheduleJob(String tenantId, Long pipelineId, Integer[] dayOfWeek, int intervalSeconds, Date startTime, Date endTime, int repeatCount) throws SchedulerException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
@@ -65,6 +66,7 @@ public class QuartzService {
         // 构建Job Detail对象，带有流水线id值
         JobDetail job = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(sPipelineId)
+                .usingJobData(SysConstant.TENANT_ID, tenantId)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, MyDataConstant.JOB_TRIGGER_TYPE_SCHEDULE)
                 .build();
@@ -113,8 +115,8 @@ public class QuartzService {
      * @param triggerType 触发类型
      * @throws SchedulerException 调度异常
      */
-    public void executeJob(Long pipelineId, String group, Integer triggerType) throws SchedulerException {
-        executeJob(pipelineId, group, triggerType, null);
+    public void executeJob(String tenantId, Long pipelineId, String group, Integer triggerType) throws SchedulerException {
+        executeJob(tenantId, pipelineId, group, triggerType, null);
     }
 
     /**
@@ -126,7 +128,7 @@ public class QuartzService {
      * @param map         数据
      * @throws SchedulerException 调度异常
      */
-    public void executeJob(Long pipelineId, String group, Integer triggerType, Map<String, Object> map) throws SchedulerException {
+    public void executeJob(String tenantId, Long pipelineId, String group, Integer triggerType, Map<String, Object> map) throws SchedulerException {
         // 流水线id的字符串值
         String sPipelineId = pipelineId.toString();
 
@@ -134,6 +136,7 @@ public class QuartzService {
 
         JobBuilder jobBuilder = JobBuilder.newJob(PipelineJob.class)
                 .withIdentity(identity, group)
+                .usingJobData(SysConstant.TENANT_ID, tenantId)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID, pipelineId)
                 .usingJobData(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE, triggerType);
 

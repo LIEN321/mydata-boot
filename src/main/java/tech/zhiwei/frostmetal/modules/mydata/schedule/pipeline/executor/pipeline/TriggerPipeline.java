@@ -41,7 +41,7 @@ public class TriggerPipeline extends TaskExecutor {
 
         pipelineJsons.forEach(pipelineJson -> {
             Long targetPipelineId = NumberUtil.parseLong((String) getTaskConfig().get("PIPELINE_ID"));
-            pipelineScheduler.webhookPipeline(targetPipelineId, pipelineJson.getOriginJson().toString());
+            pipelineScheduler.webhookPipeline(pipelineTask.getTenantId(), targetPipelineId, pipelineJson.getOriginJson().toString());
             log("触发流水线成功，提交json={}", pipelineJson.getOriginJson());
         });
     }

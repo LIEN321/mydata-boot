@@ -90,7 +90,7 @@ public class PipelineScheduler {
 
         try {
             // 使用 quartz 调度任务
-            quartzService.scheduleJob(pipelineId, dayOfWeek, intervalSeconds, dStartTime, dEndTime, MyDataConstant.JOB_REPEAT_FOREVER);
+            quartzService.scheduleJob(pipeline.getTenantId(), pipelineId, dayOfWeek, intervalSeconds, dStartTime, dEndTime, MyDataConstant.JOB_REPEAT_FOREVER);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -99,11 +99,12 @@ public class PipelineScheduler {
     /**
      * 手动执行流水线
      *
+     * @param tenantId   租户标识
      * @param pipelineId 流水线id
      */
-    public void executePipeline(Long pipelineId) {
+    public void executePipeline(String tenantId, Long pipelineId) {
         try {
-            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_MANUAL, MyDataConstant.JOB_TRIGGER_TYPE_MANUAL);
+            quartzService.executeJob(tenantId, pipelineId, MyDataConstant.JOB_GROUP_MANUAL, MyDataConstant.JOB_TRIGGER_TYPE_MANUAL);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -112,13 +113,14 @@ public class PipelineScheduler {
     /**
      * webhook执行流水线
      *
+     * @param tenantId   租户标识
      * @param pipelineId 流水线id
      */
-    public void webhookPipeline(Long pipelineId, String body) {
+    public void webhookPipeline(String tenantId, Long pipelineId, String body) {
         try {
             Map<String, Object> map = MapUtil.newHashMap();
             map.put(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY, body);
-            quartzService.executeJob(pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK, map);
+            quartzService.executeJob(tenantId, pipelineId, MyDataConstant.JOB_GROUP_WEBHOOK, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK, map);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
