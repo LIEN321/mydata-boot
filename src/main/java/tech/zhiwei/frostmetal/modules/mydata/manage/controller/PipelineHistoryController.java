@@ -22,6 +22,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineHistoryVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineHistoryWrapper;
+import tech.zhiwei.tool.date.DateUtil;
 
 import java.util.Collection;
 import java.util.Date;
@@ -56,13 +57,15 @@ public class PipelineHistoryController {
         queryWrapper.eq(PipelineHistory::getPipelineId, pipelineId);
         queryWrapper.orderByDesc(PipelineHistory::getCreateTime);
         if (startTime != null) {
-            if (startTime.length == 1) {
-                queryWrapper.ge(PipelineHistory::getStartTime, startTime[0]);
-            } else if (startTime.length > 1) {
-                queryWrapper.between(PipelineHistory::getStartTime, startTime[0], startTime[1]);
+            if (startTime.length > 0) {
+                Date start = DateUtil.updateTime(startTime[0], 0, 0, 0);
+                queryWrapper.ge(PipelineHistory::getStartTime, start);
+            }
+            if (startTime.length > 1) {
+                Date end = DateUtil.updateTime(startTime[1], 23, 59, 59);
+                queryWrapper.le(PipelineHistory::getStartTime, end);
             }
         }
-
         return P.page(PipelineHistoryWrapper.getInstance().pageVO(pipelineHistoryService.page(queryWrapper, pageParam)));
     }
 
