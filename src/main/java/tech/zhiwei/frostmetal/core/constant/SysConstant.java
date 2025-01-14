@@ -118,6 +118,11 @@ public interface SysConstant {
      */
     Long DEFAULT_PARENT_ID = null;
 
+    /**
+     * 租户标识
+     */
+    String TENANT_ID = "tenant_id";
+
     // -------------------- 缓存相关 --------------------
 
     /**
