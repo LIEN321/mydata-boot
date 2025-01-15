@@ -41,6 +41,7 @@ public class QuartzService {
 
     public QuartzService() throws SchedulerException {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
+        scheduler.getListenerManager().addJobListener(new TenantJobListener(1));
         scheduler.start();
     }
 
@@ -53,8 +54,6 @@ public class QuartzService {
 
     /**
      * 加入调度任务
-     *
-     * @throws SchedulerException
      */
     public void scheduleJob(String tenantId, Long pipelineId, Integer[] dayOfWeek, int intervalSeconds, Date startTime, Date endTime, int repeatCount) throws SchedulerException {
         // 流水线id的字符串值
