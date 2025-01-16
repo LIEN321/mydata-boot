@@ -89,7 +89,7 @@
 
 ## 使用手册
 
-* 使用手册：https://www.mydata.work/docs#/./manual/
+* 使用手册：https://www.yuque.com/lien321/mydata
 
 # 试用体验
 
