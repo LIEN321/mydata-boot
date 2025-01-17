@@ -41,7 +41,6 @@ public class QuartzService {
 
     public QuartzService() throws SchedulerException {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
-        scheduler.getListenerManager().addJobListener(new TenantJobListener(1));
         scheduler.start();
     }
 
