@@ -84,20 +84,19 @@ public class ParseDataToJson extends TaskExecutor {
 
         // 将json字符串 替换${DATA_JSON}占位符
         Map<String, Object> map = MapUtil.newHashMap();
-        map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
         if (CollectionUtil.isNotEmpty(bizDataList) && bizDataList.size() == 1) {
             map.putAll(bizDataList.get(0));
+            // 当map值为String时，处理其中的 单引号和双引号，避免影响输出的json
+            map.forEach((k, v) -> {
+                if (v instanceof String str) {
+                    str = StringUtil.replace(str, "\"", "\\\"");
+                    str = StringUtil.replace(str, "'", "\\'");
+                    map.put(k, str);
+                }
+            });
         }
+        map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
         map.putAll(jobContextData);
-
-        // 当map值为String时，处理其中的 单引号和双引号，避免影响输出的json
-        map.forEach((k, v) -> {
-            if (v instanceof String str) {
-                str = StringUtil.replace(str, "\"", "\\\"");
-                str = StringUtil.replace(str, "'", "\\'");
-                map.put(k, str);
-            }
-        });
 
         String json = StringUtil.substitute(jsonTemplate, map);
         try {
