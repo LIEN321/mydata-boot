@@ -21,7 +21,7 @@ import java.util.Map;
  * 业务数据转为JSON
  *
  * @author LIEN
- * @since 2024/11/29
+ * @since 2024/12/15
  */
 @Slf4j
 public class ParseDataToJson extends TaskExecutor {
@@ -89,13 +89,23 @@ public class ParseDataToJson extends TaskExecutor {
             map.putAll(bizDataList.get(0));
         }
         map.putAll(jobContextData);
+
+        // 当map值为String时，处理其中的 单引号和双引号，避免影响输出的json
+        map.forEach((k, v) -> {
+            if (v instanceof String str) {
+                str = StringUtil.replace(str, "\"", "\\\"");
+                str = StringUtil.replace(str, "'", "\\'");
+                map.put(k, str);
+            }
+        });
+
         String json = StringUtil.substitute(jsonTemplate, map);
         try {
             // 预先检测json字符串是否有效
             JSON jsonObject = JsonUtil.parse(json);
             log("转换后的JSON：{}", json);
 
-            PipelineJson pipelineJson = new PipelineJson(jsonObject, CollectionUtil.toList(dataJson));
+            PipelineJson pipelineJson = new PipelineJson(jsonObject, CollectionUtil.toList(jsonObject));
             setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));
         } catch (Exception e) {
 //            error("转换后的json无效，结束执行，json={}", json);
