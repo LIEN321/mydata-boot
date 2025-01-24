@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service;
 
+import cn.hutool.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
@@ -98,13 +99,18 @@ public class JobApiService {
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
-        taskExecutor.log("\trequest param：{}", reqParams);
-        taskExecutor.log("\trequest header：{}", reqHeaders);
-        taskExecutor.log("\trequest form：{}", reqForm);
-        taskExecutor.log("\trequest body：{}", reqBody);
-        // 发送请求
-        String response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
-        taskExecutor.log("\tresponse : {}", response);
-        return response;
+        taskExecutor.log("\trequest url: [{}] {}", api.getApiMethod(), apiUrl);
+        taskExecutor.log("\trequest param : {}", reqParams);
+        taskExecutor.log("\trequest header : {}", reqHeaders);
+        taskExecutor.log("\trequest form : {}", reqForm);
+        taskExecutor.log("\trequest body : {}", reqBody);
+
+        // 发送请求，获取响应结果
+        HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
+        String responseBody = response.body();
+
+        taskExecutor.log("\tresponse status : {}", response.getStatus());
+        taskExecutor.log("\tresponse body : {}", responseBody);
+        return responseBody;
     }
 }

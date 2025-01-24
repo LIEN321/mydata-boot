@@ -186,6 +186,6 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         bizDataService.updateDataCount(dataId);
-        log("更新标准数据的业务数量");
+        log("重新统计业务数据量");
     }
 }

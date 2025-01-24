@@ -108,6 +108,8 @@ public class PipelineController {
     @GetMapping("/execute/{id}")
     @Operation(summary = "执行流水线", operationId = "executePipeline")
     public R<Boolean> execute(@PathVariable Long id) {
+        Pipeline pipeline = pipelineService.getById(id);
+
         // 查询流水线任务列表
         List<PipelineTask> tasks = pipelineTaskService.listByPipeline(id);
         if (CollectionUtil.isEmpty(tasks)) {
@@ -122,7 +124,7 @@ public class PipelineController {
             return R.fail("执行失败：流水线正在运行中，请稍后再试！");
         }
 
-        pipelineScheduler.executePipeline(id);
+        pipelineScheduler.executePipeline(pipeline.getTenantId(), id);
         return R.success();
     }
 

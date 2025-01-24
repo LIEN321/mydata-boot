@@ -6,6 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
@@ -20,7 +21,7 @@ import java.util.Map;
  * 业务数据转为JSON
  *
  * @author LIEN
- * @since 2024/11/29
+ * @since 2024/12/15
  */
 @Slf4j
 public class ParseDataToJson extends TaskExecutor {
@@ -56,14 +57,6 @@ public class ParseDataToJson extends TaskExecutor {
         // 字段映射
         Map<String, String> fieldMapping = getFieldMapping();
 
-        // 输出配置
-        Map<String, String> outputMap = getOutputMap();
-        String dataJsonKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
-        if (StringUtil.isEmpty(dataJsonKey)) {
-//            error("执行失败：无效的输出设置，未配置JSON的变量名");
-            throw new RuntimeException("执行失败：无效的输出设置，未配置JSON的变量名");
-        }
-
         // 复制上下文的业务数据
         List<Map<String, Object>> bizDataList = ObjectUtil.cloneByStream(pipelineBizData.getBizData());
         // 如果字段映射有效，则根据字段映射 修改业务数据的key
@@ -86,27 +79,36 @@ public class ParseDataToJson extends TaskExecutor {
         JSON dataJson = JsonUtil.parse(bizDataList);
 
         // JSON模板
-        String jsonTemplate = StringUtil.nullToEmpty((String) pipelineTask.getTaskConfig().get("JSON_TEMPLATE"));
+        String jsonTemplate = StringUtil.nullToEmpty((String) pipelineTask.getTaskConfig().get(MyDataConstant.JOB_KEY_JSON_TEMPLATE));
         log("JSON模板：{}", jsonTemplate);
 
         // 将json字符串 替换${DATA_JSON}占位符
         Map<String, Object> map = MapUtil.newHashMap();
-        map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
         if (CollectionUtil.isNotEmpty(bizDataList) && bizDataList.size() == 1) {
             map.putAll(bizDataList.get(0));
+            // 当map值为String时，处理其中的 单引号和双引号，避免影响输出的json
+            map.forEach((k, v) -> {
+                if (v instanceof String str) {
+                    str = StringUtil.replace(str, "\"", "\\\"");
+                    str = StringUtil.replace(str, "'", "\\'");
+                    map.put(k, str);
+                }
+            });
         }
+        map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
         map.putAll(jobContextData);
+
         String json = StringUtil.substitute(jsonTemplate, map);
         try {
             // 预先检测json字符串是否有效
-            JsonUtil.parse(json);
+            JSON jsonObject = JsonUtil.parse(json);
+            log("转换后的JSON：{}", json);
+
+            PipelineJson pipelineJson = new PipelineJson(jsonObject, CollectionUtil.toList(jsonObject));
+            setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));
         } catch (Exception e) {
 //            error("转换后的json无效，结束执行，json={}", json);
             throw new RuntimeException(StringUtil.format("转换后的json无效，结束执行，json={}", json));
         }
-
-        // 数据存入任务上下文数据中
-        jobContextData.put(dataJsonKey, json);
-        log("转换后的JSON：{}", json);
     }
 }

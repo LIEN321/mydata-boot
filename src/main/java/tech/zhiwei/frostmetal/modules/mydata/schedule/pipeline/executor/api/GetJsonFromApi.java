@@ -125,14 +125,14 @@ public class GetJsonFromApi extends TaskExecutor {
             }
 
             // 将json字符串转 提取业务数据
-            List<PipelineJson> subPipelineJsons = JobJsonService.pipelineJson(originJsonString, fieldPrefix);
+            PipelineJson subPipelineJson = JobJsonService.pipelineJson(originJsonString, fieldPrefix);
 
-            if (JobJsonService.isAllEmpty(subPipelineJsons)) {
+            if (JobJsonService.hasNoData(subPipelineJson)) {
                 error("没有有效的业务数据，结束执行");
             }
 
             // 对比上一次数据
-            List<JSON> dataJsons = subPipelineJsons.stream().map(PipelineJson::getDataJson).toList();
+            List<JSON> dataJsons = subPipelineJson.getDataJsonList();
             if (lastDataJsons != null) {
                 if (lastDataJsons.equals(dataJsons)) {
                     error("本次结果与前一次 完全一样，结束执行。");
@@ -142,7 +142,8 @@ public class GetJsonFromApi extends TaskExecutor {
             // 记录最新json的hash
             lastDataJsons = dataJsons;
 
-            pipelineJsons.addAll(subPipelineJsons);
+            // 本次结果加入分批列表中
+            pipelineJsons.add(subPipelineJson);
 
             if (isBatch) {
                 // 分批模式
@@ -157,11 +158,7 @@ public class GetJsonFromApi extends TaskExecutor {
         } while (isBatch);
 
         // 将结果保存到 job上下文
-        Map<String, String> output = getOutputMap();
-        String pipelineJsonKey = output.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
-        if (StringUtil.isNotEmpty(pipelineJsonKey)) {
-            jobContextData.put(pipelineJsonKey, pipelineJsons);
-        }
+        setPipelineJson(jobContextData, pipelineJsons);
         log("从API获取JSON完成");
     }
 }

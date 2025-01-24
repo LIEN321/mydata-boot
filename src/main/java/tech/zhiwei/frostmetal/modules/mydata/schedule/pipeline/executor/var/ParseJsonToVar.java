@@ -1,16 +1,16 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var;
 
-import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSON;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
-import tech.zhiwei.tool.lang.StringUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -30,24 +30,6 @@ public class ParseJsonToVar extends TaskExecutor {
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
-        // 输入配置
-        Map<String, String> inputMap = getInputMap();
-
-        // 获取待解析json的key
-        String pipelineJsonKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
-        if (StringUtil.isEmpty(pipelineJsonKey)) {
-//            error("JSON变量名为空，结束执行。");
-            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
-        }
-
-        // 从上下文获取json
-        // 业务数据json
-        List<PipelineJson> pipelineJsons = (List<PipelineJson>) jobContextData.get(pipelineJsonKey);
-        if (CollectionUtil.isEmpty(pipelineJsons)) {
-//            error("没有JSON待转换，结束执行。");
-            throw new IllegalArgumentException("没有JSON待转换，结束执行。");
-        }
-
         // 变量配置
         List<Map<String, Object>> varMappings = (List<Map<String, Object>>) getTaskConfig().get(MyDataConstant.JOB_DATA_VAR_MAPPING);
         if (CollectionUtil.isEmpty(varMappings)) {
@@ -55,31 +37,42 @@ public class ParseJsonToVar extends TaskExecutor {
             throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
 
-        for (PipelineJson pipelineJson : pipelineJsons) {
-            JSONObject originJson = ObjectUtil.defaultIfNull(pipelineJson.getOriginJson(), new JSONObject());
+        // 从上下文获取json
+        List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
+        if (ObjectUtil.isEmpty(pipelineJsons)) {
+//            throw new IllegalArgumentException("没有JSON待转换，结束执行。");
+            error("没有JSON待转换，结束执行。");
+            return;
+        }
+
+        pipelineJsons.forEach(pipelineJson -> {
+            // 获取原始json
+            JSON originJson = pipelineJson.getOriginJson();
             if (JsonUtil.isEmpty(originJson)) {
                 error("未获取有效json");
-            } else {
-                log("从json提取值到变量，json = {}", originJson);
+                return;
             }
+            log("从json提取值到变量，json = {}", originJson);
 
+            // 遍历参数映射
             varMappings.forEach(varMapping -> {
+                // 参数名
                 String varCode = (String) varMapping.get("varCode");
+                // json字段名
                 String jsonField = (String) varMapping.get("jsonField");
-                Boolean switchEmpty = ObjectUtil.defaultIfNull((Boolean) varMapping.get("switchEmpty"), false);
+//                Boolean switchEmpty = ObjectUtil.defaultIfNull((Boolean) varMapping.get("switchEmpty"), false);
+                String op = (String) varMapping.get("op");
+
                 Object varValue = originJson.getByPath(jsonField);
+                varValue = ProcessData.processValue(varValue, op, null, null);
+
                 if (ObjectUtil.isNotNull(varValue)) {
                     jobContextData.put(varCode, varValue);
                     log("设置变量成功：{} = {}", varCode, varValue);
                 } else {
-                    if (switchEmpty) {
-                        jobContextData.put(varCode, "");
-                        log("设置变量为空：{} = \"\"", varCode);
-                    } else {
-                        log("设置变量失败：{} = null", varCode);
-                    }
+                    log("设置变量失败：{} = null", varCode);
                 }
             });
-        }
+        });
     }
 }

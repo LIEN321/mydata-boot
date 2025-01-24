@@ -9,6 +9,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -193,6 +194,33 @@ public abstract class TaskExecutor {
         }
 
         return (Map<String, String>) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_OUTPUT);
+    }
+
+    /**
+     * 设置流水线上下文的json
+     *
+     * @param jobContextData 流水线上下文数据
+     * @param pipelineJsons  流水线json
+     */
+    protected void setPipelineJson(Map<String, Object> jobContextData, List<PipelineJson> pipelineJsons) {
+        Map<String, String> output = getOutputMap();
+        String pipelineJsonKey = output.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
+        jobContextData.put(pipelineJsonKey, pipelineJsons);
+    }
+
+    /**
+     * 从流水线上下文获取json
+     *
+     * @param jobContextData 流水线上下文数据
+     * @return 流水线json
+     */
+    protected List<PipelineJson> getPipelineJson(Map<String, Object> jobContextData) {
+        String pipelineJsonKey = getInputMap().get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
+        if (StringUtil.isEmpty(pipelineJsonKey)) {
+//            error("JSON变量名为空，结束执行。");
+            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
+        }
+        return (List<PipelineJson>) jobContextData.get(pipelineJsonKey);
     }
 
     /**

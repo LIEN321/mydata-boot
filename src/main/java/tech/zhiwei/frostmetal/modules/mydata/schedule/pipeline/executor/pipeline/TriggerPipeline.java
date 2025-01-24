@@ -1,14 +1,16 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 import tech.zhiwei.tool.util.NumberUtil;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,27 +33,16 @@ public class TriggerPipeline extends TaskExecutor {
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
 
-        // 输入配置
-        Map<String, String> inputMap = getInputMap();
-
-        // 获取待解析json的key
-        String dataJsonKey = inputMap.get(MyDataConstant.JOB_DATA_KEY_DATA_JSON);
-//        if (StringUtil.isEmpty(dataJsonKey)) {
-//            error("JSON变量名为空，结束执行。");
-//            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
-//        }
-
-        String dataJson = null;
-        if (dataJsonKey != null) {
-            dataJson = (String) jobContextData.get(dataJsonKey);
+        List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
+        if (ObjectUtil.isEmpty(pipelineJsons)) {
+            log("json内容为空，不触发流水线，结束执行。");
+            return;
         }
-//        if (JsonUtil.isEmpty(dataJson)) {
-//            log("json内容为空，不触发流水线，结束执行。");
-//            return;
-//        }
 
-        Long targetPipelineId = NumberUtil.parseLong((String) getTaskConfig().get("PIPELINE_ID"));
-        pipelineScheduler.webhookPipeline(targetPipelineId, dataJson);
-        log("触发流水线成功，提交json={}", dataJson);
+        pipelineJsons.forEach(pipelineJson -> {
+            Long targetPipelineId = NumberUtil.parseLong((String) getTaskConfig().get("PIPELINE_ID"));
+            pipelineScheduler.webhookPipeline(pipelineTask.getTenantId(), targetPipelineId, pipelineJson.getOriginJson().toString());
+            log("触发流水线成功，提交json={}", pipelineJson.getOriginJson());
+        });
     }
 }

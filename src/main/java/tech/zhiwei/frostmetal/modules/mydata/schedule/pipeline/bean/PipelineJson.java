@@ -1,12 +1,12 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean;
 
 import cn.hutool.json.JSON;
-import cn.hutool.json.JSONObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 流水线中的业务数据JSON
@@ -20,12 +20,12 @@ public class PipelineJson implements Serializable {
     @Serial
     private static final long serialVersionUID = 3367393394544398794L;
     /**
-     * 原始json对象
+     * 原始json
      */
-    private JSONObject originJson;
+    private JSON originJson;
 
     /**
      * 数据json
      */
-    private JSON dataJson;
+    private List<JSON> dataJsonList;
 }

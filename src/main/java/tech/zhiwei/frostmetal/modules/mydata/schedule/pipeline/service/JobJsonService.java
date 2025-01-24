@@ -17,11 +17,14 @@ import java.util.List;
  * @since 2024/12/19
  */
 public class JobJsonService {
-    public static List<PipelineJson> pipelineJson(String json, String fieldPrefix) {
-        List<PipelineJson> pipelineJsons = CollectionUtil.newArrayList();
-
+    public static PipelineJson pipelineJson(String json, String fieldPrefix) {
         // json字符串转为json对象
         JSON originJson = JsonUtil.parse(json);
+        // 业务数据json集合
+        List<JSON> dataJsonList = CollectionUtil.newArrayList();
+        // 流水线json对象
+        PipelineJson pipelineJson = new PipelineJson(originJson, dataJsonList);
+
         // 使用数组模式 兼容单个对象和数组模式
         JSONArray originJsonArray;
         if (originJson instanceof JSONArray) {
@@ -31,38 +34,32 @@ public class JobJsonService {
             originJsonArray.add(originJson);
         }
 
-        originJsonArray.forEach(originJsonObject -> {
-            JSONObject baseJson = (JSONObject) originJsonObject;
+        originJsonArray.forEach(obj -> {
+            JSONObject jsonObject = (JSONObject) obj;
             JSON dataJson;
             if (StringUtil.isEmpty(fieldPrefix)) {
-                dataJson = baseJson;
+                dataJson = jsonObject;
             } else {
-                dataJson = (JSON) baseJson.getByPath(fieldPrefix);
+                dataJson = (JSON) jsonObject.getByPath(fieldPrefix);
             }
-
-//            log("数据所在层级：{}，提取的数据JSON：{}", fieldPrefix, dataJson);
-
-            // 使用数组模式 兼容单个对象和数组模式
-
-            PipelineJson pipelineJson = new PipelineJson(baseJson, dataJson);
-            pipelineJsons.add(pipelineJson);
+            dataJsonList.add(dataJson);
         });
-        return pipelineJsons;
+        return pipelineJson;
     }
 
     /**
      * 判断流水线json是否没有数据
      *
-     * @param pipelineJsons 流水线json集合
+     * @param pipelineJson 流水线json集合
      * @return 是否没有数据
      */
-    public static boolean isAllEmpty(List<PipelineJson> pipelineJsons) {
-        if (CollectionUtil.isEmpty(pipelineJsons)) {
+    public static boolean hasNoData(PipelineJson pipelineJson) {
+        if (pipelineJson == null || CollectionUtil.isEmpty(pipelineJson.getDataJsonList())) {
             return true;
         }
 
-        for (PipelineJson pipelineJson : pipelineJsons) {
-            if (JsonUtil.isNotEmpty(pipelineJson.getDataJson())) {
+        for (JSON json : pipelineJson.getDataJsonList()) {
+            if (JsonUtil.isNotEmpty(json)) {
                 return false;
             }
         }

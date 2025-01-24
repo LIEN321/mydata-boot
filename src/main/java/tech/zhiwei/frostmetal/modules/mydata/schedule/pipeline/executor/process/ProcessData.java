@@ -174,9 +174,12 @@ public class ProcessData extends TaskExecutor {
 
             // 若字段值无效
             if (ObjectUtil.isNull(dataValue)) {
-                // 需要设置为空字符串
                 if (isSetEmptyIfNull(op)) {
+                    // 设置为空字符串
                     dataValue = StringUtil.EMPTY;
+                } else if (isSetZeroIfNull(op)) {
+                    // 设置为数字0
+                    dataValue = 0;
                 } else {
                     // 跳过不处理
                     continue;
@@ -223,7 +226,11 @@ public class ProcessData extends TaskExecutor {
      * @param originData  处理前业务数据
      * @return 处理后的数据
      */
-    private Object processValue(Object originValue, String op, Object opValue, Map<String, Object> originData) {
+    public static Object processValue(Object originValue, String op, Object opValue, Map<String, Object> originData) {
+        if (StringUtil.isEmpty(op)) {
+            return originValue;
+        }
+
         switch (op) {
             // 数值运算： + - * /
             case "+":
@@ -234,6 +241,8 @@ public class ProcessData extends TaskExecutor {
                     return originValue;
                 }
                 return ExpressionUtil.eval(StringUtil.toString(originValue) + op + opValue, originData);
+            case "zeroIfNull":
+                return originValue == null ? 0 : originValue;
             // 字符串：md5，base64，prepend，append
             case "md5":
                 return MD5.create().digestHex(StringUtil.toString(originValue));
@@ -243,12 +252,20 @@ public class ProcessData extends TaskExecutor {
                 return StringUtil.prependIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
             case "append":
                 return StringUtil.appendIfMissing(StringUtil.toString(originValue), StringUtil.toString(opValue));
+            case "empty":
+                return StringUtil.EMPTY;
+            case "emptyIfNull":
+                return originValue == null ? StringUtil.EMPTY : originValue;
             // 日期：add second
             case "addSecond":
                 Date date = DateUtil.parse(StringUtil.toString(originValue));
                 Calendar calendar = CalendarUtil.calendar(date);
                 calendar.add(Calendar.SECOND, NumberUtil.parseInt(StringUtil.toString(opValue)));
                 return calendar.getTime();
+            // 通用：null
+            case "null":
+                return null;
+
         }
         return originValue;
     }
@@ -281,5 +298,15 @@ public class ProcessData extends TaskExecutor {
      */
     public static boolean isSetEmptyIfNull(String targetOp) {
         return "emptyIfNull".equals(targetOp);
+    }
+
+    /**
+     * 判断指定处理类型 是否为置0
+     *
+     * @param targetOp 指定处理类型
+     * @return true-为置空，false-不是
+     */
+    public static boolean isSetZeroIfNull(String targetOp) {
+        return "zeroIfNull".equals(targetOp);
     }
 }
