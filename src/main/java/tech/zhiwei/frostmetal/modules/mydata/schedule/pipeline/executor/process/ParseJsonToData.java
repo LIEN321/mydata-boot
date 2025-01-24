@@ -60,6 +60,7 @@ public class ParseJsonToData extends TaskExecutor {
 //            error("字段映射为空，结束执行。");
             throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
+        log("字段映射：{}", fieldMapping);
 
         // 输出配置
         Map<String, String> outputMap = getOutputMap();
@@ -95,8 +96,12 @@ public class ParseJsonToData extends TaskExecutor {
         pipelineJsons.forEach(pipelineJson -> {
             // 获取原始json
             JSON originJson = pipelineJson.getOriginJson();
+            log("接收的原始json：{}", originJson);
+
             // 获取业务数据json
             List<JSON> dataJsonList = pipelineJson.getDataJsonList();
+            log("接收的数据json：{}", dataJsonList);
+
             for (JSON dataJson : dataJsonList) {
                 JSONArray dataJsons = new JSONArray();
                 if (dataJson instanceof JSONObject) {
@@ -152,7 +157,9 @@ public class ParseJsonToData extends TaskExecutor {
 //                        produceData.put(fieldCode, MdUtil.convertDataType(fieldDefaultValue, targetType));
 //                    });
 //                }
-                    bizDataList.add(produceData);
+                    if (!produceData.isEmpty()) {
+                        bizDataList.add(produceData);
+                    }
                 });
             }
         });
