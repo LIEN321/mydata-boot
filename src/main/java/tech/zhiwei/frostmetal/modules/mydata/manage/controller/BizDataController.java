@@ -57,4 +57,10 @@ public class BizDataController {
         params.remove("dataId");
         return P.page(bizDataService.bizDataPage(pageParam, dataId, params));
     }
+
+    @GetMapping("/getBizData")
+    @Operation(summary = "获取业务数据详情", operationId = "getBizData")
+    public R<Map<String, Object>> getData(Long dataId, String bizDataId) {
+        return R.data(bizDataService.getBizData(dataId, bizDataId));
+    }
 }

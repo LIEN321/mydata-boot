@@ -170,6 +170,20 @@ public class BizDataDAO {
         return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
     }
 
+    /**
+     * 根据 MyData唯一标识 查询业务数据
+     *
+     * @param dbCode   数据库编号
+     * @param dataCode 业务数据编号
+     * @param bizId    业务数据id
+     * @return 业务数据
+     */
+    public Map<String, Object> findByMdId(String dbCode, String dataCode, String bizId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(MyDataConstant.DATA_COLUMN_DATA_ID).is(bizId));
+        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
+    }
+
     public void drop(String dbCode, String dataCode) {
         mongoFactory.getTemplate(dbCode).dropCollection(dataCode);
     }

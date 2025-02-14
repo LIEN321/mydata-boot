@@ -2,9 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
-import tech.zhiwei.frostmetal.core.base.service.IBaseService;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +13,7 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/12/05
  */
-public interface IBizDataService extends IBaseService<Data> {
+public interface IBizDataService {
 
     /**
      * 获取数据项的总数
@@ -41,4 +39,13 @@ public interface IBizDataService extends IBaseService<Data> {
      * @return 数据列表
      */
     IPage<Map<String, Object>> bizDataPage(PageParam pageParam, Long dataId, Map<String, Object> params);
+
+    /**
+     * 获取业务数据详情
+     *
+     * @param dataId    数据标准id
+     * @param bizDataId 业务数据id
+     * @return 业务数据
+     */
+    Map<String, Object> getBizData(Long dataId, String bizDataId);
 }
