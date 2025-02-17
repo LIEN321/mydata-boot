@@ -125,4 +125,19 @@ public class BizDataServiceImpl implements IBizDataService {
         // 根据唯一标识 查询业务数据
         bizDataDAO.update(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), idMap, bizData);
     }
+
+    @Override
+    public void deleteBizData(Long dataId, String bizDataId) {
+        AssertUtil.notEmpty(bizDataId);
+
+        // 获取数据标准
+        Data data = MyDataCache.getData(dataId);
+        AssertUtil.notNull(data);
+
+        // 获取所属项目
+        Project project = MyDataCache.getProject(data.getProjectId());
+        AssertUtil.notNull(project);
+
+        bizDataDAO.remove(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), bizDataId);
+    }
 }

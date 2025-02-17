@@ -57,4 +57,12 @@ public interface IBizDataService {
      * @param bizData   业务数据
      */
     void saveBizData(Long dataId, String bizDataId, Map<String, Object> bizData);
+
+    /**
+     * 删除业务数据
+     *
+     * @param dataId    数据标准id
+     * @param bizDataId 业务数据id
+     */
+    void deleteBizData(Long dataId, String bizDataId);
 }

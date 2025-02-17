@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -70,6 +71,13 @@ public class BizDataController {
     @Operation(summary = "编辑业务数据", operationId = "saveBizData")
     public R<Boolean> saveBizData(@RequestParam Long dataId, @RequestParam String bizDataId, @RequestBody Map<String, Object> bizData) {
         bizDataService.saveBizData(dataId, bizDataId, bizData);
+        return R.success();
+    }
+
+    @DeleteMapping("/deleteBizData")
+    @Operation(summary = "删除业务数据", operationId = "deleteBizData")
+    public R<Boolean> deleteBizData(@RequestParam Long dataId, @RequestParam String bizDataId) {
+        bizDataService.deleteBizData(dataId, bizDataId);
         return R.success();
     }
 }
