@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -62,5 +64,12 @@ public class BizDataController {
     @Operation(summary = "获取业务数据详情", operationId = "getBizData")
     public R<Map<String, Object>> getData(Long dataId, String bizDataId) {
         return R.data(bizDataService.getBizData(dataId, bizDataId));
+    }
+
+    @PutMapping("/saveBizData")
+    @Operation(summary = "编辑业务数据", operationId = "saveBizData")
+    public R<Boolean> saveBizData(@RequestParam Long dataId, @RequestParam String bizDataId, @RequestBody Map<String, Object> bizData) {
+        bizDataService.saveBizData(dataId, bizDataId, bizData);
+        return R.success();
     }
 }

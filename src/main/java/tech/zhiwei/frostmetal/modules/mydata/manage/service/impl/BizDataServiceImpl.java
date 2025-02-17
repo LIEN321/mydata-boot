@@ -35,6 +35,8 @@ public class BizDataServiceImpl implements IBizDataService {
     private BizDataDAO bizDataDAO;
     @Resource
     private IDataService dataService;
+    @Resource
+    private DataFieldService dataFieldService;
 
     @Override
     public long getTotalCount(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
@@ -102,5 +104,25 @@ public class BizDataServiceImpl implements IBizDataService {
         String dataCode = data.getDataCode();
 
         return bizDataDAO.findByMdId(dbCode, dataCode, bizDataId);
+    }
+
+    @Override
+    public void saveBizData(Long dataId, String bizDataId, Map<String, Object> bizData) {
+        AssertUtil.notEmpty(bizDataId);
+
+        // 获取数据标准
+        Data data = MyDataCache.getData(dataId);
+        AssertUtil.notNull(data);
+
+        // 获取所属项目
+        Project project = MyDataCache.getProject(data.getProjectId());
+        AssertUtil.notNull(project);
+
+        // 标识字段 键值对
+        Map<String, Object> idMap = MapUtil.newHashMap();
+        idMap.put(MyDataConstant.DATA_COLUMN_DATA_ID, bizDataId);
+
+        // 根据唯一标识 查询业务数据
+        bizDataDAO.update(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), idMap, bizData);
     }
 }

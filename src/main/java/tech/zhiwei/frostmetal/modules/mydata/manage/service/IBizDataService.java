@@ -48,4 +48,13 @@ public interface IBizDataService {
      * @return 业务数据
      */
     Map<String, Object> getBizData(Long dataId, String bizDataId);
+
+    /**
+     * 更新业务数据
+     *
+     * @param dataId    数据标准id
+     * @param bizDataId 业务数据id
+     * @param bizData   业务数据
+     */
+    void saveBizData(Long dataId, String bizDataId, Map<String, Object> bizData);
 }
