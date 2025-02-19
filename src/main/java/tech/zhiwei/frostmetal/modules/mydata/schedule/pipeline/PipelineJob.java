@@ -18,6 +18,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
@@ -70,6 +71,13 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistoryDTO.setStartTime(historyStartTime);
         pipelineHistoryDTO.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
         pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
+        // 流水线参数
+        Map<String, Object> triggerParam = ObjectUtil.cloneByStream(context.getJobDetail().getJobDataMap());
+        // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+        // triggerParam.remove(SysConstant.TENANT_ID);
+        // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
+        pipelineHistoryDTO.setTriggerParam(triggerParam);
+        // 保存流水线的执行记录
         Long historyId = pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO);
 
         // 更新流水线的最新执行记录id
