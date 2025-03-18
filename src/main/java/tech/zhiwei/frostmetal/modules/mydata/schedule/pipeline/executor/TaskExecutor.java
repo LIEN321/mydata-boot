@@ -92,6 +92,7 @@ public abstract class TaskExecutor {
      */
     public final void execute(Map<String, Object> jobContextData) {
         log("[{}] 开始执行", pipelineTask.getTaskName());
+        log("输入参数：{}", jobContextData);
         try {
             doExecute(jobContextData);
             log("[{}] 执行完成。", pipelineTask.getTaskName());
