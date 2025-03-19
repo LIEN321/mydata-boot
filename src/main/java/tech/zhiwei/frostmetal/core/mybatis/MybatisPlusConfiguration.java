@@ -24,12 +24,12 @@ public class MybatisPlusConfiguration {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor(TenantHandler tenantHandler) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 分页拦截器
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         // 多租户拦截器
         TenantLineInnerInterceptor tenantInterceptor = new TenantLineInnerInterceptor();
         tenantInterceptor.setTenantLineHandler(tenantHandler);
         interceptor.addInnerInterceptor(tenantInterceptor);
+        // 分页拦截器
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
     }
 
