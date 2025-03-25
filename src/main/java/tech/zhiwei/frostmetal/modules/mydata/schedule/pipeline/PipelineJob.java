@@ -46,16 +46,16 @@ public class PipelineJob implements InterruptableJob {
     // Job执行过程中的变量
     private final Map<String, Object> jobContextData = new HashMap<>();
 
-    @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
-        jobContextData.putAll(context.getJobDetail().getJobDataMap());
+    public void execute(Map<String, Object> paramMap, Long pipelineId, Integer triggerType) throws JobExecutionException {
+        // 流水线参数
+        Map<String, Object> triggerParam = ObjectUtil.cloneByStream(paramMap);
+        // 流水线参数存入流程全局变量
+        jobContextData.putAll(paramMap);
 
         // 开始时间
         Date historyStartTime = new Date();
 
         log.info("PipelineJob execute");
-        // 获取流水线id
-        Long pipelineId = context.getJobDetail().getJobDataMap().getLong(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
 
         // 查询流水线记录
         Pipeline pipeline = pipelineService.getById(pipelineId);
@@ -64,15 +64,12 @@ public class PipelineJob implements InterruptableJob {
         }
 
         // 创建流水线的执行记录
-        Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
         pipelineHistoryDTO.setTriggerType(triggerType);
         pipelineHistoryDTO.setStartTime(historyStartTime);
         pipelineHistoryDTO.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
         pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
-        // 流水线参数
-        Map<String, Object> triggerParam = ObjectUtil.cloneByStream(context.getJobDetail().getJobDataMap());
         // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
         // triggerParam.remove(SysConstant.TENANT_ID);
         // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
@@ -175,6 +172,16 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistory.setEndTime(historyEndTime);
         pipelineHistory.setExecutionTime(DateUtil.between(historyStartTime, historyEndTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
+    }
+
+    @Override
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+        // 流水线id
+        Long pipelineId = context.getJobDetail().getJobDataMap().getLong(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
+        // 流水线出发类型
+        Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+
+        execute(context.getJobDetail().getJobDataMap(), pipelineId, triggerType);
     }
 
     @Override
