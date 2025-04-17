@@ -1,8 +1,10 @@
 package tech.zhiwei.frostmetal.modules.mydata.util;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.io.FileUtil;
@@ -244,5 +246,30 @@ public class MyDataUtil {
                 }
             });
         });
+    }
+
+    /**
+     * 转换过滤条件，Map -> BizDataFilter
+     *
+     * @param dataFilterList 用户配置的查询条件
+     * @return BizDataFilter集合
+     */
+    public static List<BizDataFilter> convertBizDataFilter(List<Map<String, Object>> dataFilterList) {
+        if (CollUtil.isEmpty(dataFilterList)) {
+            return null;
+        }
+
+        List<BizDataFilter> bizDataFilters = CollUtil.newArrayList();
+        for (Map<String, Object> map : dataFilterList) {
+            BizDataFilter bizDataFilter = new BizDataFilter();
+            bizDataFilter.setKey((String) map.get("k"));
+            bizDataFilter.setOp((String) map.get("op"));
+            bizDataFilter.setValue(map.get("v"));
+            bizDataFilter.setType(map.get("t"));
+            bizDataFilter.setLogic((String) map.get("l"));
+            bizDataFilters.add(bizDataFilter);
+        }
+
+        return bizDataFilters;
     }
 }
