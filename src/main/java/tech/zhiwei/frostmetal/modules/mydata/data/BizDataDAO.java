@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.data.mongo.MultiMongoFactory;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
