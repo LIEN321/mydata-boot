@@ -266,7 +266,6 @@ public class MyDataUtil {
             bizDataFilter.setOp((String) map.get("op"));
             bizDataFilter.setValue(map.get("v"));
             bizDataFilter.setType(map.get("t"));
-            bizDataFilter.setLogic((String) map.get("l"));
             bizDataFilters.add(bizDataFilter);
         }
 
