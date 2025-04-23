@@ -63,10 +63,13 @@ public class QueryDataFromWarehouse extends TaskExecutor {
             throw new RuntimeException("查询失败：无效的输出设置，未配置查询结果的变量名");
         }
 
-        // 查询条件
+        // 界面配置的查询条件
         List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
         List<BizDataFilter> dataFilters = MyDataUtil.convertBizDataFilter(dataFilterConfig);
         dataFilters = CollectionUtil.emptyIfNull(dataFilters);
+
+        // 自定义输入的查询条件
+        String condition = (String) pipelineTask.getTaskConfig().get("CONDITION");
 
         // 处理查询条件中的上下文变量
         if (paramBizData != null) {
@@ -100,7 +103,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         log("查询条件：{}", dataFilters);
         // 查询业务数据
-        List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters);
+        List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters, condition);
         MyDataUtil.processBizData(bizDataList);
 
         log("查询结果：共 {} 条", bizDataList.size());
