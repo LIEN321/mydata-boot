@@ -236,9 +236,9 @@ public class MyDataUtil {
                 return;
             }
 
-            bizData.remove(MyDataConstant.MONGODB_OBJECT_ID);
-            bizData.remove(MyDataConstant.DATA_COLUMN_DATA_ID);
-            bizData.remove(MyDataConstant.DATA_COLUMN_UPDATE_TIME);
+            // bizData.remove(MyDataConstant.MONGODB_OBJECT_ID);
+            // bizData.remove(MyDataConstant.DATA_COLUMN_DATA_ID);
+            // bizData.remove(MyDataConstant.DATA_COLUMN_UPDATE_TIME);
 
             bizData.forEach((k, v) -> {
                 if (v instanceof Date) {
