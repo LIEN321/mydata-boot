@@ -117,7 +117,10 @@ public class BizDataDAO {
             criteriaList.addAll(parsedCriteriaList);
         }
 
-        query.addCriteria(new Criteria().andOperator(criteriaList));
+        if (CollectionUtil.isNotEmpty(criteriaList)) {
+            query.addCriteria(new Criteria().andOperator(criteriaList));
+        }
+        
         // 排序
         if (ArrayUtil.isNotEmpty(bizDataSorts)) {
             Sort sort = null;
