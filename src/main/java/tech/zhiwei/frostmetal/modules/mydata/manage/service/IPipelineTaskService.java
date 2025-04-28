@@ -30,6 +30,14 @@ public interface IPipelineTaskService extends IBaseService<PipelineTask> {
     List<PipelineTask> listByPipeline(Long pipelineId);
 
     /**
+     * 根据流水线 查询启用状态的任务列表
+     *
+     * @param pipelineId 流水线id
+     * @return 启用状态的任务列表
+     */
+    List<PipelineTask> listEnabledByPipeline(Long pipelineId);
+
+    /**
      * 保存流水线的任务列表
      *
      * @param pipelineId 流水线id

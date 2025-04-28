@@ -38,4 +38,7 @@ public class PipelineTaskDTO {
 
     @Schema(description = "任务配置")
     private Map<String, Object> taskConfig;
+
+    @Schema(description = "业务状态")
+    private Integer status;
 }

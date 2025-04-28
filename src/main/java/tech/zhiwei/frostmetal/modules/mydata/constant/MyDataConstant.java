@@ -347,6 +347,10 @@ public interface MyDataConstant {
      * 流水线历史记录的执行状态：4-失败
      */
     int PIPELINE_HISTORY_STATUS_FAILED = 4;
+    /**
+     * 流水线历史记录的执行状态：5-跳过
+     */
+    int PIPELINE_HISTORY_STATUS_SKIP = 5;
 
     // ------------------------------ 业务数据相关常量 ------------------------------
 
