@@ -10,8 +10,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 2024/8/25
  */
 @SpringBootApplication
-public class FrostMetalApplication {
+public class MyDataApplication {
     public static void main(String[] args) {
-        SpringApplication.run(FrostMetalApplication.class, args);
+        SpringApplication.run(MyDataApplication.class, args);
     }
 }
