@@ -93,10 +93,11 @@ public abstract class TaskExecutor {
     public final void execute(Map<String, Object> jobContextData) {
         log("[{}] 开始执行", pipelineTask.getTaskName());
         if (MapUtil.isNotEmpty(jobContextData)) {
-            log("输入参数：");
+            StringBuffer logInfo = new StringBuffer();
             jobContextData.forEach((k, v) -> {
-                log("{} = {}", k, v);
+                logInfo.append(StringUtil.format("\t{} = {}\n", k, v));
             });
+            log("输入参数：\n" + logInfo.toString());
         }
 
         try {

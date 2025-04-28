@@ -50,8 +50,11 @@ public class PipelineJob implements InterruptableJob {
     public void execute(Map<String, Object> paramMap, Long pipelineId, Integer triggerType) throws JobExecutionException {
         // 流水线参数
         Map<String, Object> triggerParam = ObjectUtil.cloneByStream(paramMap);
+        triggerParam.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+        triggerParam.remove(SysConstant.TENANT_ID);
+        triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
         // 流水线参数存入流程全局变量
-        jobContextData.putAll(paramMap);
+        jobContextData.putAll(triggerParam);
 
         // 开始时间
         Date historyStartTime = new Date();
@@ -71,9 +74,6 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistoryDTO.setStartTime(historyStartTime);
         pipelineHistoryDTO.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
         pipelineHistoryDTO.setTenantId(pipeline.getTenantId());
-        // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
-        // triggerParam.remove(SysConstant.TENANT_ID);
-        // triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
         pipelineHistoryDTO.setTriggerParam(triggerParam);
         // 保存流水线的执行记录
         Long historyId = pipelineHistoryService.savePipelineHistory(pipelineHistoryDTO);
@@ -133,7 +133,7 @@ public class PipelineJob implements InterruptableJob {
                             pipelineLog.setTaskLog("该任务已禁用，不执行。");
                             continue;
                         }
-                        
+
                         // 更新任务日志的执行状态
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
                         pipelineLogService.updateById(pipelineLog);
