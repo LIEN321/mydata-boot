@@ -1,4 +1,4 @@
-package tech.zhiwei.frostmetal.modules.mydata.data;
+package tech.zhiwei.frostmetal.modules.mydata.data.mongo;
 
 import com.mongodb.client.MongoDatabase;
 import org.springframework.data.mongodb.MongoDatabaseFactory;

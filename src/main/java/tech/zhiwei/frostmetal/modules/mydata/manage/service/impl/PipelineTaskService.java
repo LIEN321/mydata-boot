@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineTaskDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineTaskMapper;
@@ -38,6 +39,14 @@ public class PipelineTaskService extends BaseService<PipelineTaskMapper, Pipelin
     public List<PipelineTask> listByPipeline(Long pipelineId) {
         LambdaQueryWrapper<PipelineTask> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(PipelineTask::getPipelineId, pipelineId);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public List<PipelineTask> listEnabledByPipeline(Long pipelineId) {
+        LambdaQueryWrapper<PipelineTask> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(PipelineTask::getPipelineId, pipelineId);
+        queryWrapper.eq(PipelineTask::getStatus, SysConstant.STATUS_ENABLED);
         return list(queryWrapper);
     }
 

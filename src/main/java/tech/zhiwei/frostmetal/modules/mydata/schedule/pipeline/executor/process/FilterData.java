@@ -1,6 +1,5 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process;
 
-import cn.hutool.core.collection.CollUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
@@ -69,7 +68,7 @@ public class FilterData extends TaskExecutor {
 
         // 过滤条件
         List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
-        List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
+        List<BizDataFilter> dataFilters = MyDataUtil.convertBizDataFilter(dataFilterConfig);
         if (CollectionUtil.isEmpty(dataFilters)) {
             error("执行失败：未配置过滤条件，结束执行");
 //            throw new RuntimeException("执行失败：未配置过滤条件，结束执行");
@@ -102,7 +101,7 @@ public class FilterData extends TaskExecutor {
                 bizDataMap.putAll(paramBizData.getBizData().get(0));
 
                 dataFilters.forEach(filter -> {
-                    if (JobVarService.isFieldExp(filter.getValue().toString())) {
+                    if (JobVarService.isFieldExp((String) filter.getValue())) {
                         String filterValue = JobVarService.processDataFieldVar(filter.getValue().toString(), bizDataMap, fieldTypeMapping);
                         filter.setValue(filterValue);
                     }
@@ -147,24 +146,6 @@ public class FilterData extends TaskExecutor {
         if (StringUtil.isNotEmpty(blockedDataKey)) {
             jobContextData.put(blockedDataKey, blockedDataList);
         }
-    }
-
-    private List<BizDataFilter> convertBizDataFilter(List<Map<String, Object>> dataFilterList) {
-        if (CollUtil.isEmpty(dataFilterList)) {
-            return null;
-        }
-
-        List<BizDataFilter> bizDataFilters = CollUtil.newArrayList();
-        for (Map<String, Object> map : dataFilterList) {
-            BizDataFilter bizDataFilter = new BizDataFilter();
-            bizDataFilter.setKey(map.get("k").toString());
-            bizDataFilter.setOp(map.get("op").toString());
-            bizDataFilter.setValue(map.get("v"));
-            bizDataFilter.setType(map.get("t"));
-            bizDataFilters.add(bizDataFilter);
-        }
-
-        return bizDataFilters;
     }
 
     private boolean filterDataValues(Map<String, Object> data, Map<String, String> fieldTypeMapping, List<BizDataFilter> dataFilters) {

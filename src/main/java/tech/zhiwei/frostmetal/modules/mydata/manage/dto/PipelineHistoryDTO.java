@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.dto.BaseDTO;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 流水线执行记录 DTO
@@ -31,6 +32,9 @@ public class PipelineHistoryDTO extends BaseDTO {
 
     @Schema(description = "触发方式")
     private Integer triggerType;
+
+    @Schema(description = "触发时的参数")
+    private Map<String, Object> triggerParam;
 
     @Schema(description = "流水线参数")
     private String pipelineVars;

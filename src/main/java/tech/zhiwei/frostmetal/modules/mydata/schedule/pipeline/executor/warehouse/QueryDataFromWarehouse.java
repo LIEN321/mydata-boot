@@ -1,6 +1,5 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse;
 
-import cn.hutool.core.collection.CollUtil;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
@@ -64,10 +63,13 @@ public class QueryDataFromWarehouse extends TaskExecutor {
             throw new RuntimeException("查询失败：无效的输出设置，未配置查询结果的变量名");
         }
 
-        // 查询条件
+        // 界面配置的查询条件
         List<Map<String, Object>> dataFilterConfig = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("DATA_FILTER");
-        List<BizDataFilter> dataFilters = convertBizDataFilter(dataFilterConfig);
+        List<BizDataFilter> dataFilters = MyDataUtil.convertBizDataFilter(dataFilterConfig);
         dataFilters = CollectionUtil.emptyIfNull(dataFilters);
+
+        // 自定义输入的查询条件
+        String condition = (String) pipelineTask.getTaskConfig().get("CONDITION");
 
         // 处理查询条件中的上下文变量
         if (paramBizData != null) {
@@ -101,7 +103,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 
         log("查询条件：{}", dataFilters);
         // 查询业务数据
-        List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters);
+        List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters, condition);
         MyDataUtil.processBizData(bizDataList);
 
         log("查询结果：共 {} 条", bizDataList.size());
@@ -112,23 +114,5 @@ public class QueryDataFromWarehouse extends TaskExecutor {
 //        jobContextData.put(bizDataKey, bizDataList);
         PipelineBizData outputBizData = new PipelineBizData(dataId, dataCode, dataFields, bizDataList);
         jobContextData.put(outputBizDataKey, outputBizData);
-    }
-
-    private List<BizDataFilter> convertBizDataFilter(List<Map<String, Object>> dataFilterList) {
-        if (CollUtil.isEmpty(dataFilterList)) {
-            return null;
-        }
-
-        List<BizDataFilter> bizDataFilters = CollUtil.newArrayList();
-        for (Map<String, Object> map : dataFilterList) {
-            BizDataFilter bizDataFilter = new BizDataFilter();
-            bizDataFilter.setKey(map.get("k").toString());
-            bizDataFilter.setOp(map.get("op").toString());
-            bizDataFilter.setValue(map.get("v"));
-            bizDataFilter.setType(map.get("t"));
-            bizDataFilters.add(bizDataFilter);
-        }
-
-        return bizDataFilters;
     }
 }

@@ -1,12 +1,15 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.Fastjson2TypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
 import java.io.Serial;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 流水线执行记录 entity
@@ -16,7 +19,7 @@ import java.util.Date;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "md_pipeline_history")
+@TableName(value = "md_pipeline_history", autoResultMap = true)
 public class PipelineHistory extends TenantEntity {
     @Serial
     private static final long serialVersionUID = -7830690754588859083L;
@@ -46,13 +49,18 @@ public class PipelineHistory extends TenantEntity {
     private Integer triggerType;
 
     /**
+     * 触发时的参数
+     */
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> triggerParam;
+
+    /**
      * 流水线参数
      */
     private String pipelineVars;
 
     /**
-     * 触发方式
+     * 执行状态
      */
     private Integer executionStatus;
-
 }

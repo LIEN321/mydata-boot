@@ -1,4 +1,4 @@
-package tech.zhiwei.frostmetal.modules.mydata.data;
+package tech.zhiwei.frostmetal.modules.mydata.data.mongo;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.MD5;
@@ -33,12 +33,12 @@ public class MultiMongoFactory {
 
         String dbName = mydataConfig.isEncryptDb() ? MD5.create().digestHex(code) : code;
 
-        //查找项目对应的MongFactory
+        // 查找项目对应的MongFactory
         MongoDatabaseFactory mongoDatabaseFactory = mongoDbFactoryMap.get(dbName);
-        //实例化
+        // 实例化
         if (mongoDatabaseFactory == null) {
 
-            //替换数据源
+            // 替换数据源
             String connectionString = StrUtil.format(mydataConfig.getMongodbUrl(), dbName);
 
             mongoDatabaseFactory = new SimpleMongoClientDatabaseFactory(connectionString);

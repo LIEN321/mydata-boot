@@ -111,7 +111,7 @@ public class PipelineController {
         Pipeline pipeline = pipelineService.getById(id);
 
         // 查询流水线任务列表
-        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(id);
+        List<PipelineTask> tasks = pipelineTaskService.listEnabledByPipeline(id);
         if (CollectionUtil.isEmpty(tasks)) {
             return R.fail("执行失败：流水线任务列表为空，请先配置！");
         }

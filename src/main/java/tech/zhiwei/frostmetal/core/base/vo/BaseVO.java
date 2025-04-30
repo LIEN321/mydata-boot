@@ -18,8 +18,11 @@ import java.io.Serializable;
 public abstract class BaseVO implements Serializable {
     @Serial
     private static final long serialVersionUID = -4745887887687023294L;
-    
+
     @Schema(description = "id")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
+
+    @Schema(description = "业务状态")
+    private Integer status;
 }

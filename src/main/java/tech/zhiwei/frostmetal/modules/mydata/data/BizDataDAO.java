@@ -11,6 +11,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.data.mongo.CriteriaParser;
+import tech.zhiwei.frostmetal.modules.mydata.data.mongo.MultiMongoFactory;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -91,7 +93,7 @@ public class BizDataDAO {
      * @param limit          限制数量
      * @return 业务数据列表
      */
-    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, Long skip, Integer limit, BizDataSort... bizDataSorts) {
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, String condition, Long skip, Integer limit, BizDataSort... bizDataSorts) {
         MongoTemplate mongoTemplate = mongoFactory.getTemplate(dbCode);
         Query query = new Query();
         if (skip != null) {
@@ -101,11 +103,24 @@ public class BizDataDAO {
             query.limit(limit);
         }
 
+        List<Criteria> criteriaList = CollectionUtil.newArrayList();
+
+        // 自定义查询条件
+        if (StringUtil.isNotEmpty(condition)) {
+            Criteria criteria = CriteriaParser.parse(condition);
+            criteriaList.add(criteria);
+        }
+
         // mongodb查询条件集合 加入查询中
-        List<Criteria> criteriaList = parseFilters(bizDataFilters);
+        List<Criteria> parsedCriteriaList = parseFilters(bizDataFilters);
+        if (CollectionUtil.isNotEmpty(parsedCriteriaList)) {
+            criteriaList.addAll(parsedCriteriaList);
+        }
+
         if (CollectionUtil.isNotEmpty(criteriaList)) {
             query.addCriteria(new Criteria().andOperator(criteriaList));
         }
+        
         // 排序
         if (ArrayUtil.isNotEmpty(bizDataSorts)) {
             Sort sort = null;
@@ -126,8 +141,8 @@ public class BizDataDAO {
         return new ArrayList<>(documents);
     }
 
-    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
-        return this.list(dbCode, dataCode, bizDataFilters, null, null, bizDataSorts);
+    public List<Map<String, Object>> list(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters, String condition, BizDataSort... bizDataSorts) {
+        return this.list(dbCode, dataCode, bizDataFilters, condition, null, null, bizDataSorts);
     }
 
     /**
@@ -142,7 +157,7 @@ public class BizDataDAO {
      */
     public List<Map<String, Object>> page(String dbCode, String dataCode, Long pageNo, Integer pageSize, List<BizDataFilter> bizDataFilters, BizDataSort... bizDataSorts) {
         Long skip = (pageNo - 1L) * pageSize;
-        return this.list(dbCode, dataCode, bizDataFilters, skip, pageSize, bizDataSorts);
+        return this.list(dbCode, dataCode, bizDataFilters, null, skip, pageSize, bizDataSorts);
     }
 
     public long total(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
@@ -167,6 +182,20 @@ public class BizDataDAO {
         idMap.forEach((k, v) -> {
             query.addCriteria(Criteria.where(k).is(v));
         });
+        return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
+    }
+
+    /**
+     * 根据 MyData唯一标识 查询业务数据
+     *
+     * @param dbCode   数据库编号
+     * @param dataCode 业务数据编号
+     * @param bizId    业务数据id
+     * @return 业务数据
+     */
+    public Map<String, Object> findByMdId(String dbCode, String dataCode, String bizId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where(MyDataConstant.DATA_COLUMN_DATA_ID).is(bizId));
         return mongoFactory.getTemplate(dbCode).findOne(query, BasicDBObject.class, dataCode);
     }
 

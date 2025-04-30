@@ -6,15 +6,14 @@ import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
-import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
-import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.DataMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
@@ -30,10 +29,14 @@ import java.util.Map;
  * @since 2024/12/05
  */
 @Service
-public class BizDataServiceImpl extends BaseService<DataMapper, Data> implements IBizDataService {
+public class BizDataServiceImpl implements IBizDataService {
 
     @Resource
     private BizDataDAO bizDataDAO;
+    @Resource
+    private IDataService dataService;
+    @Resource
+    private DataFieldService dataFieldService;
 
     @Override
     public long getTotalCount(String dbCode, String dataCode, List<BizDataFilter> bizDataFilters) {
@@ -43,7 +46,7 @@ public class BizDataServiceImpl extends BaseService<DataMapper, Data> implements
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateDataCount(Long dataId) {
-        Data data = getById(dataId);
+        Data data = dataService.getById(dataId);
         AssertUtil.notNull(data);
 
         Project project = MyDataCache.getProject(data.getProjectId());
@@ -52,7 +55,7 @@ public class BizDataServiceImpl extends BaseService<DataMapper, Data> implements
         // 从数据仓库统计最新数量
         long total = getTotalCount(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), null);
         data.setDataCount(total);
-        updateById(data);
+        dataService.updateById(data);
     }
 
     @Override
@@ -63,7 +66,7 @@ public class BizDataServiceImpl extends BaseService<DataMapper, Data> implements
         AssertUtil.notNull(data, "数据标准不存在，dataId={}", dataId);
 
         Project project = MyDataCache.getProject(data.getProjectId());
-        AssertUtil.notNull(data, "项目不存在，dataId={}", dataId);
+        AssertUtil.notNull(project, "项目不存在，dataId={}", dataId);
 
         // 根据分页参数 查询业务数据
         String dbCode = MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode());
@@ -90,5 +93,51 @@ public class BizDataServiceImpl extends BaseService<DataMapper, Data> implements
         bizDataPage.setRecords(dataList);
 
         return bizDataPage;
+    }
+
+    @Override
+    public Map<String, Object> getBizData(Long dataId, String bizDataId) {
+        Data data = MyDataCache.getData(dataId);
+        Project project = MyDataCache.getProject(data.getProjectId());
+        // 根据分页参数 查询业务数据
+        String dbCode = MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode());
+        String dataCode = data.getDataCode();
+
+        return bizDataDAO.findByMdId(dbCode, dataCode, bizDataId);
+    }
+
+    @Override
+    public void saveBizData(Long dataId, String bizDataId, Map<String, Object> bizData) {
+        AssertUtil.notEmpty(bizDataId);
+
+        // 获取数据标准
+        Data data = MyDataCache.getData(dataId);
+        AssertUtil.notNull(data);
+
+        // 获取所属项目
+        Project project = MyDataCache.getProject(data.getProjectId());
+        AssertUtil.notNull(project);
+
+        // 标识字段 键值对
+        Map<String, Object> idMap = MapUtil.newHashMap();
+        idMap.put(MyDataConstant.DATA_COLUMN_DATA_ID, bizDataId);
+
+        // 根据唯一标识 查询业务数据
+        bizDataDAO.update(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), idMap, bizData);
+    }
+
+    @Override
+    public void deleteBizData(Long dataId, String bizDataId) {
+        AssertUtil.notEmpty(bizDataId);
+
+        // 获取数据标准
+        Data data = MyDataCache.getData(dataId);
+        AssertUtil.notNull(data);
+
+        // 获取所属项目
+        Project project = MyDataCache.getProject(data.getProjectId());
+        AssertUtil.notNull(project);
+
+        bizDataDAO.remove(MyDataUtil.getBizDbCode(data.getTenantId(), project.getProjectCode()), data.getDataCode(), bizDataId);
     }
 }
