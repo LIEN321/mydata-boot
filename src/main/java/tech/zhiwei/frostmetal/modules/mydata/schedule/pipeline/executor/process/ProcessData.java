@@ -97,15 +97,15 @@ public class ProcessData extends TaskExecutor {
         // 字段编号-字段类型
         Map<String, String> fieldTypeMapping = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
 
-        log("处理前的数据：{}", bizDataList);
-        log("处理数据开始...");
+        // log("处理前的数据：{}", bizDataList);
+        log("处理开始，共有{}条数据...", bizDataList.size());
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
             processBizData(data, bizData, jobContextData, idFields, fieldTypeMapping, dataProcesses);
         });
-        log("处理后的数据：{}", bizDataList);
-        log("处理数据结束");
+        // log("处理后的数据：{}", bizDataList);
+        log("处理结束");
 
         // 输出参数
         jobContextData.put(bizDataKey, pipelineBizData);

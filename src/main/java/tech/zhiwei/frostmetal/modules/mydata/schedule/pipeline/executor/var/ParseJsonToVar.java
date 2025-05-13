@@ -52,7 +52,7 @@ public class ParseJsonToVar extends TaskExecutor {
                 error("未获取有效json");
                 return;
             }
-            log("从json提取值到变量，json = {}", originJson);
+            // log("从json提取值到变量，json = {}", originJson);
 
             // 遍历参数映射
             varMappings.forEach(varMapping -> {

@@ -91,7 +91,7 @@ public class SendDataToApi extends TaskExecutor {
                 apiDataList.add(apiData);
             });
 
-            log("转换后的业务数据：{}", apiDataList);
+            // log("转换后的业务数据：{}", apiDataList);
 
             // 判断业务数据是否有效，若无效则结束
             if (CollectionUtil.isEmpty(apiDataList)) {
@@ -136,12 +136,12 @@ public class SendDataToApi extends TaskExecutor {
                         // 执行次数+1
                         batchRound++;
 
-                        log("分批模式，第{}批数据：{}", batchRound, subDataList);
+                        // log("分批模式，第{}批数据：{}", batchRound, subDataList);
                     } else {
                         // 不分批，则发送所有数据
                         jsonArray.addAll(apiDataList);
 
-                        log("不分批，全部数据：{}", apiDataList);
+                        // log("不分批，全部数据：{}", apiDataList);
                     }
 
                     // 发送数据

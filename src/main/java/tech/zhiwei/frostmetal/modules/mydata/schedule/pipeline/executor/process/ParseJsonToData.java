@@ -96,11 +96,11 @@ public class ParseJsonToData extends TaskExecutor {
         pipelineJsons.forEach(pipelineJson -> {
             // 获取原始json
             JSON originJson = pipelineJson.getOriginJson();
-            log("接收的原始json：{}", originJson);
+            // log("接收的原始json：{}", originJson);
 
             // 获取业务数据json
             List<JSON> dataJsonList = pipelineJson.getDataJsonList();
-            log("接收的数据json：{}", dataJsonList);
+            // log("接收的数据json：{}", dataJsonList);
 
             for (JSON dataJson : dataJsonList) {
                 JSONArray dataJsons = new JSONArray();
@@ -168,6 +168,7 @@ public class ParseJsonToData extends TaskExecutor {
         PipelineBizData pipelineBizData = new PipelineBizData(dataId, data.getDataCode(), usedDataFields, bizDataList);
         jobContextData.put(bizDataKey, pipelineBizData);
 
-        log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
+        // log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
+        log("共获得数据 {} 条", bizDataList.size());
     }
 }

@@ -116,7 +116,7 @@ public class GetJsonFromApi extends TaskExecutor {
 
             // 调用接口 获取json
             String originJsonString = JobApiService.callApi(this, app, api, batchParams, bizDataMap, fieldTypeMapping);
-            log("\t获得JSON：{}", originJsonString);
+            // log("\t获得JSON：{}", originJsonString);
 
             // json为空则结束
             if (JsonUtil.isEmpty(originJsonString)) {
