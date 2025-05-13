@@ -110,7 +110,7 @@ public class JobApiService {
         String responseBody = response.body();
 
         taskExecutor.log("\tresponse status : {}", response.getStatus());
-        taskExecutor.log("\tresponse body : {}", responseBody);
+        // taskExecutor.log("\tresponse body : {}", responseBody);
         return responseBody;
     }
 }
