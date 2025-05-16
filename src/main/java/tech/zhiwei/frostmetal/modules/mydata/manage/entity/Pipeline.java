@@ -104,6 +104,7 @@ public class Pipeline extends TenantEntity {
     /**
      * 邮件通知策略
      */
+    @TableField(typeHandler = IntegerArrayTypeHandler.class)
     private Integer[] emailStrategy;
 
     /**

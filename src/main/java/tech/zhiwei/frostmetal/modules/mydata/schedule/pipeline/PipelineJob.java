@@ -17,12 +17,15 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.system.entity.User;
+import tech.zhiwei.frostmetal.system.service.IUserService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
+import tech.zhiwei.tool.util.ArrayUtil;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +44,7 @@ public class PipelineJob implements InterruptableJob {
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
     private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
+    private final IUserService userService = SpringUtil.getBean(IUserService.class);
 
     private volatile boolean interrupted = false;
 
@@ -181,6 +185,25 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistory.setEndTime(historyEndTime);
         pipelineHistory.setExecutionTime(DateUtil.between(historyStartTime, historyEndTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
+
+        // 根据流水线的邮件通知配置，发送通知邮件
+        Integer isEmail = pipeline.getIsEmail();
+        if (ObjectUtil.equals(SysConstant.STATUS_ENABLED, isEmail)) {
+            Integer[] emailStrategy = pipeline.getEmailStrategy();
+            if (ArrayUtil.isNotEmpty(emailStrategy)) {
+                // TODO 发送成功通知邮件
+                // TODO 发送失败通知邮件
+                if (ArrayUtil.contains(emailStrategy, 0)) {
+                    User creator = userService.getById(pipeline.getCreateUser());
+                    if (creator != null) {
+                        String email = creator.getEmail();
+                        if (StringUtil.isNotEmpty(email)) {
+                            // MailSender.sendMail(email, "MyData - 流水线执行失败");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
