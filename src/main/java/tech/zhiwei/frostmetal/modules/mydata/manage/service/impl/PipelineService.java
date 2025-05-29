@@ -39,6 +39,8 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
             pipeline.setStartTime("00:00");
             pipeline.setEndTime("23:59");
             pipeline.setIntervalTime("00:15:00");
+            pipeline.setIsEmail(1);
+            pipeline.setEmailStrategy(new Integer[]{0});
         }
         // 保存流水线基本信息
         saveOrUpdate(pipeline);

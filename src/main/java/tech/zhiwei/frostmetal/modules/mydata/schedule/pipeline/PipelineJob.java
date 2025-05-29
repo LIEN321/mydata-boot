@@ -6,12 +6,15 @@ import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
@@ -70,6 +73,8 @@ public class PipelineJob implements InterruptableJob {
         if (pipeline == null) {
             throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
         }
+
+        Project project = MyDataCache.getProject(pipeline.getProjectId());
 
         // 创建流水线的执行记录
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
@@ -191,16 +196,23 @@ public class PipelineJob implements InterruptableJob {
         if (ObjectUtil.equals(SysConstant.STATUS_ENABLED, isEmail)) {
             Integer[] emailStrategy = pipeline.getEmailStrategy();
             if (ArrayUtil.isNotEmpty(emailStrategy)) {
-                // TODO 发送成功通知邮件
-                // TODO 发送失败通知邮件
-                if (ArrayUtil.contains(emailStrategy, 0)) {
-                    User creator = userService.getById(pipeline.getCreateUser());
-                    if (creator != null) {
-                        String email = creator.getEmail();
-                        if (StringUtil.isNotEmpty(email)) {
-                            // MailSender.sendMail(email, "MyData - 流水线执行失败");
-                        }
-                    }
+                // 流水线创建者
+                User creator = userService.getById(pipeline.getCreateUser());
+                if (creator == null || StringUtil.isEmpty(creator.getEmail())) {
+                    // TODO 记录未发送的通知
+                    return;
+                }
+                // 创建者email
+                String email = creator.getEmail();
+                // 发送失败通知邮件
+                if (ObjectUtil.equals(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED, pipelineHistory.getExecutionStatus())
+                        && ArrayUtil.contains(emailStrategy, 0)) {
+                    MyDataMail.notifyPipelineFailed(email, project.getProjectName(), pipeline.getPipelineName());
+                }
+                // 发送成功通知邮件
+                if (ObjectUtil.equals(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS, pipelineHistory.getExecutionStatus())
+                        && ArrayUtil.contains(emailStrategy, 1)) {
+                    MyDataMail.notifyPipelineSuccess(email, project.getProjectName(), pipeline.getPipelineName());
                 }
             }
         }
