@@ -37,13 +37,15 @@ public class MailSender {
 
     private static synchronized void startMailConsumer() {
         Thread consumerThread = new Thread(() -> {
-            try {
-                MailTask mailTask = mailQueue.take();
-                doSend(mailTask);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (Exception e) {
-                e.printStackTrace();
+            while (true) {
+                try {
+                    MailTask mailTask = mailQueue.take();
+                    doSend(mailTask);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         consumerThread.setDaemon(true);
