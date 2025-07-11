@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Fastjson2TypeHandler;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.ibatis.type.JdbcType;
 import tech.zhiwei.frostmetal.core.jackson.IntegerArrayTypeHandler;
 import tech.zhiwei.frostmetal.core.tenant.entity.TenantEntity;
 
@@ -99,7 +100,8 @@ public class Pipeline extends TenantEntity {
     /**
      * 是否启用邮件
      */
-    private Integer isEmail;
+    @TableField(jdbcType = JdbcType.INTEGER)
+    private Boolean isEmail;
 
     /**
      * 邮件通知策略

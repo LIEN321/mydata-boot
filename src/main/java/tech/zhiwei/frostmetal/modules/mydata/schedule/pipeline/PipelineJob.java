@@ -192,8 +192,8 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistoryService.updateById(pipelineHistory);
 
         // 根据流水线的邮件通知配置，发送通知邮件
-        Integer isEmail = pipeline.getIsEmail();
-        if (ObjectUtil.equals(SysConstant.STATUS_ENABLED, isEmail)) {
+        Boolean isEmail = pipeline.getIsEmail();
+        if (isEmail) {
             Integer[] emailStrategy = pipeline.getEmailStrategy();
             if (ArrayUtil.isNotEmpty(emailStrategy)) {
                 // 流水线创建者

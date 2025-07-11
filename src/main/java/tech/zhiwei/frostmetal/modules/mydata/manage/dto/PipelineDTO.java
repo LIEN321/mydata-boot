@@ -59,7 +59,7 @@ public class PipelineDTO extends BaseDTO {
     private Map<String, Object> webhookAuthParams;
 
     @Schema(description = "是否启用邮件")
-    private Integer isEmail;
+    private Boolean isEmail;
 
     @Schema(description = "邮件通知策略")
     private Integer[] emailStrategy;
