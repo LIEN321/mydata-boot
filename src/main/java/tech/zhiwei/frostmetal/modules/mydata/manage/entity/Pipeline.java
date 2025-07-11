@@ -116,4 +116,9 @@ public class Pipeline extends TenantEntity {
      * 最新的执行记录id
      */
     private Long latestHistoryId;
+
+    /**
+     * 连续失败次数
+     */
+    private Integer consecutiveFailures;
 }

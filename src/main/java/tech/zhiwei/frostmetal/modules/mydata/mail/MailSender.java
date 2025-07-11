@@ -3,6 +3,7 @@ package tech.zhiwei.frostmetal.modules.mydata.mail;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.tool.spring.SpringUtil;
 
 import java.io.File;
@@ -15,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author LIEN
  * @since 2024/12/11
  */
+@Slf4j
 public class MailSender {
     private static final MailConfig mailConfig;
 
@@ -44,7 +46,7 @@ public class MailSender {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("发送邮件异常", e);
                 }
             }
         });

@@ -38,4 +38,17 @@ public class MyDataMail {
         String content = StringUtil.format("项目【{}】中的流水线【{}】于 {} 执行成功。", projectName, pipelineName, DateUtil.now());
         MailSender.sendHtml(email, subject, content);
     }
+
+    /**
+     * 流水线 [异常终止] 的通知邮件
+     */
+    public static void notifyPipelineStop(String email, String projectName, String pipelineName) {
+        AssertUtil.isTrue(Validator.isEmail(email), "邮箱无效！");
+        AssertUtil.isTrue(StringUtil.isNotEmpty(projectName), "项目名称无效");
+        AssertUtil.isTrue(StringUtil.isNotEmpty(pipelineName), "流水线名称无效");
+
+        String subject = "MyData - 流水线异常结束";
+        String content = StringUtil.format("项目【{}】中的流水线【{}】因失败次数过多 于 {} 终止且不再执行，若需继续 请手动开启。", projectName, pipelineName, DateUtil.now());
+        MailSender.sendHtml(email, subject, content);
+    }
 }
