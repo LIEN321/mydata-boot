@@ -20,6 +20,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryServ
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.system.entity.User;
 import tech.zhiwei.frostmetal.system.service.IUserService;
@@ -188,6 +189,9 @@ public class PipelineJob implements InterruptableJob {
                 // 连续失败次数置0
                 pipeline.setConsecutiveFailures(0);
             }
+        } catch (StopPipelineException e) {
+            // 流水线执行终止
+            pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
         } catch (Exception e) {
             // 流水线执行失败
             pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);

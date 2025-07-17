@@ -120,7 +120,7 @@ public class BizDataDAO {
         if (CollectionUtil.isNotEmpty(criteriaList)) {
             query.addCriteria(new Criteria().andOperator(criteriaList));
         }
-        
+
         // 排序
         if (ArrayUtil.isNotEmpty(bizDataSorts)) {
             Sort sort = null;
@@ -254,14 +254,14 @@ public class BizDataDAO {
                         public Document getCriteriaObject() {
                             String executeOp;
                             switch (op) {
-                                case MyDataConstant.DATA_OP_EQ:
+                                case MyDataConstant.CONDITION_EQ:
                                     executeOp = "==";
                                     break;
-                                case MyDataConstant.DATA_OP_NE:
-                                case MyDataConstant.DATA_OP_GT:
-                                case MyDataConstant.DATA_OP_GTE:
-                                case MyDataConstant.DATA_OP_LT:
-                                case MyDataConstant.DATA_OP_LTE:
+                                case MyDataConstant.CONDITION_NE:
+                                case MyDataConstant.CONDITION_GT:
+                                case MyDataConstant.CONDITION_GTE:
+                                case MyDataConstant.CONDITION_LT:
+                                case MyDataConstant.CONDITION_LTE:
                                     executeOp = op;
                                     break;
 
@@ -275,32 +275,32 @@ public class BizDataDAO {
                     // 根据条件操作类型 调用mongodb对应的查询方法
                     criteria = Criteria.where(key);
                     switch (op) {
-                        case MyDataConstant.DATA_OP_EQ:
+                        case MyDataConstant.CONDITION_EQ:
                             criteria.is(value);
                             break;
-                        case MyDataConstant.DATA_OP_NE:
+                        case MyDataConstant.CONDITION_NE:
                             criteria.ne(value);
                             break;
-                        case MyDataConstant.DATA_OP_GT:
+                        case MyDataConstant.CONDITION_GT:
                             criteria.gt(value);
                             break;
-                        case MyDataConstant.DATA_OP_GTE:
+                        case MyDataConstant.CONDITION_GTE:
                             criteria.gte(value);
                             break;
-                        case MyDataConstant.DATA_OP_LT:
+                        case MyDataConstant.CONDITION_LT:
                             criteria.lt(value);
                             break;
-                        case MyDataConstant.DATA_OP_LTE:
+                        case MyDataConstant.CONDITION_LTE:
                             criteria.lte(value);
                             break;
-                        case MyDataConstant.DATA_NOT_EMPTY:
+                        case MyDataConstant.CONDITION_NOT_EMPTY:
                             criteria.ne("");
                             criteriaList.add(Criteria.where(key).ne(null));
                             break;
-                        case MyDataConstant.DATA_NOT_NULL:
+                        case MyDataConstant.CONDITION_NOT_NULL:
                             criteria.ne(null).exists(true);
                             break;
-                        case MyDataConstant.DATA_OP_LIKE:
+                        case MyDataConstant.CONDITION_LIKE:
                             criteria.regex(".*" + value + ".*", "i");
                             break;
 

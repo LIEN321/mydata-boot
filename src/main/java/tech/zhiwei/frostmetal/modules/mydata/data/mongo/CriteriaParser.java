@@ -177,14 +177,14 @@ public class CriteriaParser {
             // 处理字段引用比较
             String executeOp;
             switch (operator) {
-                case MyDataConstant.DATA_OP_EQ:
+                case MyDataConstant.CONDITION_EQ:
                     executeOp = "==";
                     break;
-                case MyDataConstant.DATA_OP_NE:
-                case MyDataConstant.DATA_OP_GT:
-                case MyDataConstant.DATA_OP_GTE:
-                case MyDataConstant.DATA_OP_LT:
-                case MyDataConstant.DATA_OP_LTE:
+                case MyDataConstant.CONDITION_NE:
+                case MyDataConstant.CONDITION_GT:
+                case MyDataConstant.CONDITION_GTE:
+                case MyDataConstant.CONDITION_LT:
+                case MyDataConstant.CONDITION_LTE:
                     executeOp = operator;
                     break;
 

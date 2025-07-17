@@ -77,7 +77,7 @@ public class BizDataServiceImpl implements IBizDataService {
                 BizDataFilter filter = new BizDataFilter();
                 filter.setType(MyDataConstant.TASK_FILTER_TYPE_VALUE);
                 filter.setKey(k);
-                filter.setOp(MyDataConstant.DATA_OP_LIKE);
+                filter.setOp(MyDataConstant.CONDITION_LIKE);
                 filter.setValue(v);
                 bizDataFilters.add(filter);
             });

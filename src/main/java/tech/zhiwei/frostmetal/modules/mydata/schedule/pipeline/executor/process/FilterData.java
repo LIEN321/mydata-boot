@@ -182,21 +182,21 @@ public class FilterData extends TaskExecutor {
             // 根据op类型，过滤数据
             isCorrect = switch (op) {
                 // not null
-                case MyDataConstant.DATA_NOT_NULL -> ObjectUtil.isNotNull(dataValue);
+                case MyDataConstant.CONDITION_NOT_NULL -> ObjectUtil.isNotNull(dataValue);
                 // not empty
-                case MyDataConstant.DATA_NOT_EMPTY -> ObjectUtil.isNotEmpty(dataValue);
+                case MyDataConstant.CONDITION_NOT_EMPTY -> ObjectUtil.isNotEmpty(dataValue);
                 // 等于
-                case MyDataConstant.DATA_OP_EQ -> (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
+                case MyDataConstant.CONDITION_EQ -> (ObjectUtil.compare(cDataValue, cFilterValue) == 0);
                 // 不等于
-                case MyDataConstant.DATA_OP_NE -> (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
+                case MyDataConstant.CONDITION_NE -> (ObjectUtil.compare(cDataValue, cFilterValue) != 0);
                 // 大于
-                case MyDataConstant.DATA_OP_GT -> (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
+                case MyDataConstant.CONDITION_GT -> (ObjectUtil.compare(cDataValue, cFilterValue) > 0);
                 // 大于等于
-                case MyDataConstant.DATA_OP_GTE -> (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
+                case MyDataConstant.CONDITION_GTE -> (ObjectUtil.compare(cDataValue, cFilterValue) >= 0);
                 // 小于
-                case MyDataConstant.DATA_OP_LT -> (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
+                case MyDataConstant.CONDITION_LT -> (ObjectUtil.compare(cDataValue, cFilterValue) < 0);
                 // 小于等于
-                case MyDataConstant.DATA_OP_LTE -> (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
+                case MyDataConstant.CONDITION_LTE -> (ObjectUtil.compare(cDataValue, cFilterValue) <= 0);
 
                 default -> throw new IllegalArgumentException(
                         StringUtil.format("过滤条件无效: 不支持的过滤操作 {}", op)

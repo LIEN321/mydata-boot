@@ -79,6 +79,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_TRIGGER_PIPELINE = "TRIGGER_PIPELINE";
     /**
+     * 任务类型：停止流水线
+     */
+    String TASK_TYPE_STOP_PIPELINE = "STOP_PIPELINE";
+    /**
      * 任务类型：保存数据到数仓
      */
     String TASK_TYPE_SAVE_DATA = "SAVE_DATA";
@@ -377,47 +381,59 @@ public interface MyDataConstant {
     /**
      * 数据过滤操作：等于
      */
-    String DATA_OP_EQ = "=";
+    String CONDITION_EQ = "=";
 
     /**
      * 数据过滤操作：等于
      */
-    String DATA_OP_NE = "!=";
+    String CONDITION_NE = "!=";
 
     /**
      * 数据过滤操作：大于
      */
-    String DATA_OP_GT = ">";
+    String CONDITION_GT = ">";
 
     /**
      * 数据过滤操作：大于或等于
      */
-    String DATA_OP_GTE = ">=";
+    String CONDITION_GTE = ">=";
 
     /**
      * 数据过滤操作：小于
      */
-    String DATA_OP_LT = "<";
+    String CONDITION_LT = "<";
 
     /**
      * 数据过滤操作：小于或等于
      */
-    String DATA_OP_LTE = "<=";
+    String CONDITION_LTE = "<=";
 
     /**
      * 数据过滤操作：not null
      */
-    String DATA_NOT_NULL = "nn";
+    String CONDITION_NOT_NULL = "nn";
 
     /**
      * 数据过滤操作：not empty
      */
-    String DATA_NOT_EMPTY = "ne";
+    String CONDITION_NOT_EMPTY = "ne";
+
+    /**
+     * 数据过滤操作：is null
+     */
+    String CONDITION_IS_NULL = "is null";
+
+    /**
+     * 数据过滤操作：is empty
+     */
+    String CONDITION_IS_EMPTY = "is empty";
+
+    String[] SINGLE_OPERATOR = new String[]{CONDITION_NOT_NULL, CONDITION_NOT_EMPTY, CONDITION_IS_NULL, CONDITION_IS_EMPTY};
 
     /**
      * 数据过滤操作：模糊匹配
      */
-    String DATA_OP_LIKE = "like";
+    String CONDITION_LIKE = "like";
 
     /**
      * 数据类型：默认，随提供放返回而定
