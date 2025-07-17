@@ -41,6 +41,11 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
             pipeline.setIntervalTime("00:15:00");
             pipeline.setIsEmail(true);
             pipeline.setEmailStrategy(new Integer[]{0});
+        } else {
+            if (pipeline.getIsSchedule()) {
+                // 重新开启定时后，重置连续失败次数
+                pipeline.setConsecutiveFailures(0);
+            }
         }
         // 保存流水线基本信息
         saveOrUpdate(pipeline);
