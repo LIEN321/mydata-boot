@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
             pipeline.setIsEmail(true);
             pipeline.setEmailStrategy(new Integer[]{0});
         } else {
-            if (pipeline.getIsSchedule()) {
+            if (ObjectUtil.equals(true, pipeline.getIsSchedule())) {
                 // 重新开启定时后，重置连续失败次数
                 pipeline.setConsecutiveFailures(0);
             }
