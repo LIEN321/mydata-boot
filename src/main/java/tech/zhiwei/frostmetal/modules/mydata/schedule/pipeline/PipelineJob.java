@@ -235,10 +235,11 @@ public class PipelineJob implements InterruptableJob {
 
         // 判断流水线连续失败次数
         int failures = ObjectUtil.defaultIfNull(pipeline.getConsecutiveFailures(), 0);
-        // 若启用定时，且失败次数过多，则自动结束 并邮件通知
-        if (pipeline.getIsSchedule() && failures >= mydataConfig.getPipelineMaxFailureCount()) {
+        // 若不是手动执行，且失败次数过多，则自动结束病禁用定时和webhook 并邮件通知
+        if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && failures >= mydataConfig.getPipelineMaxFailureCount()) {
             // 结束定时执行
             pipeline.setIsSchedule(false);
+            pipeline.setIsWebhook(false);
             if (StringUtil.isEmpty(creatorEmail)) {
                 // TODO 记录未发送的通知
                 return;
