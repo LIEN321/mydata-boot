@@ -50,6 +50,7 @@ public class PipelineJob implements InterruptableJob {
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
     private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
     private final IUserService userService = SpringUtil.getBean(IUserService.class);
+    private final PipelineScheduler pipelineScheduler = SpringUtil.getBean(PipelineScheduler.class);
 
     private volatile boolean interrupted = false;
 
@@ -245,6 +246,8 @@ public class PipelineJob implements InterruptableJob {
                 return;
             }
             MyDataMail.notifyPipelineFailure(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
+            // 调整调度
+            pipelineScheduler.update(pipelineId);
         }
 
         // 更新流水线
