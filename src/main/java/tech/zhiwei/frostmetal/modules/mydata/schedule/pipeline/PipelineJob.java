@@ -244,7 +244,7 @@ public class PipelineJob implements InterruptableJob {
                 // TODO 记录未发送的通知
                 return;
             }
-            MyDataMail.notifyPipelineStop(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
+            MyDataMail.notifyPipelineFailure(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
         }
 
         // 更新流水线
