@@ -63,4 +63,9 @@ public class PipelineTask extends TenantEntity {
      */
     @TableField(typeHandler = Fastjson2TypeHandler.class)
     private Map<String, Object> taskConfig;
+
+    /**
+     * 后续的前提条件：0-ALWAYS，1-SUCCESS
+     */
+    private Integer preCondition;
 }

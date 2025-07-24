@@ -6,3 +6,6 @@ ALTER TABLE `md_pipeline_history`
 
 ALTER TABLE `md_pipeline`
     ADD COLUMN `consecutive_failures` int(0) NULL DEFAULT 0 COMMENT '连续失败次数';
+
+ALTER TABLE `md_pipeline_task`
+    ADD COLUMN `pre_condition` int(0) NULL DEFAULT 1 COMMENT '后续的前提条件：0-ALWAYS，1-SUCCESS';

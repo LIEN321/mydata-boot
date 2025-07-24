@@ -356,6 +356,16 @@ public interface MyDataConstant {
      */
     int PIPELINE_HISTORY_STATUS_SKIP = 5;
 
+    /**
+     * 流水线任务的执行状态：0-总是继续执行
+     */
+    int PIPELINE_TASK_PRE_CONDITION_ALWAYS = 0;
+
+    /**
+     * 流水线任务的执行状态：1-成功才继续
+     */
+    int PIPELINE_TASK_PRE_CONDITION_SUCCESS = 1;
+
     // ------------------------------ 业务数据相关常量 ------------------------------
 
     /**

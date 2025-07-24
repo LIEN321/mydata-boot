@@ -143,6 +143,9 @@ public class PipelineJob implements InterruptableJob {
                         break;
                     }
 
+                    // 执行任务
+                    TaskExecutor taskExecutor = TaskExecutor.create(pipelineTask, pipelineLog);
+
                     try {
                         // 任务禁用状态
                         if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
@@ -157,12 +160,22 @@ public class PipelineJob implements InterruptableJob {
                         pipelineLogService.updateById(pipelineLog);
 
                         // 执行任务
-                        TaskExecutor.create(pipelineTask, pipelineLog).execute(jobContextData);
+                        taskExecutor.execute(jobContextData);
 
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
                     } catch (Exception e) {
+                        // 异常，执行失败
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
                         log.error(e.getMessage(), e);
+
+                        // 判断preCondition，默认成功才继续
+                        Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
+                        // 若为 总是继续，则不抛出异常，继续下个task
+                        if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
+                            taskExecutor.log("任务设置为 失败继续执行...");
+                            continue;
+                        }
+
                         // 抛出异常，结束流水线和后续任务
                         throw e;
                     } finally {
