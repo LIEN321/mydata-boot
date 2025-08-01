@@ -90,6 +90,10 @@ public interface MyDataConstant {
      * 任务类型：从数仓查询数据
      */
     String TASK_TYPE_QUERY_DATA = "QUERY_DATA";
+    /**
+     * 任务类型：从数仓清空指定数据集合
+     */
+    String TASK_TYPE_TRUNCATE_DATA = "TRUNCATE_DATA";
 
     /**
      * 任务类型：JSON转数据
