@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tech.zhiwei.frostmetal.auth.util.AuthUtil;
 import tech.zhiwei.frostmetal.core.base.service.TreeService;
 import tech.zhiwei.frostmetal.system.dto.MenuDTO;
 import tech.zhiwei.frostmetal.system.entity.Menu;
@@ -17,6 +18,7 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringPool;
 import tech.zhiwei.tool.lang.StringUtil;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +39,10 @@ public class MenuService extends TreeService<MenuMapper, Menu> implements IMenuS
     public Long saveMenu(MenuDTO menuDTO) {
         Menu menu = BeanUtil.copyProperties(menuDTO, Menu.class);
         saveOrUpdate(menu);
+
+        Long roleId = AuthUtil.getRoleId();
+        roleMenuService.add(roleId, menu.getId());
+
         return menu.getId();
     }
 
@@ -67,7 +73,7 @@ public class MenuService extends TreeService<MenuMapper, Menu> implements IMenuS
         List<Long> menuIds = roleMenus.stream().map(RoleMenu::getMenuId).toList();
 
         // 查询菜单列表
-        List<Menu> menus = listByIds(menuIds);
+        List<Menu> menus = listByMenuIds(menuIds);
 
         // 不重复的菜单id
         Set<Long> uniqueMenuIds = CollectionUtil.newHashSet(menuIds);
@@ -86,13 +92,20 @@ public class MenuService extends TreeService<MenuMapper, Menu> implements IMenuS
         }
 
         // 查询用户可见菜单
-        return listByIds(uniqueMenuIds);
+        return listByMenuIds(uniqueMenuIds);
     }
 
     @Override
     public List<Menu> listByCodes(List<String> codes) {
         LambdaQueryWrapper<Menu> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.in(Menu::getCode, codes);
+        return list(queryWrapper);
+    }
+
+    private List<Menu> listByMenuIds(Collection<Long> ids) {
+        LambdaQueryWrapper<Menu> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(Menu::getId, ids);
+        queryWrapper.orderByAsc(Menu::getSort);
         return list(queryWrapper);
     }
 }

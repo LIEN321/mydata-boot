@@ -36,4 +36,12 @@ public interface IRoleMenuService extends IIdService<RoleMenu> {
      * @return 角色列表
      */
     List<RoleMenu> listByMenuId(Long menuId);
+
+    /**
+     * 新增角色的菜单权限，若存在 则不新增
+     *
+     * @param roleId 角色id
+     * @param menuId 菜单id
+     */
+    void add(Long roleId, Long menuId);
 }
