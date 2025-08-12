@@ -13,8 +13,16 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 public interface IAppService extends IBaseService<App> {
     /**
      * 保存应用
+     *
      * @param appDTO 应用
      * @return id
      */
     Long saveApp(AppDTO appDTO);
+
+    /**
+     * 更新应用的API数量
+     *
+     * @param ids 应用id
+     */
+    void updateAppApiCount(Long... ids);
 }

@@ -4,6 +4,7 @@ import tech.zhiwei.frostmetal.core.base.service.IBaseService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppApiDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -28,4 +29,28 @@ public interface IAppApiService extends IBaseService<AppApi> {
      * @return 接口列表
      */
     List<AppApi> listByApp(Long appId);
+
+    /**
+     * 根据应用 统计接口数量
+     *
+     * @param appId 应用id
+     * @return 接口数量
+     */
+    long countByApp(Long appId);
+
+    /**
+     * 单个删除
+     *
+     * @param id 记录id
+     * @return
+     */
+    boolean delete(Long id);
+
+    /**
+     * 批量删除
+     *
+     * @param ids 记录id集合
+     * @return
+     */
+    boolean delete(Collection<Long> ids);
 }

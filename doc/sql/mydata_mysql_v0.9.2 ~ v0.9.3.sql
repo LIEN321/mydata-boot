@@ -9,3 +9,10 @@ ALTER TABLE `md_pipeline`
 
 ALTER TABLE `md_pipeline_task`
     ADD COLUMN `pre_condition` int(0) NULL DEFAULT 1 COMMENT '后续的前提条件：0-ALWAYS，1-SUCCESS';
+
+update md_app a
+    join ( select app.id, (select count (1) from md_api where app_id = app.id) as api_count
+    from md_app app ) t
+on a.id = t.id
+    set a.api_count = t.api_count
+;

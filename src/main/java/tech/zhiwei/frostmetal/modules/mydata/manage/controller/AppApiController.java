@@ -83,7 +83,7 @@ public class AppApiController {
     @Operation(summary = "单个删除应用接口", operationId = "deleteAppApi")
     @Parameter(name = "id", description = "记录id")
     public R<Boolean> delete(@PathVariable Long id) {
-        boolean result = appApiService.remove(id);
+        boolean result = appApiService.delete(id);
         if (result) {
             MyDataCache.removeApi(id);
         }
@@ -93,7 +93,7 @@ public class AppApiController {
     @DeleteMapping
     @Operation(summary = "批量删除应用接口", operationId = "deleteAppApis")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
-        boolean result = appApiService.remove(ids);
+        boolean result = appApiService.delete(ids);
         if (result) {
             ids.forEach(MyDataCache::removeApi);
         }
