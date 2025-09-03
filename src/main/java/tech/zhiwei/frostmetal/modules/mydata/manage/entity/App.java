@@ -59,4 +59,15 @@ public class App extends TenantEntity {
      */
     @TableField(typeHandler = Fastjson2TypeHandler.class)
     private List<Map<String, Object>> reqHeaders;
+
+    /**
+     * 认证类型，null-无、api_key、cookie
+     */
+    private String authType;
+
+    /**
+     * 认证配置
+     */
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> authConfig;
 }

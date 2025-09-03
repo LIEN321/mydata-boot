@@ -110,4 +110,15 @@ public class AppApiController {
         }
         return AppApiWrapper.getInstance().selectVOList(appApiService.listByApp(appId));
     }
+
+    @GetMapping("/select_auth")
+    @Operation(summary = "查询认证接口", operationId = "authApiSelect")
+    public List<SelectVO> selectAuthApi(@RequestParam(required = false) Long appId) {
+        if (ObjectUtil.isNull(appId)) {
+            return List.of();
+        }
+        return AppApiWrapper.getInstance().selectVOList(appApiService.listAuthApiByApp(appId));
+    }
+
+
 }

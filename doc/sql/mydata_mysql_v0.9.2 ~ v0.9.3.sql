@@ -16,3 +16,7 @@ update md_app a
 on a.id = t.id
     set a.api_count = t.api_count
 ;
+
+ALTER TABLE `md_app`
+    ADD COLUMN `auth_type` varchar(64) NULL COMMENT '认证类型' AFTER `req_headers`,
+    ADD COLUMN `auth_config` text NULL COMMENT '认证配置' AFTER `auth_type`;

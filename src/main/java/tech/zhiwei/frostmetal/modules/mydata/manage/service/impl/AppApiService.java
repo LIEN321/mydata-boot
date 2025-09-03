@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
+import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.AppApiDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.AppApiMapper;
@@ -46,6 +47,14 @@ public class AppApiService extends BaseService<AppApiMapper, AppApi> implements 
     public List<AppApi> listByApp(Long appId) {
         LambdaQueryWrapper<AppApi> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(AppApi::getAppId, appId);
+        return list(queryWrapper);
+    }
+
+    @Override
+    public List<AppApi> listAuthApiByApp(Long appId) {
+        LambdaQueryWrapper<AppApi> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(AppApi::getAppId, appId);
+        queryWrapper.eq(AppApi::getOpType, MyDataConstant.API_TYPE_APP_AUTH);
         return list(queryWrapper);
     }
 

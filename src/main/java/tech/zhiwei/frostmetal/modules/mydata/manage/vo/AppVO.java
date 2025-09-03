@@ -42,4 +42,10 @@ public class AppVO extends BaseVO {
 
     @Schema(description = "请求Header")
     private List<Map<String, Object>> reqHeaders;
+
+    @Schema(description = "认证类型")
+    private String authType;
+
+    @Schema(description = "认证配置")
+    private Map<String, Object> authConfig;
 }

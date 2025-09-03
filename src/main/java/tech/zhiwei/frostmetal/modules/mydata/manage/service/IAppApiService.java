@@ -31,6 +31,14 @@ public interface IAppApiService extends IBaseService<AppApi> {
     List<AppApi> listByApp(Long appId);
 
     /**
+     * 根据应用 查询认证接口列表
+     *
+     * @param appId 应用id
+     * @return 认证接口列表
+     */
+    List<AppApi> listAuthApiByApp(Long appId);
+
+    /**
      * 根据应用 统计接口数量
      *
      * @param appId 应用id
