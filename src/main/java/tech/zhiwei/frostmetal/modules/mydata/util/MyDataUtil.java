@@ -43,7 +43,7 @@ public class MyDataUtil {
         if (opType == null) {
             return false;
         }
-        return MyDataConstant.DATA_PRODUCER == opType || MyDataConstant.DATA_CONSUMER == opType;
+        return MyDataConstant.API_TYPE_DATA_PRODUCER == opType || MyDataConstant.API_TYPE_DATA_CONSUMER == opType;
     }
 
     /**
@@ -92,11 +92,11 @@ public class MyDataUtil {
      * @param map Map
      * @return map List<Map<String, Object>>
      */
-    public static List<Map<String, String>> switchMapToList(Map<String, String> map) {
-        List<Map<String, String>> maps = CollectionUtil.newArrayList();
+    public static List<Map<String, Object>> switchMapToList(Map<String, String> map) {
+        List<Map<String, Object>> maps = CollectionUtil.newArrayList();
         if (CollectionUtil.isNotEmpty(map)) {
             map.forEach((k, v) -> {
-                Map<String, String> item = MapUtil.newHashMap();
+                Map<String, Object> item = MapUtil.newHashMap();
                 item.put("k", k);
                 item.put("v", v);
                 maps.add(item);

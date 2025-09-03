@@ -11,6 +11,7 @@ import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
@@ -45,6 +46,11 @@ import java.util.Map;
  */
 @Slf4j
 public class PipelineJob implements InterruptableJob {
+    /**
+     * 流水线参数key：流水线内已认证的APP
+     */
+    public static final String PIPELINE_PARAM_KEY_AUTHED_APP = "PIPELINE_AUTHED_APP";
+
     private final IPipelineService pipelineService = SpringUtil.getBean(IPipelineService.class);
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
@@ -67,6 +73,9 @@ public class PipelineJob implements InterruptableJob {
         triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
         // 流水线参数存入流程全局变量
         jobContextData.putAll(triggerParam);
+
+        // 流水线内 存储已认证的App
+        jobContextData.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, App>());
 
         // 开始时间
         Date historyStartTime = new Date();

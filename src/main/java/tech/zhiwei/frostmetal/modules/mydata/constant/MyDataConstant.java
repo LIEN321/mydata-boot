@@ -51,14 +51,25 @@ public interface MyDataConstant {
     int API_DATA_MODE_LIST = 2;
 
     /**
-     * 数据操作类型：数据提供者
+     * API操作类型：提供数据
      */
-    int DATA_PRODUCER = 1;
+    int API_TYPE_DATA_PRODUCER = 1;
 
     /**
-     * 数据操作类型：数据消费者
+     * API操作类型：消费数据
      */
-    int DATA_CONSUMER = 2;
+    int API_TYPE_DATA_CONSUMER = 2;
+
+    /**
+     * AP作类型：授权认证
+     */
+    int API_TYPE_APP_AUTH = 3;
+
+
+    /**
+     * 认证类型：cookie
+     */
+    String AUTH_TYPE_COOKIE = "cookie";
 
     // ------------------------------ 流水线任务常量 ------------------------------
 

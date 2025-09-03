@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.http.HttpUtil;
@@ -30,7 +31,7 @@ public class JobApiService {
      * @param api 接口
      * @return 接口响应内容
      */
-    public static String callApi(TaskExecutor taskExecutor, App app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
+    public static PipelineApiResponse callApi(TaskExecutor taskExecutor, App app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
         AssertUtil.notNull(app);
         AssertUtil.notNull(api);
 
@@ -42,6 +43,9 @@ public class JobApiService {
 
         // APP 全局Header
         Map<String, String> appHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(app.getReqHeaders()));
+        if (ObjectUtil.isNull(appHeaders)) {
+            appHeaders = MapUtil.newHashMap();
+        }
         // API 请求Header
         Map<String, String> apiHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqHeaders()));
         // API Header 并入 全局Header
@@ -106,11 +110,18 @@ public class JobApiService {
         taskExecutor.log("\trequest body : {}", reqBody);
 
         // 发送请求，获取响应结果
-        HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
-        String responseBody = response.body();
+        try (HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);) {
+            String cookie = response.getCookieStr();
+            if (StringUtil.isNotEmpty(cookie)) {
+                appHeaders.put("Cookie", cookie);
+            }
+            app.setReqHeaders(MyDataUtil.switchMapToList(appHeaders));
 
-        taskExecutor.log("\tresponse status : {}", response.getStatus());
-        // taskExecutor.log("\tresponse body : {}", responseBody);
-        return responseBody;
+            String responseBody = response.body();
+            taskExecutor.log("\tresponse status : {}", response.getStatus());
+            taskExecutor.log("\tresponse body : {}", responseBody);
+
+            return new PipelineApiResponse(response.getStatus(), responseBody);
+        }
     }
 }

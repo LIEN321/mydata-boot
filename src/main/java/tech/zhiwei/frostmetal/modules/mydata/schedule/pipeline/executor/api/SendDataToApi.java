@@ -11,7 +11,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2024/11/22
  */
 @Slf4j
-public class SendDataToApi extends TaskExecutor {
+public class SendDataToApi extends ApiTaskExecutor {
 
     public SendDataToApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -37,6 +37,8 @@ public class SendDataToApi extends TaskExecutor {
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
+        super.doExecute(jobContextData);
+
         PipelineTask pipelineTask = getPipelineTask();
 
         Map<String, String> inputMap = getInputMap();
@@ -67,6 +69,7 @@ public class SendDataToApi extends TaskExecutor {
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
+        App authedApp = doAppAuth(app);
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
@@ -146,7 +149,7 @@ public class SendDataToApi extends TaskExecutor {
 
                     // 发送数据
                     map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString());
-                    JobApiService.callApi(this, app, api, null, map, fieldMapping);
+                    JobApiService.callApi(this, authedApp, api, null, map, fieldMapping);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -178,7 +181,7 @@ public class SendDataToApi extends TaskExecutor {
                 map.putAll(bizData);
                 map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString());
                 // 发送数据
-                JobApiService.callApi(this, app, api, null, map, fieldMapping);
+                JobApiService.callApi(this, authedApp, api, null, map, fieldMapping);
             });
         }
     }
