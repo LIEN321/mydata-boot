@@ -30,6 +30,7 @@ public class MailSender {
         mailAccount.setFrom(mailConfig.getFrom());
         mailAccount.setUser(mailConfig.getUser());
         mailAccount.setPass(mailConfig.getPass());
+        mailAccount.setSslEnable(mailConfig.getSsl());
 
         startMailConsumer();
     }
