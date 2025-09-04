@@ -58,7 +58,7 @@ public class SendEmail extends TaskExecutor {
         }
 
         log("发送邮件开始");
-        MailSender.sendMail(address, subject, content, file);
+        MailSender.sendHtml(address, subject, content, file);
         log("发送邮件结束");
     }
 }
