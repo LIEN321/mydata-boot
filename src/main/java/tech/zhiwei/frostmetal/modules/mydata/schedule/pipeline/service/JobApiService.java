@@ -6,6 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.http.HttpUtil;
@@ -14,6 +15,7 @@ import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -69,6 +71,33 @@ public class JobApiService {
         // api地址
         String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
+        // 解析替换业务数据变量
+        apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
+
+        // API Key 认证
+        String authType = app.getAuthType();
+        // 认证配置
+        Map<String, Object> authConfig = app.getAuthConfig();
+        if (MyDataConstant.APP_AUTH_TYPE_API_KEY.equals(authType)) {
+            // key
+            String key = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_KEY);
+            // value
+            String value = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_VALUE);
+            // add to
+            String addTo = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_ADD_TO);
+
+            if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
+                if (reqHeaders == null) {
+                    reqHeaders = MapUtil.newHashMap();
+                }
+                reqHeaders.put(key, value);
+            } else {
+                Map<String, Object> query = new HashMap<>();
+                query.put(key, value);
+                apiUrl = HttpUtil.urlWithForm(apiUrl, query, null, true);
+            }
+        }
+
         // 解析替换系统变量值
         apiUrl = JobVarService.processSysVarValue(apiUrl);
         JobVarService.processSysVarValues(reqParams);
@@ -76,8 +105,6 @@ public class JobApiService {
         JobVarService.processSysVarValues(reqForm);
         reqBody = JobVarService.processSysVarValue(reqBody);
 
-        // 解析替换业务数据变量
-        apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
         try {
             JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
         } catch (Exception e) {

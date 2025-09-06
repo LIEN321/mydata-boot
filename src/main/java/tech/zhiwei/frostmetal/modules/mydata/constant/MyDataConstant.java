@@ -67,9 +67,22 @@ public interface MyDataConstant {
 
 
     /**
-     * 认证类型：cookie
+     * APP认证类型：cookie
      */
-    String AUTH_TYPE_COOKIE = "cookie";
+    String APP_AUTH_TYPE_COOKIE = "cookie";
+    /**
+     * APP认证类型：API Key
+     */
+    String APP_AUTH_TYPE_API_KEY = "api_key";
+
+    /**
+     * http header
+     */
+    String HTTP_HEADER = "header";
+    /**
+     * http query
+     */
+    String HTTP_QUERY = "query";
 
     // ------------------------------ 流水线任务常量 ------------------------------
 

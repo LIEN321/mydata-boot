@@ -28,7 +28,10 @@ import java.util.Map;
 @Slf4j
 public abstract class ApiTaskExecutor extends TaskExecutor {
 
-    private static final String AUTH_CONFIG_KEY_API = "api";
+    public static final String AUTH_CONFIG_API = "api";
+    public static final String AUTH_CONFIG_KEY = "key";
+    public static final String AUTH_CONFIG_VALUE = "value";
+    public static final String AUTH_CONFIG_ADD_TO = "addTo";
 
     /**
      * 已完成授权的App
@@ -70,15 +73,16 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
         log("应用{} 认证开始...", app.getAppName());
         // cookie认证
-        if (MyDataConstant.AUTH_TYPE_COOKIE.equals(authType)) {
+        if (MyDataConstant.APP_AUTH_TYPE_COOKIE.equals(authType)) {
             // 认证的接口id
-            Long apiId = NumberUtil.parseLong((String) authConfig.get(AUTH_CONFIG_KEY_API));
+            Long apiId = NumberUtil.parseLong((String) authConfig.get(AUTH_CONFIG_API));
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
             PipelineApiResponse apiResponse = JobApiService.callApi(this, app, api, null, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
         }
+        // api key 认证，在JobApiService中调用api前处理
 
         authedApps.put(app.getId(), app);
 
