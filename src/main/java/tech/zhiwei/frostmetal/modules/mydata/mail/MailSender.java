@@ -5,6 +5,7 @@ import cn.hutool.extra.mail.MailUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.tool.spring.SpringUtil;
+import tech.zhiwei.tool.util.ArrayUtil;
 
 import java.io.File;
 import java.util.concurrent.BlockingQueue;
@@ -65,7 +66,7 @@ public class MailSender {
     }
 
     /**
-     * 发送系统邮件
+     * 立即发送系统邮件（不排队）
      *
      * @param to      接收人邮件地址
      * @param subject 主题
@@ -73,6 +74,26 @@ public class MailSender {
      * @param files   附件列表
      */
     public static void sendHtml(String to, String subject, String content, File... files) {
+        MailTask mailTask = new MailTask();
+        mailTask.setTo(to);
+        mailTask.setSubject(subject);
+        mailTask.setContent(content);
+        if (files != null) {
+            mailTask.setAttachments(ArrayUtil.removeNull(files));
+        }
+        mailTask.setHtml(true);
+        doSend(mailTask);
+    }
+
+    /**
+     * 队列发送系统邮件
+     *
+     * @param to      接收人邮件地址
+     * @param subject 主题
+     * @param content 内容
+     * @param files   附件列表
+     */
+    public static void sendHtmlByQueue(String to, String subject, String content, File... files) {
         MailTask mailTask = new MailTask();
         mailTask.setTo(to);
         mailTask.setSubject(subject);

@@ -1,6 +1,5 @@
 package tech.zhiwei.frostmetal.modules.mydata.mail;
 
-import tech.zhiwei.frostmetal.system.mail.MailSender;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -23,7 +22,7 @@ public class MyDataMail {
 
         String subject = "MyData - 流水线执行失败";
         String content = StringUtil.format("项目【{}】中的流水线【{}】于 {} 执行失败，详见执行日志。", projectName, pipelineName, DateUtil.now());
-        MailSender.sendHtml(email, subject, content);
+        MailSender.sendHtmlByQueue(email, subject, content);
     }
 
     /**
@@ -36,7 +35,7 @@ public class MyDataMail {
 
         String subject = "MyData - 流水线执行成功";
         String content = StringUtil.format("项目【{}】中的流水线【{}】于 {} 执行成功。", projectName, pipelineName, DateUtil.now());
-        MailSender.sendHtml(email, subject, content);
+        MailSender.sendHtmlByQueue(email, subject, content);
     }
 
     /**
@@ -49,6 +48,6 @@ public class MyDataMail {
 
         String subject = "MyData - 流水线异常结束";
         String content = StringUtil.format("项目【{}】中的流水线【{}】因失败次数过多 于 {} 终止且禁用定时和webhook，若需继续使用 请手动开启。", projectName, pipelineName, DateUtil.now());
-        MailSender.sendHtml(email, subject, content);
+        MailSender.sendHtmlByQueue(email, subject, content);
     }
 }
