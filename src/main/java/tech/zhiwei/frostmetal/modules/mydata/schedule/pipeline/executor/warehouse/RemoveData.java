@@ -18,11 +18,11 @@ import java.util.Map;
  * @author LIEN
  * @since 2024/11/25
  */
-public class TruncateData extends TaskExecutor {
+public class RemoveData extends TaskExecutor {
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
     private final IBizDataService bizDataService = SpringUtil.getBean(IBizDataService.class);
 
-    public TruncateData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    public RemoveData(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }
 

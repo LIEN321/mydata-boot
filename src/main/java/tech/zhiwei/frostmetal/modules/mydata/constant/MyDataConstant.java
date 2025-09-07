@@ -117,7 +117,7 @@ public interface MyDataConstant {
     /**
      * 任务类型：从数仓清空指定数据集合
      */
-    String TASK_TYPE_TRUNCATE_DATA = "TRUNCATE_DATA";
+    String TASK_TYPE_REMOVE_DATA = "REMOVE_DATA";
 
     /**
      * 任务类型：JSON转数据

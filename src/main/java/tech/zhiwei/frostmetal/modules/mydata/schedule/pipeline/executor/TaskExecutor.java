@@ -22,8 +22,8 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.ParseJsonToVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.RemoveData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.TruncateData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.webhook.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -82,7 +82,7 @@ public abstract class TaskExecutor {
             // 从数仓查询数据
             case MyDataConstant.TASK_TYPE_QUERY_DATA -> new QueryDataFromWarehouse(task, log);
             // 从数仓清空指定数据集合
-            case MyDataConstant.TASK_TYPE_TRUNCATE_DATA -> new TruncateData(task, log);
+            case MyDataConstant.TASK_TYPE_REMOVE_DATA -> new RemoveData(task, log);
             // 发送邮件
             case MyDataConstant.TASK_TYPE_SEND_EMAIL -> new SendEmail(task, log);
             // JSON值存入变量
