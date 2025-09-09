@@ -9,9 +9,10 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  * @since 2024/11/21
  */
 @Slf4j
-public class GetJsonFromApi extends TaskExecutor {
+public class GetJsonFromApi extends ApiTaskExecutor {
 
     public GetJsonFromApi(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
@@ -41,6 +42,8 @@ public class GetJsonFromApi extends TaskExecutor {
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
+        super.doExecute(jobContextData);
+
         PipelineTask pipelineTask = getPipelineTask();
 
         // 输入参数
@@ -55,8 +58,9 @@ public class GetJsonFromApi extends TaskExecutor {
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
+        App authedApp = doAppAuth(app);
 
-        log("将调用应用 {} 的接口", app.getAppName());
+        log("将调用应用 {} 的接口", authedApp.getAppName());
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
@@ -115,8 +119,9 @@ public class GetJsonFromApi extends TaskExecutor {
             log("第{}次调用接口", loopCount);
 
             // 调用接口 获取json
-            String originJsonString = JobApiService.callApi(this, app, api, batchParams, bizDataMap, fieldTypeMapping);
-            log("\t获得JSON：{}", originJsonString);
+            PipelineApiResponse apiResponse = JobApiService.callApi(this, authedApp, api, batchParams, bizDataMap, fieldTypeMapping);
+            String originJsonString = apiResponse.getData();
+            // log("\t获得JSON：{}", originJsonString);
 
             // json为空则结束
             if (JsonUtil.isEmpty(originJsonString)) {

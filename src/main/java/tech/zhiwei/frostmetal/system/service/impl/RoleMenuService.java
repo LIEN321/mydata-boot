@@ -39,4 +39,24 @@ public class RoleMenuService extends IdService<RoleMenuMapper, RoleMenu> impleme
                 .eq(RoleMenu::getMenuId, menuId);
         return list(queryWrapper);
     }
+
+    @Override
+    public void add(Long roleId, Long menuId) {
+        if (roleId == null || menuId == null) {
+            return;
+        }
+        Wrapper<RoleMenu> queryWrapper = Wrappers.<RoleMenu>lambdaQuery()
+                .eq(RoleMenu::getRoleId, roleId)
+                .eq(RoleMenu::getMenuId, menuId);
+
+        RoleMenu exist = getOne(queryWrapper);
+        if (exist != null) {
+            return;
+        }
+
+        RoleMenu roleMenu = new RoleMenu();
+        roleMenu.setRoleId(roleId);
+        roleMenu.setMenuId(menuId);
+        save(roleMenu);
+    }
 }

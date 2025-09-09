@@ -58,10 +58,12 @@ public class AppApiController {
     public P<List<AppApiVO>> page(@ParameterObject PageParam pageParam
             , @RequestParam(required = false) String appId
             , @RequestParam(required = false) String apiName
+            , @RequestParam(required = false) String apiUri
     ) {
         LambdaQueryWrapper<AppApi> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(ObjectUtil.isNotNull(appId), AppApi::getAppId, appId);
         queryWrapper.like(ObjectUtil.isNotNull(apiName), AppApi::getApiName, apiName);
+        queryWrapper.like(ObjectUtil.isNotNull(apiUri), AppApi::getApiUri, apiUri);
 
         return P.page(AppApiWrapper.getInstance().pageVO(appApiService.page(queryWrapper, pageParam)));
     }
@@ -83,7 +85,7 @@ public class AppApiController {
     @Operation(summary = "单个删除应用接口", operationId = "deleteAppApi")
     @Parameter(name = "id", description = "记录id")
     public R<Boolean> delete(@PathVariable Long id) {
-        boolean result = appApiService.remove(id);
+        boolean result = appApiService.delete(id);
         if (result) {
             MyDataCache.removeApi(id);
         }
@@ -93,7 +95,7 @@ public class AppApiController {
     @DeleteMapping
     @Operation(summary = "批量删除应用接口", operationId = "deleteAppApis")
     public R<Boolean> delete(@RequestBody Collection<Long> ids) {
-        boolean result = appApiService.remove(ids);
+        boolean result = appApiService.delete(ids);
         if (result) {
             ids.forEach(MyDataCache::removeApi);
         }
@@ -108,4 +110,15 @@ public class AppApiController {
         }
         return AppApiWrapper.getInstance().selectVOList(appApiService.listByApp(appId));
     }
+
+    @GetMapping("/select_auth")
+    @Operation(summary = "查询认证接口", operationId = "authApiSelect")
+    public List<SelectVO> selectAuthApi(@RequestParam(required = false) Long appId) {
+        if (ObjectUtil.isNull(appId)) {
+            return List.of();
+        }
+        return AppApiWrapper.getInstance().selectVOList(appApiService.listAuthApiByApp(appId));
+    }
+
+
 }

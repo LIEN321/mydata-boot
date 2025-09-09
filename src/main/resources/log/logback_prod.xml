@@ -45,7 +45,7 @@
     <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 日志文件输出的文件名 -->
-            <FileNamePattern>target/zhiwei/log/error-%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>target/mydata/log/error-%d{yyyy-MM-dd}.log</FileNamePattern>
             <!-- 日志文件保留天数 -->
             <MaxHistory>365</MaxHistory>
         </rollingPolicy>

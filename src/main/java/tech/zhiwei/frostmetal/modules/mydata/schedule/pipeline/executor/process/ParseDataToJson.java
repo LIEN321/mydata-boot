@@ -75,7 +75,7 @@ public class ParseDataToJson extends TaskExecutor {
             });
         }
 
-        log("业务数据：{}", bizDataList);
+        // log("业务数据：{}", bizDataList);
         JSON dataJson = JsonUtil.parse(bizDataList);
 
         // JSON模板
@@ -102,7 +102,7 @@ public class ParseDataToJson extends TaskExecutor {
         try {
             // 预先检测json字符串是否有效
             JSON jsonObject = JsonUtil.parse(json);
-            log("转换后的JSON：{}", json);
+            // log("转换后的JSON：{}", json);
 
             PipelineJson pipelineJson = new PipelineJson(jsonObject, CollectionUtil.toList(jsonObject));
             setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));

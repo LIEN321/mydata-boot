@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email.SendEmail;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipeline.StopPipeline;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipeline.TriggerPipeline;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.FilterData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseDataToJson;
@@ -21,6 +22,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.ParseJsonToVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.RemoveData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.SaveDataToWarehouse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.webhook.GetJsonFromWebhook;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -63,6 +65,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
             // 用Webhook触发流水线
             case MyDataConstant.TASK_TYPE_TRIGGER_PIPELINE -> new TriggerPipeline(task, log);
+            // 用Webhook触发流水线
+            case MyDataConstant.TASK_TYPE_STOP_PIPELINE -> new StopPipeline(task, log);
             // JSON转数据
             case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
             // 数据转JSON
@@ -77,6 +81,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_SAVE_DATA -> new SaveDataToWarehouse(task, log);
             // 从数仓查询数据
             case MyDataConstant.TASK_TYPE_QUERY_DATA -> new QueryDataFromWarehouse(task, log);
+            // 从数仓清空指定数据集合
+            case MyDataConstant.TASK_TYPE_REMOVE_DATA -> new RemoveData(task, log);
             // 发送邮件
             case MyDataConstant.TASK_TYPE_SEND_EMAIL -> new SendEmail(task, log);
             // JSON值存入变量
@@ -93,11 +99,11 @@ public abstract class TaskExecutor {
     public final void execute(Map<String, Object> jobContextData) {
         log("[{}] 开始执行", pipelineTask.getTaskName());
         if (MapUtil.isNotEmpty(jobContextData)) {
-            StringBuffer logInfo = new StringBuffer();
-            jobContextData.forEach((k, v) -> {
-                logInfo.append(StringUtil.format("\t{} = {}\n", k, v));
-            });
-            log("输入参数：\n" + logInfo.toString());
+            // StringBuffer logInfo = new StringBuffer();
+            // jobContextData.forEach((k, v) -> {
+            //     logInfo.append(StringUtil.format("\t{} = {}\n", k, v));
+            // });
+            // log("输入参数：\n" + logInfo.toString());
         }
 
         try {

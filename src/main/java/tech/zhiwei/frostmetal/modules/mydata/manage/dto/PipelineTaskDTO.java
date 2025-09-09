@@ -41,4 +41,7 @@ public class PipelineTaskDTO {
 
     @Schema(description = "业务状态")
     private Integer status;
+
+    @Schema(description = "后续的前提条件")
+    private Integer preCondition;
 }

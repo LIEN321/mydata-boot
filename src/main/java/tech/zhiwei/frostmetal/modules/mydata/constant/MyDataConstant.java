@@ -51,14 +51,38 @@ public interface MyDataConstant {
     int API_DATA_MODE_LIST = 2;
 
     /**
-     * 数据操作类型：数据提供者
+     * API操作类型：提供数据
      */
-    int DATA_PRODUCER = 1;
+    int API_TYPE_DATA_PRODUCER = 1;
 
     /**
-     * 数据操作类型：数据消费者
+     * API操作类型：消费数据
      */
-    int DATA_CONSUMER = 2;
+    int API_TYPE_DATA_CONSUMER = 2;
+
+    /**
+     * AP作类型：授权认证
+     */
+    int API_TYPE_APP_AUTH = 3;
+
+
+    /**
+     * APP认证类型：cookie
+     */
+    String APP_AUTH_TYPE_COOKIE = "cookie";
+    /**
+     * APP认证类型：API Key
+     */
+    String APP_AUTH_TYPE_API_KEY = "api_key";
+
+    /**
+     * http header
+     */
+    String HTTP_HEADER = "header";
+    /**
+     * http query
+     */
+    String HTTP_QUERY = "query";
 
     // ------------------------------ 流水线任务常量 ------------------------------
 
@@ -79,6 +103,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_TRIGGER_PIPELINE = "TRIGGER_PIPELINE";
     /**
+     * 任务类型：停止流水线
+     */
+    String TASK_TYPE_STOP_PIPELINE = "STOP_PIPELINE";
+    /**
      * 任务类型：保存数据到数仓
      */
     String TASK_TYPE_SAVE_DATA = "SAVE_DATA";
@@ -86,6 +114,10 @@ public interface MyDataConstant {
      * 任务类型：从数仓查询数据
      */
     String TASK_TYPE_QUERY_DATA = "QUERY_DATA";
+    /**
+     * 任务类型：从数仓清空指定数据集合
+     */
+    String TASK_TYPE_REMOVE_DATA = "REMOVE_DATA";
 
     /**
      * 任务类型：JSON转数据
@@ -352,6 +384,16 @@ public interface MyDataConstant {
      */
     int PIPELINE_HISTORY_STATUS_SKIP = 5;
 
+    /**
+     * 流水线任务的执行状态：0-总是继续执行
+     */
+    int PIPELINE_TASK_PRE_CONDITION_ALWAYS = 0;
+
+    /**
+     * 流水线任务的执行状态：1-成功才继续
+     */
+    int PIPELINE_TASK_PRE_CONDITION_SUCCESS = 1;
+
     // ------------------------------ 业务数据相关常量 ------------------------------
 
     /**
@@ -377,47 +419,59 @@ public interface MyDataConstant {
     /**
      * 数据过滤操作：等于
      */
-    String DATA_OP_EQ = "=";
+    String CONDITION_EQ = "=";
 
     /**
      * 数据过滤操作：等于
      */
-    String DATA_OP_NE = "!=";
+    String CONDITION_NE = "!=";
 
     /**
      * 数据过滤操作：大于
      */
-    String DATA_OP_GT = ">";
+    String CONDITION_GT = ">";
 
     /**
      * 数据过滤操作：大于或等于
      */
-    String DATA_OP_GTE = ">=";
+    String CONDITION_GTE = ">=";
 
     /**
      * 数据过滤操作：小于
      */
-    String DATA_OP_LT = "<";
+    String CONDITION_LT = "<";
 
     /**
      * 数据过滤操作：小于或等于
      */
-    String DATA_OP_LTE = "<=";
+    String CONDITION_LTE = "<=";
 
     /**
      * 数据过滤操作：not null
      */
-    String DATA_NOT_NULL = "nn";
+    String CONDITION_NOT_NULL = "nn";
 
     /**
      * 数据过滤操作：not empty
      */
-    String DATA_NOT_EMPTY = "ne";
+    String CONDITION_NOT_EMPTY = "ne";
+
+    /**
+     * 数据过滤操作：is null
+     */
+    String CONDITION_IS_NULL = "is null";
+
+    /**
+     * 数据过滤操作：is empty
+     */
+    String CONDITION_IS_EMPTY = "is empty";
+
+    String[] SINGLE_OPERATOR = new String[]{CONDITION_NOT_NULL, CONDITION_NOT_EMPTY, CONDITION_IS_NULL, CONDITION_IS_EMPTY};
 
     /**
      * 数据过滤操作：模糊匹配
      */
-    String DATA_OP_LIKE = "like";
+    String CONDITION_LIKE = "like";
 
     /**
      * 数据类型：默认，随提供放返回而定

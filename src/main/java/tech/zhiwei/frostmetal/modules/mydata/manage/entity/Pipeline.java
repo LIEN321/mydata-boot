@@ -99,11 +99,12 @@ public class Pipeline extends TenantEntity {
     /**
      * 是否启用邮件
      */
-    private Integer isEmail;
+    private Boolean isEmail;
 
     /**
      * 邮件通知策略
      */
+    @TableField(typeHandler = IntegerArrayTypeHandler.class)
     private Integer[] emailStrategy;
 
     /**
@@ -115,4 +116,9 @@ public class Pipeline extends TenantEntity {
      * 最新的执行记录id
      */
     private Long latestHistoryId;
+
+    /**
+     * 连续失败次数
+     */
+    private Integer consecutiveFailures;
 }

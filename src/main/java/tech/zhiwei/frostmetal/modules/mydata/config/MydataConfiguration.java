@@ -18,10 +18,13 @@ public class MydataConfiguration {
      */
     @Value("${mydata.secure.encrypt-db:false}")
     private boolean isEncryptDb;
-    
+
     /**
      * 获取配置文件的副本集连接
      */
     @Value("${mydata.mongodb.url}")
     private String mongodbUrl;
+
+    @Value("${mydata.pipeline.max-failure-count:5}")
+    private int pipelineMaxFailureCount;
 }

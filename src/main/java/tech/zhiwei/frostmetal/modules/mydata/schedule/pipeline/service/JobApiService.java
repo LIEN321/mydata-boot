@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.http.HttpUtil;
@@ -13,6 +15,7 @@ import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +33,7 @@ public class JobApiService {
      * @param api 接口
      * @return 接口响应内容
      */
-    public static String callApi(TaskExecutor taskExecutor, App app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
+    public static PipelineApiResponse callApi(TaskExecutor taskExecutor, App app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, String> fieldTypeMapping) {
         AssertUtil.notNull(app);
         AssertUtil.notNull(api);
 
@@ -42,6 +45,9 @@ public class JobApiService {
 
         // APP 全局Header
         Map<String, String> appHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(app.getReqHeaders()));
+        if (ObjectUtil.isNull(appHeaders)) {
+            appHeaders = MapUtil.newHashMap();
+        }
         // API 请求Header
         Map<String, String> apiHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqHeaders()));
         // API Header 并入 全局Header
@@ -65,6 +71,33 @@ public class JobApiService {
         // api地址
         String apiUrl = StringUtil.emptyIfNull(apiPrefix) + api.getApiUri();
 
+        // 解析替换业务数据变量
+        apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
+
+        // API Key 认证
+        String authType = app.getAuthType();
+        // 认证配置
+        Map<String, Object> authConfig = app.getAuthConfig();
+        if (MyDataConstant.APP_AUTH_TYPE_API_KEY.equals(authType)) {
+            // key
+            String key = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_KEY);
+            // value
+            String value = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_VALUE);
+            // add to
+            String addTo = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_ADD_TO);
+
+            if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
+                if (reqHeaders == null) {
+                    reqHeaders = MapUtil.newHashMap();
+                }
+                reqHeaders.put(key, value);
+            } else {
+                Map<String, Object> query = new HashMap<>();
+                query.put(key, value);
+                apiUrl = HttpUtil.urlWithForm(apiUrl, query, null, true);
+            }
+        }
+
         // 解析替换系统变量值
         apiUrl = JobVarService.processSysVarValue(apiUrl);
         JobVarService.processSysVarValues(reqParams);
@@ -72,8 +105,6 @@ public class JobApiService {
         JobVarService.processSysVarValues(reqForm);
         reqBody = JobVarService.processSysVarValue(reqBody);
 
-        // 解析替换业务数据变量
-        apiUrl = JobVarService.processDataFieldVar(apiUrl, bizData, fieldTypeMapping);
         try {
             JobVarService.processDataFieldVar(reqParams, bizData, fieldTypeMapping);
         } catch (Exception e) {
@@ -106,11 +137,18 @@ public class JobApiService {
         taskExecutor.log("\trequest body : {}", reqBody);
 
         // 发送请求，获取响应结果
-        HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);
-        String responseBody = response.body();
+        try (HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);) {
+            String cookie = response.getCookieStr();
+            if (StringUtil.isNotEmpty(cookie)) {
+                appHeaders.put("Cookie", cookie);
+            }
+            app.setReqHeaders(MyDataUtil.switchMapToList(appHeaders));
 
-        taskExecutor.log("\tresponse status : {}", response.getStatus());
-        taskExecutor.log("\tresponse body : {}", responseBody);
-        return responseBody;
+            String responseBody = response.body();
+            taskExecutor.log("\tresponse status : {}", response.getStatus());
+            taskExecutor.log("\tresponse body : {}", responseBody);
+
+            return new PipelineApiResponse(response.getStatus(), responseBody);
+        }
     }
 }

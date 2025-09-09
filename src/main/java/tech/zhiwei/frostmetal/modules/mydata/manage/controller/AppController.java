@@ -59,11 +59,13 @@ public class AppController {
             , @RequestParam(required = false) String appCode
             , @RequestParam(required = false) String appName
             , @RequestParam(required = false) String appUrl
+            , @RequestParam(required = false) String apiPrefix
     ) {
         LambdaQueryWrapper<App> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.like(ObjectUtil.isNotNull(appCode), App::getAppCode, appCode);
         queryWrapper.like(ObjectUtil.isNotNull(appName), App::getAppName, appName);
         queryWrapper.like(ObjectUtil.isNotNull(appUrl), App::getAppUrl, appUrl);
+        queryWrapper.like(ObjectUtil.isNotNull(apiPrefix), App::getApiPrefix, apiPrefix);
 
         return P.page(AppWrapper.getInstance().pageVO(appService.page(queryWrapper, pageParam)));
     }

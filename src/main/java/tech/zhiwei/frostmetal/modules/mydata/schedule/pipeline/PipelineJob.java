@@ -6,23 +6,32 @@ import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
+import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.system.entity.User;
+import tech.zhiwei.frostmetal.system.service.IUserService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
+import tech.zhiwei.tool.util.ArrayUtil;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -37,15 +46,24 @@ import java.util.Map;
  */
 @Slf4j
 public class PipelineJob implements InterruptableJob {
+    /**
+     * 流水线参数key：流水线内已认证的APP
+     */
+    public static final String PIPELINE_PARAM_KEY_AUTHED_APP = "PIPELINE_AUTHED_APP";
+
     private final IPipelineService pipelineService = SpringUtil.getBean(IPipelineService.class);
     private final IPipelineTaskService pipelineTaskService = SpringUtil.getBean(IPipelineTaskService.class);
     private final IPipelineHistoryService pipelineHistoryService = SpringUtil.getBean(IPipelineHistoryService.class);
     private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
+    private final IUserService userService = SpringUtil.getBean(IUserService.class);
+    private final PipelineScheduler pipelineScheduler = SpringUtil.getBean(PipelineScheduler.class);
 
     private volatile boolean interrupted = false;
 
     // Job执行过程中的变量
     private final Map<String, Object> jobContextData = new HashMap<>();
+
+    private final MydataConfiguration mydataConfig = SpringUtil.getBean(MydataConfiguration.class);
 
     public void execute(Map<String, Object> paramMap, Long pipelineId, Integer triggerType) throws JobExecutionException {
         // 流水线参数
@@ -55,6 +73,9 @@ public class PipelineJob implements InterruptableJob {
         triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
         // 流水线参数存入流程全局变量
         jobContextData.putAll(triggerParam);
+
+        // 流水线内 存储已认证的App
+        jobContextData.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, App>());
 
         // 开始时间
         Date historyStartTime = new Date();
@@ -66,6 +87,12 @@ public class PipelineJob implements InterruptableJob {
         if (pipeline == null) {
             throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
         }
+
+        // 流水线所属项目
+        Project project = MyDataCache.getProject(pipeline.getProjectId());
+        // 流水线创建者
+        User creator = userService.getById(pipeline.getCreateUser());
+        String creatorEmail = creator.getEmail();
 
         // 创建流水线的执行记录
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
@@ -125,6 +152,9 @@ public class PipelineJob implements InterruptableJob {
                         break;
                     }
 
+                    // 执行任务
+                    TaskExecutor taskExecutor = TaskExecutor.create(pipelineTask, pipelineLog);
+
                     try {
                         // 任务禁用状态
                         if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
@@ -139,12 +169,22 @@ public class PipelineJob implements InterruptableJob {
                         pipelineLogService.updateById(pipelineLog);
 
                         // 执行任务
-                        TaskExecutor.create(pipelineTask, pipelineLog).execute(jobContextData);
+                        taskExecutor.execute(jobContextData);
 
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
                     } catch (Exception e) {
+                        // 异常，执行失败
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
                         log.error(e.getMessage(), e);
+
+                        // 判断preCondition，默认成功才继续
+                        Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
+                        // 若为 总是继续，则不抛出异常，继续下个task
+                        if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
+                            taskExecutor.log("任务设置为 失败继续执行...");
+                            continue;
+                        }
+
                         // 抛出异常，结束流水线和后续任务
                         throw e;
                     } finally {
@@ -167,20 +207,73 @@ public class PipelineJob implements InterruptableJob {
                 }
             }
             if (pipelineHistory.getExecutionStatus() == null) {
+                // 流水线执行成功
                 pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                // 连续失败次数置0
+                pipeline.setConsecutiveFailures(0);
             }
+        } catch (StopPipelineException e) {
+            // 流水线执行终止
+            pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
         } catch (Exception e) {
+            // 流水线执行失败
             pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            // 连续失败次数+1
+            int failures = ObjectUtil.defaultIfNull(pipeline.getConsecutiveFailures(), 0);
+            failures++;
+            pipeline.setConsecutiveFailures(failures);
             log.error(e.getMessage(), e);
         }
 
         // 结束时间
         Date historyEndTime = new Date();
 
-        // 更新流水线结果
+        // 更新流水线历史记录
         pipelineHistory.setEndTime(historyEndTime);
         pipelineHistory.setExecutionTime(DateUtil.between(historyStartTime, historyEndTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
+
+        // 根据流水线的邮件通知配置，发送通知邮件
+        Boolean isEmail = pipeline.getIsEmail();
+        if (isEmail) {
+            Integer[] emailStrategy = pipeline.getEmailStrategy();
+            if (ArrayUtil.isNotEmpty(emailStrategy)) {
+                if (StringUtil.isEmpty(creatorEmail)) {
+                    // TODO 记录未发送的通知
+                    return;
+                }
+
+                // 发送失败通知邮件
+                if (ObjectUtil.equals(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED, pipelineHistory.getExecutionStatus())
+                        && ArrayUtil.contains(emailStrategy, 0)) {
+                    MyDataMail.notifyPipelineFailed(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
+                }
+                // 发送成功通知邮件
+                if (ObjectUtil.equals(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS, pipelineHistory.getExecutionStatus())
+                        && ArrayUtil.contains(emailStrategy, 1)) {
+                    MyDataMail.notifyPipelineSuccess(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
+                }
+            }
+        }
+
+        // 判断流水线连续失败次数
+        int failures = ObjectUtil.defaultIfNull(pipeline.getConsecutiveFailures(), 0);
+        // 若不是手动执行，且失败次数过多，则自动结束病禁用定时和webhook 并邮件通知
+        if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && failures >= mydataConfig.getPipelineMaxFailureCount()) {
+            // 结束定时执行
+            pipeline.setIsSchedule(false);
+            pipeline.setIsWebhook(false);
+            if (StringUtil.isEmpty(creatorEmail)) {
+                // TODO 记录未发送的通知
+                return;
+            }
+            MyDataMail.notifyPipelineFailure(creatorEmail, project.getProjectName(), pipeline.getPipelineName());
+            // 调整调度
+            pipelineScheduler.update(pipelineId);
+        }
+
+        // 更新流水线
+        pipelineService.updateById(pipeline);
     }
 
     @Override
