@@ -24,7 +24,12 @@ public class HttpUtil extends cn.hutool.http.HttpUtil {
             params.forEach((k, v) -> {
                 paramString.append(StringUtil.format("&{}={}", k, v));
             });
-            url = url + "?" + paramString.substring(1);
+
+            if (url.contains("?")) {
+                url = url + paramString;
+            } else {
+                url = url + "?" + paramString.substring(1);
+            }
         }
 
         HttpRequest request = HttpUtil.createRequest(Method.valueOf(method), url);
