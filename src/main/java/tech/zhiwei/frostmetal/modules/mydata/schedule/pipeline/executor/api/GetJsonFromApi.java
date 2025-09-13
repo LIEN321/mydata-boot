@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
@@ -58,7 +59,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
-        App authedApp = doAppAuth(app);
+        PipelineApp authedApp = doAppAuth(app);
 
         log("将调用应用 {} 的接口", authedApp.getAppName());
 

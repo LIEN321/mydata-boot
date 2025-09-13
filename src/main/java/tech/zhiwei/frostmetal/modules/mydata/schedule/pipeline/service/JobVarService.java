@@ -103,6 +103,11 @@ public class JobVarService {
         return processDataVar(string, bizData, fieldTypeMapping, EXISTED_DATA_FIELD_PATTERN, EXISTED_DATA_FIELD_PATTERN_PREFIX, EXISTED_DATA_FIELD_PATTERN_SUFFIX);
     }
 
+
+    public static void processDataFieldVar(Map<String, String> map, Map<String, Object> data) {
+        processDataFieldVar(map, data, null);
+    }
+
     /**
      * 解析 字符串中${field}格式的数据变量
      *
@@ -119,6 +124,10 @@ public class JobVarService {
             // 替换用户自定义变量
             map.put(k, processDataVar(v, data, fieldTypeMapping, DATA_FIELD_PATTERN, DATA_FIELD_PATTERN_PREFIX, DATA_FIELD_PATTERN_SUFFIX));
         });
+    }
+
+    public static String processDataFieldVar(String string, Map<String, Object> data) {
+        return processDataFieldVar(string, data, null);
     }
 
     /**
