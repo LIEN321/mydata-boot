@@ -50,7 +50,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     public static final String JWT_API = "api";
     public static final String JWT_ADD_TO = "addTo";
     public static final String JWT_HEADER_PREFIX = "prefix";
-    public static final String JWT_HEADER_AUTHORIZATION = "Authorization";
+    public static final String JWT_HEADER_KEY = "key";
     public static final String JWT_QUERY_PARAM = "param";
     /**
      * APP认证类型：cookie
@@ -174,6 +174,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // jwt 认证
         if (APP_AUTH_TYPE_JWT.equals(authType)) {
             Map<String, Object> jwtConfig = (Map<String, Object>) authConfig.get("jwt");
+            AssertUtil.notNull(jwtConfig, "JWT配置无效，请确认");
 
             // 认证的接口id
             Long apiId = NumberUtil.parseLong((String) jwtConfig.get(AUTH_CONFIG_API));
@@ -208,13 +209,13 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             String token = responseData;
             String apiFieldPrefix = api.getFieldPrefix();
             if (StringUtil.isNotEmpty(apiFieldPrefix)) {
-                log("从 {} 中的路径 {} 提取token", responseData, apiFieldPrefix);
+                log("从 {} 中的 {} 提取token", responseData, apiFieldPrefix);
                 // 获取接口返回的json
                 JSON json = JsonUtil.parse(responseData);
                 // json中提取token
                 token = (String) json.getByPath(apiFieldPrefix);
             } else {
-                log("API 未配置前缀，无法提取token！");
+                log("API 未配置层级，使用响应的全部内容作为token");
             }
             log("token={}", token);
 
@@ -223,10 +224,11 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             // header
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
                 log("token 添加到 header");
+                String key = (String) jwtConfig.get(JWT_HEADER_KEY);
                 String prefix = (String) jwtConfig.get(JWT_HEADER_PREFIX);
                 prefix = StringUtil.isNotEmpty(prefix) ? prefix + " " : "";
                 String value = prefix + token;
-                appHeaders.put(JWT_HEADER_AUTHORIZATION, value);
+                appHeaders.put(key, value);
             } else if (MyDataConstant.HTTP_QUERY.equals(addTo)) {
                 log("token 添加到 query param");
                 String paramName = (String) jwtConfig.get(JWT_QUERY_PARAM);
