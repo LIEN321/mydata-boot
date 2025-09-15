@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
+import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSON;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,10 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -39,9 +42,24 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     public static final String AUTH_CONFIG_KEY = "key";
     public static final String AUTH_CONFIG_VALUE = "value";
     public static final String AUTH_CONFIG_ADD_TO = "addTo";
+
+    /**
+     * APP认证类型：jwt
+     */
+    public static final String APP_AUTH_TYPE_JWT = "jwt";
+    public static final String JWT_API = "api";
+    public static final String JWT_ADD_TO = "addTo";
     public static final String JWT_HEADER_PREFIX = "prefix";
     public static final String JWT_HEADER_AUTHORIZATION = "Authorization";
     public static final String JWT_QUERY_PARAM = "param";
+    /**
+     * APP认证类型：cookie
+     */
+    public static final String APP_AUTH_TYPE_COOKIE = "cookie";
+    /**
+     * APP认证类型：API Key
+     */
+    public static final String APP_AUTH_TYPE_API_KEY = "api_key";
 
     /**
      * 已完成授权的App
@@ -58,6 +76,70 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     }
 
     /**
+     * 流水线任务 调用API
+     *
+     * @param method       http method
+     * @param url          http url
+     * @param reqHeaders   request headers
+     * @param queryParams  request params
+     * @param reqForm      request form
+     * @param reqBody      request body
+     * @param bizData      业务数据，用于替换API定义中的${var}变量
+     * @param pipelineVars 流水线上下文变量，用于替换API定义中的${var}变量
+     * @return 流水线API响应
+     */
+    public PipelineApiResponse callApi(String method, String url, Map<String, String> reqHeaders, Map<String, String> queryParams, Map<String, String> reqForm, String reqBody, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
+        // 解析替换系统变量值
+        url = JobVarService.processSysVarValue(url);
+        JobVarService.processSysVarValues(reqHeaders);
+        JobVarService.processSysVarValues(queryParams);
+        JobVarService.processSysVarValues(reqForm);
+        reqBody = JobVarService.processSysVarValue(reqBody);
+
+        // 替换业务数据变量值
+        try {
+            JobVarService.processDataFieldVar(queryParams, bizData);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            JobVarService.processDataFieldVar(reqHeaders, bizData);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            JobVarService.processDataFieldVar(reqForm, bizData);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
+        }
+        try {
+            reqBody = JobVarService.processDataFieldVar(reqBody, bizData);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
+        }
+
+        this.log("\trequest url: [{}] {}", method, url);
+        this.log("\trequest param : {}", queryParams);
+        this.log("\trequest header : {}", reqHeaders);
+        this.log("\trequest form : {}", reqForm);
+        this.log("\trequest body : {}", reqBody);
+
+        // 发送请求，获取响应结果
+        try (HttpResponse response = HttpUtil.send(method, url, queryParams, reqHeaders, reqForm, reqBody);) {
+            String cookie = response.getCookieStr();
+            String responseBody = response.body();
+            this.log("\tresponse status : {}", response.getStatus());
+            this.log("\tresponse body : {}", responseBody);
+
+            return new PipelineApiResponse(response.getStatus(), responseBody, cookie);
+        }
+    }
+
+    /**
      * 执行app认证
      *
      * @param app 待执行的app
@@ -65,7 +147,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     public PipelineApp doAppAuth(App app) {
         AssertUtil.notNull(app, "应用认证失败：待认证的应用无效");
 
-        PipelineApp pipelineApp = BeanUtil.copyProperties(app, PipelineApp.class);
+        PipelineApp pipelineApp = BeanUtil.copyProperties(app, PipelineApp.class, "reqHeaders");
         pipelineApp.setReqHeaders(ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(app.getReqHeaders())));
 
         // 认证类型
@@ -88,11 +170,13 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // app query params
         Map<String, Object> appQueryParams = pipelineApp.getQueryParams();
 
-        log("应用{} 认证开始...", app.getAppName());
+        log("应用{} 认证开始，认证方式为{}", app.getAppName(), app.getAuthType());
         // jwt 认证
-        if (MyDataConstant.APP_AUTH_TYPE_JWT.equals(authType)) {
+        if (APP_AUTH_TYPE_JWT.equals(authType)) {
+            Map<String, Object> jwtConfig = (Map<String, Object>) authConfig.get("jwt");
+
             // 认证的接口id
-            Long apiId = NumberUtil.parseLong((String) authConfig.get(AUTH_CONFIG_API));
+            Long apiId = NumberUtil.parseLong((String) jwtConfig.get(AUTH_CONFIG_API));
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
@@ -117,29 +201,40 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             }
 
             // 调用认证接口
-            PipelineApiResponse apiResponse = JobApiService.callApi(this, api.getApiMethod(), StringUtil.emptyIfNull(app.getApiPrefix()) + api.getApiUri(), reqHeaders, apiReqParams, reqForm, reqBody, null, null);
+            PipelineApiResponse apiResponse = callApi(api.getApiMethod(), StringUtil.emptyIfNull(app.getApiPrefix()) + api.getApiUri(), reqHeaders, apiReqParams, reqForm, reqBody, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
-            // 获取接口返回的json
-            JSON json = JsonUtil.parse(apiResponse.getData());
-            // json中提取token
-            String token = (String) json.getByPath(api.getFieldPrefix());
+            String responseData = apiResponse.getData();
+            String token = responseData;
+            String apiFieldPrefix = api.getFieldPrefix();
+            if (StringUtil.isNotEmpty(apiFieldPrefix)) {
+                log("从 {} 中的路径 {} 提取token", responseData, apiFieldPrefix);
+                // 获取接口返回的json
+                JSON json = JsonUtil.parse(responseData);
+                // json中提取token
+                token = (String) json.getByPath(apiFieldPrefix);
+            } else {
+                log("API 未配置前缀，无法提取token！");
+            }
+            log("token={}", token);
 
             // add to
-            String addTo = (String) authConfig.get(AUTH_CONFIG_ADD_TO);
+            String addTo = (String) jwtConfig.get(AUTH_CONFIG_ADD_TO);
             // header
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
-                String prefix = (String) authConfig.get(JWT_HEADER_PREFIX);
+                log("token 添加到 header");
+                String prefix = (String) jwtConfig.get(JWT_HEADER_PREFIX);
                 prefix = StringUtil.isNotEmpty(prefix) ? prefix + " " : "";
                 String value = prefix + token;
                 appHeaders.put(JWT_HEADER_AUTHORIZATION, value);
             } else if (MyDataConstant.HTTP_QUERY.equals(addTo)) {
-                String paramName = (String) authConfig.get(JWT_QUERY_PARAM);
+                log("token 添加到 query param");
+                String paramName = (String) jwtConfig.get(JWT_QUERY_PARAM);
                 appQueryParams.put(paramName, token);
             }
         }
         // cookie 认证
-        else if (MyDataConstant.APP_AUTH_TYPE_COOKIE.equals(authType)) {
+        else if (APP_AUTH_TYPE_COOKIE.equals(authType)) {
             // 认证的接口id
             Long apiId = NumberUtil.parseLong((String) authConfig.get(AUTH_CONFIG_API));
             // 认证接口
@@ -154,7 +249,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             }
         }
         // api key 认证
-        else if (MyDataConstant.APP_AUTH_TYPE_API_KEY.equals(authType)) {
+        else if (APP_AUTH_TYPE_API_KEY.equals(authType)) {
             // key
             String key = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_KEY);
             // value

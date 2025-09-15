@@ -65,20 +65,6 @@ public interface MyDataConstant {
      */
     int API_TYPE_APP_AUTH = 3;
 
-
-    /**
-     * APP认证类型：jwt
-     */
-    String APP_AUTH_TYPE_JWT = "jwt";
-    /**
-     * APP认证类型：cookie
-     */
-    String APP_AUTH_TYPE_COOKIE = "cookie";
-    /**
-     * APP认证类型：API Key
-     */
-    String APP_AUTH_TYPE_API_KEY = "api_key";
-
     /**
      * http header
      */

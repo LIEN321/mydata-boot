@@ -3,6 +3,8 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean;
 import lombok.Data;
 import tech.zhiwei.tool.map.MapUtil;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -12,7 +14,9 @@ import java.util.Map;
  * @since 2025/9/13
  */
 @Data
-public class PipelineApp {
+public class PipelineApp implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 5248056790657601249L;
     /**
      * 主键id
      */
