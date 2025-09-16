@@ -38,28 +38,27 @@ import java.util.Map;
 @Slf4j
 public abstract class ApiTaskExecutor extends TaskExecutor {
 
-    public static final String AUTH_CONFIG_API = "api";
-    public static final String AUTH_CONFIG_KEY = "key";
-    public static final String AUTH_CONFIG_VALUE = "value";
-    public static final String AUTH_CONFIG_ADD_TO = "addTo";
-
     /**
      * APP认证类型：jwt
      */
     public static final String APP_AUTH_TYPE_JWT = "jwt";
-    public static final String JWT_API = "api";
-    public static final String JWT_ADD_TO = "addTo";
-    public static final String JWT_HEADER_PREFIX = "prefix";
-    public static final String JWT_HEADER_KEY = "key";
-    public static final String JWT_QUERY_PARAM = "param";
+    public static final String JWT_CONFIG_API = "api";
+    public static final String JWT_CONFIG_ADD_TO = "addTo";
+    public static final String JWT_CONFIG_HEADER_PREFIX = "prefix";
+    public static final String JWT_CONFIG_HEADER_KEY = "key";
+    public static final String JWT_CONFIG_QUERY_PARAM = "param";
     /**
      * APP认证类型：cookie
      */
     public static final String APP_AUTH_TYPE_COOKIE = "cookie";
+    public static final String COOKIE_CONFIG_API = "api";
     /**
      * APP认证类型：API Key
      */
     public static final String APP_AUTH_TYPE_API_KEY = "api_key";
+    public static final String API_KEY_CONFIG_ADD_TO = "addTo";
+    public static final String API_KEY_CONFIG_KEY = "key";
+    public static final String API_KEY_CONFIG_VALUE = "value";
 
     /**
      * 已完成授权的App
@@ -173,11 +172,11 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         log("应用{} 认证开始，认证方式为{}", app.getAppName(), app.getAuthType());
         // jwt 认证
         if (APP_AUTH_TYPE_JWT.equals(authType)) {
-            Map<String, Object> jwtConfig = (Map<String, Object>) authConfig.get("jwt");
+            Map<String, Object> jwtConfig = (Map<String, Object>) authConfig.get(APP_AUTH_TYPE_JWT);
             AssertUtil.notNull(jwtConfig, "JWT配置无效，请确认");
 
             // 认证的接口id
-            Long apiId = NumberUtil.parseLong((String) jwtConfig.get(AUTH_CONFIG_API));
+            Long apiId = NumberUtil.parseLong((String) jwtConfig.get(JWT_CONFIG_API));
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
@@ -220,25 +219,27 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             log("token={}", token);
 
             // add to
-            String addTo = (String) jwtConfig.get(AUTH_CONFIG_ADD_TO);
+            String addTo = (String) jwtConfig.get(API_KEY_CONFIG_ADD_TO);
             // header
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
                 log("token 添加到 header");
-                String key = (String) jwtConfig.get(JWT_HEADER_KEY);
-                String prefix = (String) jwtConfig.get(JWT_HEADER_PREFIX);
+                String key = (String) jwtConfig.get(JWT_CONFIG_HEADER_KEY);
+                String prefix = (String) jwtConfig.get(JWT_CONFIG_HEADER_PREFIX);
                 prefix = StringUtil.isNotEmpty(prefix) ? prefix + " " : "";
                 String value = prefix + token;
                 appHeaders.put(key, value);
             } else if (MyDataConstant.HTTP_QUERY.equals(addTo)) {
                 log("token 添加到 query param");
-                String paramName = (String) jwtConfig.get(JWT_QUERY_PARAM);
+                String paramName = (String) jwtConfig.get(JWT_CONFIG_QUERY_PARAM);
                 appQueryParams.put(paramName, token);
             }
         }
         // cookie 认证
         else if (APP_AUTH_TYPE_COOKIE.equals(authType)) {
+            Map<String, Object> cookieConfig = (Map<String, Object>) authConfig.get(APP_AUTH_TYPE_COOKIE);
+
             // 认证的接口id
-            Long apiId = NumberUtil.parseLong((String) authConfig.get(AUTH_CONFIG_API));
+            Long apiId = NumberUtil.parseLong((String) cookieConfig.get(COOKIE_CONFIG_API));
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
@@ -252,12 +253,14 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         }
         // api key 认证
         else if (APP_AUTH_TYPE_API_KEY.equals(authType)) {
+            Map<String, Object> apiKeyConfig = (Map<String, Object>) authConfig.get(APP_AUTH_TYPE_API_KEY);
+            AssertUtil.notNull(apiKeyConfig, "API Key配置无效，请确认");
             // key
-            String key = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_KEY);
+            String key = (String) apiKeyConfig.get(ApiTaskExecutor.API_KEY_CONFIG_KEY);
             // value
-            String value = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_VALUE);
+            String value = (String) apiKeyConfig.get(ApiTaskExecutor.API_KEY_CONFIG_VALUE);
             // add to
-            String addTo = (String) authConfig.get(ApiTaskExecutor.AUTH_CONFIG_ADD_TO);
+            String addTo = (String) apiKeyConfig.get(ApiTaskExecutor.API_KEY_CONFIG_ADD_TO);
 
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
                 appHeaders.put(key, value);
