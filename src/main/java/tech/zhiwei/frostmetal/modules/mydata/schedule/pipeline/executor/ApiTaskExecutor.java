@@ -225,7 +225,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
                 log("token 添加到 header");
                 String key = (String) jwtConfig.get(JWT_CONFIG_HEADER_KEY);
                 String prefix = (String) jwtConfig.get(JWT_CONFIG_HEADER_PREFIX);
-                prefix = StringUtil.isNotEmpty(prefix) ? prefix + " " : "";
+                prefix = StringUtil.isNotEmpty(prefix) ? prefix : "";
                 String value = prefix + token;
                 appHeaders.put(key, value);
             } else if (MyDataConstant.HTTP_QUERY.equals(addTo)) {
