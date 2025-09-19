@@ -14,4 +14,5 @@ import lombok.Data;
 public class PipelineApiResponse {
     private int status;
     private String data;
+    private String cookie;
 }

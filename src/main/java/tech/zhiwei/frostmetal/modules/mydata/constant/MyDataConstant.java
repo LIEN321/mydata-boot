@@ -65,16 +65,6 @@ public interface MyDataConstant {
      */
     int API_TYPE_APP_AUTH = 3;
 
-
-    /**
-     * APP认证类型：cookie
-     */
-    String APP_AUTH_TYPE_COOKIE = "cookie";
-    /**
-     * APP认证类型：API Key
-     */
-    String APP_AUTH_TYPE_API_KEY = "api_key";
-
     /**
      * http header
      */
@@ -147,6 +137,10 @@ public interface MyDataConstant {
      * 任务类型：JSON值存入变量
      */
     String TASK_TYPE_JSON_TO_VAR = "JSON_TO_VAR";
+    /**
+     * 任务类型：设置流水线变量
+     */
+    String TASK_TYPE_SET_PIPELINE_VAR = "SET_PIPELINE_VAR";
 
     /**
      * 任务配置中的常量key：字段映射
