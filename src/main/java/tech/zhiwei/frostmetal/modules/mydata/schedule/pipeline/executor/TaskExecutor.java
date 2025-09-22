@@ -113,6 +113,9 @@ public abstract class TaskExecutor {
         try {
             doExecute(jobContextData);
             log("[{}] 执行完成。", pipelineTask.getTaskName());
+        } catch (StopPipelineException e) {
+            log("[{}] 执行停止。", pipelineTask.getTaskName());
+            throw e;
         } catch (Exception e) {
             error("[{}] 执行失败：{}", pipelineTask.getTaskName(), e.getMessage());
             throw e;

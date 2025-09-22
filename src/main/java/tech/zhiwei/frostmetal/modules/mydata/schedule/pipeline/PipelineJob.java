@@ -172,6 +172,11 @@ public class PipelineJob implements InterruptableJob {
                         taskExecutor.execute(jobContextData);
 
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                    } catch (StopPipelineException e) {
+                        // 停止流水线
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+                        // 抛出异常，结束流水线和后续任务
+                        throw e;
                     } catch (Exception e) {
                         // 异常，执行失败
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
