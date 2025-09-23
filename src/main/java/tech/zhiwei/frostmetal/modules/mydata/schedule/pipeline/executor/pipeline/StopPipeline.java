@@ -51,7 +51,8 @@ public class StopPipeline extends TaskExecutor {
             String op = condition.getOp();
             Object value = StringParser.autoParse((String) condition.getValue());
             if (MyDataUtil.compare(param, op, value)) {
-                throw new StopPipelineException(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
+                log(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
+                throw new StopPipelineException();
             }
             log("不满足终止条件：{} {} {}，继续...", param, op, value);
         });
