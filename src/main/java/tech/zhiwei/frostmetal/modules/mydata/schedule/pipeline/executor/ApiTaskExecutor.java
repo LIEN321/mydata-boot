@@ -14,7 +14,6 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.bean.BeanUtil;
@@ -72,6 +71,53 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
         authedApps = (Map<Long, PipelineApp>) jobContextData.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
+    }
+
+    /**
+     * 根据应用和API信息，提取调用api的所需参数，再调用 {@link #callApi(String, String, Map, Map, Map, String, Map, Map)} 统一调用API
+     *
+     * @param app          应用
+     * @param api          API
+     * @param batchParam   分批参数
+     * @param bizData      业务数据，用于替换API定义中的${var}变量
+     * @param pipelineVars 流水线上下文变量，用于替换API定义中的${var}变量
+     * @return 流水线API响应
+     */
+    public PipelineApiResponse callApi(PipelineApp app, AppApi api, Map<String, String> batchParam, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
+        AssertUtil.notNull(app);
+        AssertUtil.notNull(api);
+
+        // method
+        String method = api.getApiMethod();
+
+        // url
+        String apiPrefix = StringUtil.emptyIfNull(app.getApiPrefix());
+        String url = apiPrefix + api.getApiUri();
+
+        // header
+        // app headers
+        Map<String, String> appHeaders = app.getReqHeaders();
+        // api headers
+        Map<String, String> apiHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqHeaders()));
+        // 合并headers
+        Map<String, String> reqHeaders = ObjectUtil.cloneByStream(MapUtil.union(appHeaders, apiHeaders));
+
+        // query params
+        Map<String, String> queryParams = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqParams()));
+
+        // request form
+        Map<String, String> reqForm = null;
+        // request body
+        String reqBody = null;
+
+        // 根据请求体类型 初始对应的数据
+        if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(api.getReqBodyType())) {
+            reqForm = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqBodyForm()));
+        } else {
+            reqBody = ObjectUtil.cloneByStream(api.getReqBodyRaw());
+        }
+
+        return callApi(method, url, reqHeaders, queryParams, reqForm, reqBody, bizData, pipelineVars);
     }
 
     /**
@@ -180,28 +226,8 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
-            // api headers
-            Map<String, String> apiHeaders = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqHeaders()));
-            // 合并headers
-            Map<String, String> reqHeaders = ObjectUtil.cloneByStream(MapUtil.union(appHeaders, apiHeaders));
-
-            // query params
-            Map<String, String> apiReqParams = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqParams()));
-
-            // request form
-            Map<String, String> reqForm = null;
-            // request body
-            String reqBody = null;
-
-            // 根据请求体类型 初始对应的数据
-            if (MyDataConstant.API_REQUEST_BODY_TYPE_FORM.equals(api.getReqBodyType())) {
-                reqForm = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqBodyForm()));
-            } else {
-                reqBody = ObjectUtil.cloneByStream(api.getReqBodyRaw());
-            }
-
             // 调用认证接口
-            PipelineApiResponse apiResponse = callApi(api.getApiMethod(), StringUtil.emptyIfNull(app.getApiPrefix()) + api.getApiUri(), reqHeaders, apiReqParams, reqForm, reqBody, null, null);
+            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
             String responseData = apiResponse.getData();
@@ -243,7 +269,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
-            PipelineApiResponse apiResponse = JobApiService.callApi(this, pipelineApp, api, null, null, null);
+            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
             String cookie = apiResponse.getCookie();
@@ -271,7 +297,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
         authedApps.put(app.getId(), pipelineApp);
 
-        log("应用{} 认证成功！", app.getAppName());
+        log("应用{} 认证结束。", app.getAppName());
         return pipelineApp;
     }
 }
