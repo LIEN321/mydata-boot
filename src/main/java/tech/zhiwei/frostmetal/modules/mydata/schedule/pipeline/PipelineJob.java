@@ -88,6 +88,12 @@ public class PipelineJob implements InterruptableJob {
             throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
         }
 
+        // 流水线多次触发 进入等待队列，若连续失败 则会连续发送邮件
+        // 检查流水线是否启用 定时或webhook（非手动触发执行）
+        if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && !(pipeline.getIsSchedule() || pipeline.getIsWebhook())) {
+            throw new JobExecutionException(StringUtil.format("执行失败：流水线未启用定时或webhook"));
+        }
+
         // 流水线所属项目
         Project project = MyDataCache.getProject(pipeline.getProjectId());
         // 流水线创建者
