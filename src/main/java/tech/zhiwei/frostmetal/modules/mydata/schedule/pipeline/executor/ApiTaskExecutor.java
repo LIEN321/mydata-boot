@@ -78,12 +78,12 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
      *
      * @param app          应用
      * @param api          API
-     * @param batchParam   分批参数
+     * @param batchParams  分批参数
      * @param bizData      业务数据，用于替换API定义中的${var}变量
      * @param pipelineVars 流水线上下文变量，用于替换API定义中的${var}变量
      * @return 流水线API响应
      */
-    public PipelineApiResponse callApi(PipelineApp app, AppApi api, Map<String, String> batchParam, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
+    public PipelineApiResponse callApi(PipelineApp app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
         AssertUtil.notNull(app);
         AssertUtil.notNull(api);
 
@@ -104,6 +104,9 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
         // query params
         Map<String, String> queryParams = ObjectUtil.cloneByStream(MyDataUtil.parseToKvMapObj(api.getReqParams()));
+        if (MapUtil.isNotEmpty(batchParams)) {
+            queryParams = MapUtil.union(queryParams, batchParams);
+        }
 
         // request form
         Map<String, String> reqForm = null;
