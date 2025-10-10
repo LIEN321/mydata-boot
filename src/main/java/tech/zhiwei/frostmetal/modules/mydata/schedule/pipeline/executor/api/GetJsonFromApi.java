@@ -134,6 +134,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
 
             if (JobJsonService.hasNoData(subPipelineJson)) {
                 error("没有有效的业务数据，结束执行");
+                break;
             }
 
             // 对比上一次数据
