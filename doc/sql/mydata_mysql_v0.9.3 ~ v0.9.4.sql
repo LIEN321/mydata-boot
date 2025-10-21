@@ -15,8 +15,8 @@ CREATE TABLE `mydata`.`md_pipeline_var`(
     `pipeline_id` BIGINT comment '所属流水线',
     `var_code` VARCHAR(64) comment '变量编号',
     `var_value` VARCHAR(512) comment '变量值',
-    `var_type` VARCHAR(64) comment '变量值类型',
-    `var_desc` VARCHAR(64) comment '变量描述',
+    `var_type` VARCHAR(64) DEFAULT 'string' comment '变量值类型',
+    `var_desc` VARCHAR(1024) comment '变量描述',
     `is_hide` INT DEFAULT 0 comment '是否隐藏变量值，0-不隐藏、1-隐藏',
     PRIMARY Key(`id`)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci comment '流水线变量';
