@@ -162,10 +162,12 @@ public class ProcessData extends TaskExecutor {
             // 优先处理 置空 操作
             if (isSetNull(op)) {
                 bizData.put(key, null);
+                log("{} set null", key);
                 continue;
             }
             if (isSetEmpty(op)) {
                 bizData.put(key, StringUtil.EMPTY);
+                log("{} set empty string", key, op);
                 continue;
             }
 
@@ -210,6 +212,7 @@ public class ProcessData extends TaskExecutor {
                 }
                 Object newValue = processValue(dataValue, op, opValue, bizData);
                 bizData.put(key, newValue);
+                log("{} = {} {} {} = {}", key, dataValue, op, opValue, newValue);
             } catch (Exception e) {
 //                error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
                 throw new RuntimeException(StringUtil.format("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage()), e);
