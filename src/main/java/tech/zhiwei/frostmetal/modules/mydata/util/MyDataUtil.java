@@ -330,6 +330,10 @@ public class MyDataUtil {
             throw new IllegalArgumentException(StringUtil.format("条件无效：{}或{} 无法进行对比", o1, o2));
         }
 
+        if (o1.getClass() != o2.getClass()) {
+            throw new IllegalArgumentException(StringUtil.format("条件值 {}({}) 与 {}({}) 类型不同，无法进行对比", o1, o1.getClass().getSimpleName(), o2, o2.getClass().getSimpleName()));
+        }
+
         Comparable c1 = (Comparable) o1;
         Comparable c2 = (Comparable) o2;
 
