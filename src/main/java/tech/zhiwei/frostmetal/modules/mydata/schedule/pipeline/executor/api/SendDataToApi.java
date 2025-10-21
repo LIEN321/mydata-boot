@@ -12,7 +12,6 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
@@ -149,7 +148,7 @@ public class SendDataToApi extends ApiTaskExecutor {
 
                     // 发送数据
                     map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonArray.toString());
-                    callApi(authedApp, api, null, map, null);
+                    callApi(authedApp, api, null, map);
 
                     if (isBatch) {
                         // 暂停间隔
@@ -181,7 +180,7 @@ public class SendDataToApi extends ApiTaskExecutor {
                 map.putAll(bizData);
                 map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, jsonObject.toString());
                 // 发送数据
-                callApi(authedApp, api, null, map, null);
+                callApi(authedApp, api, null, map);
             });
         }
     }

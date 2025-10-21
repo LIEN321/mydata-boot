@@ -1,4 +1,4 @@
-package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
+package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api;
 
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSON;
@@ -14,6 +14,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.bean.BeanUtil;
@@ -64,26 +65,31 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
      */
     private Map<Long, PipelineApp> authedApps;
 
+    /**
+     * 流水线上下文
+     */
+    private Map<String, Object> jobContextData;
+
     public ApiTaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
         super(pipelineTask, pipelineLog);
     }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
+        this.jobContextData = jobContextData;
         authedApps = (Map<Long, PipelineApp>) jobContextData.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
     }
 
     /**
-     * 根据应用和API信息，提取调用api的所需参数，再调用 {@link #callApi(String, String, Map, Map, Map, String, Map, Map)} 统一调用API
+     * 根据应用和API信息，提取调用api的所需参数，再调用 {@link #callApi(String, String, Map, Map, Map, String, Map)} 统一调用API
      *
-     * @param app          应用
-     * @param api          API
-     * @param batchParams  分批参数
-     * @param bizData      业务数据，用于替换API定义中的${var}变量
-     * @param pipelineVars 流水线上下文变量，用于替换API定义中的${var}变量
+     * @param app         应用
+     * @param api         API
+     * @param batchParams 分批参数
+     * @param bizData     业务数据，用于替换API定义中的${var}变量
      * @return 流水线API响应
      */
-    public PipelineApiResponse callApi(PipelineApp app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
+    public PipelineApiResponse callApi(PipelineApp app, AppApi api, Map<String, String> batchParams, Map<String, Object> bizData) {
         AssertUtil.notNull(app);
         AssertUtil.notNull(api);
 
@@ -120,23 +126,22 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             reqBody = ObjectUtil.cloneByStream(api.getReqBodyRaw());
         }
 
-        return callApi(method, url, reqHeaders, queryParams, reqForm, reqBody, bizData, pipelineVars);
+        return callApi(method, url, reqHeaders, queryParams, reqForm, reqBody, bizData);
     }
 
     /**
      * 流水线任务 调用API
      *
-     * @param method       http method
-     * @param url          http url
-     * @param reqHeaders   request headers
-     * @param queryParams  request params
-     * @param reqForm      request form
-     * @param reqBody      request body
-     * @param bizData      业务数据，用于替换API定义中的${var}变量
-     * @param pipelineVars 流水线上下文变量，用于替换API定义中的${var}变量
+     * @param method      http method
+     * @param url         http url
+     * @param reqHeaders  request headers
+     * @param queryParams request params
+     * @param reqForm     request form
+     * @param reqBody     request body
+     * @param bizData     业务数据，用于替换API定义中的${var}变量
      * @return 流水线API响应
      */
-    public PipelineApiResponse callApi(String method, String url, Map<String, String> reqHeaders, Map<String, String> queryParams, Map<String, String> reqForm, String reqBody, Map<String, Object> bizData, Map<String, Object> pipelineVars) {
+    public PipelineApiResponse callApi(String method, String url, Map<String, String> reqHeaders, Map<String, String> queryParams, Map<String, String> reqForm, String reqBody, Map<String, Object> bizData) {
         // 解析替换系统变量值
         url = JobVarService.processSysVarValue(url);
         JobVarService.processSysVarValues(reqHeaders);
@@ -147,24 +152,28 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // 替换业务数据变量值
         try {
             JobVarService.processDataFieldVar(queryParams, bizData);
+            JobVarService.processDataFieldVar(queryParams, jobContextData);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqHeaders, bizData);
+            JobVarService.processDataFieldVar(reqHeaders, jobContextData);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqForm, bizData);
+            JobVarService.processDataFieldVar(reqForm, jobContextData);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
         }
         try {
             reqBody = JobVarService.processDataFieldVar(reqBody, bizData);
+            reqBody = JobVarService.processDataFieldVar(reqBody, jobContextData);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
@@ -177,7 +186,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         this.log("\trequest body : {}", reqBody);
 
         // 发送请求，获取响应结果
-        try (HttpResponse response = HttpUtil.send(method, url, queryParams, reqHeaders, reqForm, reqBody);) {
+        try (HttpResponse response = HttpUtil.send(method, url, queryParams, reqHeaders, reqForm, reqBody)) {
             String cookie = response.getCookieStr();
             String responseBody = response.body();
             this.log("\tresponse status : {}", response.getStatus());
@@ -230,7 +239,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             AppApi api = MyDataCache.getApi(apiId);
 
             // 调用认证接口
-            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null, null);
+            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
             String responseData = apiResponse.getData();
@@ -248,7 +257,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             log("token={}", token);
 
             // add to
-            String addTo = (String) jwtConfig.get(API_KEY_CONFIG_ADD_TO);
+            String addTo = (String) jwtConfig.get(JWT_CONFIG_ADD_TO);
             // header
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
                 log("token 添加到 header");
@@ -272,7 +281,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             // 认证接口
             AppApi api = MyDataCache.getApi(apiId);
 
-            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null, null);
+            PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
             String cookie = apiResponse.getCookie();
