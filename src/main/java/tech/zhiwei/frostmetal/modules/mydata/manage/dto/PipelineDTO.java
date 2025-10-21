@@ -69,4 +69,7 @@ public class PipelineDTO extends BaseDTO {
 
     @Schema(description = "任务编排列表")
     private List<PipelineTaskDTO> tasks;
+
+    @Schema(description = "任务变量列表")
+    private List<PipelineVarDTO> variables;
 }

@@ -27,9 +27,12 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineTaskVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineVO;
+import tech.zhiwei.frostmetal.modules.mydata.manage.vo.PipelineVarVO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineTaskWrapper;
+import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineVarWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.wrapper.PipelineWrapper;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -52,6 +55,7 @@ public class PipelineController {
     private IPipelineTaskService pipelineTaskService;
     private IPipelineHistoryService pipelineHistoryService;
     private PipelineScheduler pipelineScheduler;
+    private IPipelineVarService pipelineVarService;
 
     @PostMapping
     @Operation(summary = "新增或更新流水线", operationId = "savePipeline")
@@ -88,6 +92,10 @@ public class PipelineController {
         // 查询流水线的任务列表
         List<PipelineTaskVO> pipelineTaskVOList = PipelineTaskWrapper.getInstance().listVO(pipelineTaskService.listByPipeline(id));
         pipelineVO.setTasks(pipelineTaskVOList);
+
+        // 查询流水线的变量列表
+        List<PipelineVarVO> pipelineVarVOList = PipelineVarWrapper.getInstance().listVO(pipelineVarService.listByPipeline(id));
+        pipelineVO.setVariables(pipelineVarVOList);
 
         return R.data(pipelineVO);
     }
