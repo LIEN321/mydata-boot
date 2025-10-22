@@ -312,9 +312,13 @@ public class PipelineJob implements InterruptableJob {
         // 流水线出发类型
         Integer triggerType = (Integer) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
 
-        jobDataMap.remove(SysConstant.TENANT_ID);
+        // 取出租户id
+        String tenantId = (String) jobDataMap.remove(SysConstant.TENANT_ID);
 
         execute(jobDataMap, pipelineId, triggerType);
+
+        // 放回租户id
+        jobDataMap.put(SysConstant.TENANT_ID, tenantId);
     }
 
     @Override
