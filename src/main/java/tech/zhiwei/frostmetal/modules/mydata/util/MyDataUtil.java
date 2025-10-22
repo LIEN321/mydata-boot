@@ -159,20 +159,13 @@ public class MyDataUtil {
             if (StrUtil.isEmpty(stringValue)) {
                 return value;
             }
-            switch (targetType) {
-                case MyDataConstant.DATA_TYPE_INT:
-                    convertValue = NumberUtil.parseInt(StrUtil.toString(value));
-                    break;
-                case MyDataConstant.DATA_TYPE_STRING:
-                    convertValue = StrUtil.toString(value);
-                    break;
-                case MyDataConstant.DATA_TYPE_DATE:
-                    convertValue = DateUtil.parse(StrUtil.toString(value));
-                    break;
-                case MyDataConstant.DATA_TYPE_NUMBER:
-                    convertValue = NumberUtil.parseNumber(StrUtil.toString(value));
-                    break;
-            }
+            convertValue = switch (targetType) {
+                case MyDataConstant.DATA_TYPE_INT -> NumberUtil.parseInt(StrUtil.toString(value));
+                case MyDataConstant.DATA_TYPE_STRING -> StrUtil.toString(value);
+                case MyDataConstant.DATA_TYPE_DATE -> DateUtil.parse(StrUtil.toString(value));
+                case MyDataConstant.DATA_TYPE_NUMBER -> NumberUtil.parseNumber(StrUtil.toString(value));
+                default -> convertValue;
+            };
         }
 
         return convertValue;
