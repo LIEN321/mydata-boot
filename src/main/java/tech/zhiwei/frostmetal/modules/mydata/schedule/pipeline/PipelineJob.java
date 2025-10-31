@@ -307,18 +307,24 @@ public class PipelineJob implements InterruptableJob {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         Map<String, Object> jobDataMap = context.getJobDetail().getJobDataMap();
 
-        // 流水线id
-        Long pipelineId = (Long) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
-        // 流水线出发类型
-        Integer triggerType = (Integer) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
-
         // 取出租户id
         String tenantId = (String) jobDataMap.remove(SysConstant.TENANT_ID);
 
-        execute(jobDataMap, pipelineId, triggerType);
+        try {
+            // 流水线id
+            Long pipelineId = (Long) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
+            // 流水线出发类型
+            Integer triggerType = (Integer) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
 
-        // 放回租户id
-        jobDataMap.put(SysConstant.TENANT_ID, tenantId);
+            // 执行流水线
+            execute(jobDataMap, pipelineId, triggerType);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            // throw new JobExecutionException(e);
+        } finally {
+            // 放回租户id
+            jobDataMap.put(SysConstant.TENANT_ID, tenantId);
+        }
     }
 
     @Override
