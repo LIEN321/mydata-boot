@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponseConfig;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
@@ -21,6 +22,7 @@ import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.http.HttpUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
+import tech.zhiwei.tool.lang.ExceptionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
@@ -126,7 +128,50 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             reqBody = ObjectUtil.cloneByStream(api.getReqBodyRaw());
         }
 
-        return callApi(method, url, reqHeaders, queryParams, reqForm, reqBody, bizData);
+        // 调用API，获取响应内容
+        PipelineApiResponse apiResponse = callApi(method, url, reqHeaders, queryParams, reqForm, reqBody, bizData);
+
+        // 根据配置的规则，校验响应是否成功
+        // 获取API的响应配置
+        Map<String, Object> respConfigMap = api.getRespConfig();
+        // 获取响应配置复用模式
+        String mode = MapUtil.getStr(respConfigMap, MyDataConstant.RESP_CONFIG_MODE, MyDataConstant.RESP_CONFIG_MODE_REUSE);
+        // 若是复用APP，则改用APP的响应配置
+        if (MyDataConstant.RESP_CONFIG_MODE_REUSE.equals(mode)) {
+            respConfigMap = app.getRespConfig();
+        }
+
+        // 响应配置Map转为Bean实例
+        PipelineApiResponseConfig responseConfig = BeanUtil.fillBeanWithMap(respConfigMap, PipelineApiResponseConfig.defaultConfig(), true);
+
+        // 校验响应码
+        if (responseConfig.isValidCode() && apiResponse.getStatus() != responseConfig.getCodeValue()) {
+            throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码不符合配置，实际{} != 配置{}", apiResponse.getStatus(), responseConfig.getCodeValue());
+        }
+        // 校验相应内容
+        if (responseConfig.isValidBody()) {
+            // 实际响应内容
+            String responseBody = apiResponse.getBody();
+            if (StringUtil.isEmpty(responseBody)) {
+                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：实际响应内容为空。");
+            }
+
+            // 响应体转json对象
+            JSON json = JsonUtil.parse(responseBody);
+            // 配置的json path
+            String jsonPath = responseConfig.getBodyJsonPath();
+            // 从json从提取 待验证内容
+            String responseValue = json.getByPath(jsonPath, String.class);
+            // 配置的内容
+            String configBodyValue = responseConfig.getBodyValue();
+
+            // 对比内容是否一致
+            if (StringUtil.equals(responseValue, configBodyValue)) {
+                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码内容不符合配置，实际{} != 配置{}", responseValue, configBodyValue);
+            }
+        }
+
+        return apiResponse;
     }
 
     /**
@@ -141,7 +186,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
      * @param bizData     业务数据，用于替换API定义中的${var}变量
      * @return 流水线API响应
      */
-    public PipelineApiResponse callApi(String method, String url, Map<String, String> reqHeaders, Map<String, String> queryParams, Map<String, String> reqForm, String reqBody, Map<String, Object> bizData) {
+    private PipelineApiResponse callApi(String method, String url, Map<String, String> reqHeaders, Map<String, String> queryParams, Map<String, String> reqForm, String reqBody, Map<String, Object> bizData) {
         // 解析替换系统变量值
         url = JobVarService.processSysVarValue(url);
         JobVarService.processSysVarValues(reqHeaders);
@@ -242,7 +287,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             PipelineApiResponse apiResponse = callApi(pipelineApp, api, null, null);
             AssertUtil.equals(apiResponse.getStatus(), ResponseCode.SUCCESS.getCode(), "应用{} 认证失败！", app.getAppName());
 
-            String responseData = apiResponse.getData();
+            String responseData = apiResponse.getBody();
             String token = responseData;
             String apiFieldPrefix = api.getFieldPrefix();
             if (StringUtil.isNotEmpty(apiFieldPrefix)) {

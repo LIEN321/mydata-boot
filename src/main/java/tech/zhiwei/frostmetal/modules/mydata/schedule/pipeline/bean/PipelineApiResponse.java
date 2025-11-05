@@ -12,7 +12,18 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PipelineApiResponse {
+    /**
+     * 响应码
+     */
     private int status;
-    private String data;
+
+    /**
+     * 响应数据
+     */
+    private String body;
+
+    /**
+     * 响应cookie
+     */
     private String cookie;
 }

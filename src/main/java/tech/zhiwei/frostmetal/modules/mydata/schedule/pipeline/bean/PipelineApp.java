@@ -45,4 +45,9 @@ public class PipelineApp implements Serializable {
      * App全局Query param
      */
     private Map<String, Object> queryParams = MapUtil.newHashMap();
+
+    /**
+     * 响应配置
+     */
+    private Map<String, Object> respConfig;
 }

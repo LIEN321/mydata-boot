@@ -119,7 +119,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
 
             // 调用接口 获取json
             PipelineApiResponse apiResponse = callApi(authedApp, api, batchParams, bizDataMap);
-            String originJsonString = apiResponse.getData();
+            String originJsonString = apiResponse.getBody();
             // log("\t获得JSON：{}", originJsonString);
 
             // json为空则结束

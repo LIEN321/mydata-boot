@@ -76,26 +76,38 @@ public interface MyDataConstant {
 
     /* APP、API 响应配置 */
     /**
-     * 响应配置key：是否启用响应码
+     * 响应配置key：配置模式
      */
-    String RESP_CONFIG_KEY_CODE_ENABLE = "resp_config_key_code_enable";
+    String RESP_CONFIG_MODE = "responseConfigMode";
+    /**
+     * API复用APP的配置
+     */
+    String RESP_CONFIG_MODE_REUSE = "reuse";
+    /**
+     * API
+     */
+    String RESP_CONFIG_MODE_CUSTOM = "custom";
+    /**
+     * 响应配置key：是否验证响应码
+     */
+    String RESP_CONFIG_IS_VALID_CODE = "isValidCode";
     /**
      * 响应配置key：响应码值
      */
-    String RESP_CONFIG_KEY_CODE_VALUE = "resp_config_key_code_value";
+    String RESP_CONFIG_CODE_VALUE = "codeValue";
     /**
      * 响应配置key：是否启用响应体
      */
-    String RESP_CONFIG_KEY_BODY_ENABLE = "resp_config_key_body_enable";
+    String RESP_CONFIG_IS_VALID_BODY = "isValidBody";
     /**
      * 响应配置key：响应体json路径
      */
-    String RESP_CONFIG_KEY_BODY_PATH = "resp_config_key_body_path";
+    String RESP_CONFIG_BODY_JSON_PATH = "bodyJsonPath";
 
     /**
      * 响应配置key：响应体值
      */
-    String RESP_CONFIG_KEY_BODY_VALUE = "resp_config_key_body_value";
+    String RESP_CONFIG_BODY_VALUE = "bodyValue";
 
     // ------------------------------ 流水线任务常量 ------------------------------
 
