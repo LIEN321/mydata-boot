@@ -78,7 +78,7 @@ public interface MyDataConstant {
     /**
      * 响应配置key：配置模式
      */
-    String RESP_CONFIG_MODE = "responseConfigMode";
+    String RESP_CONFIG_MODE = "mode";
     /**
      * API复用APP的配置
      */
