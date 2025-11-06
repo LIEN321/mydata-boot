@@ -1,7 +1,7 @@
 -- TableName:流水线变量
 -- Description:流水线变量
-DROP TABLE if exists `mydata`.`md_pipeline_var`;
-CREATE TABLE `mydata`.`md_pipeline_var`(
+DROP TABLE if exists `md_pipeline_var`;
+CREATE TABLE `md_pipeline_var`(
     `id` BIGINT(20) NOT NULL comment '主键，自增',
     `create_user` BIGINT(20) comment '创建人id',
     `create_time` DATETIME comment '创建时间',
@@ -20,3 +20,12 @@ CREATE TABLE `mydata`.`md_pipeline_var`(
     `is_hide` INT DEFAULT 0 comment '是否隐藏变量值，0-不隐藏、1-隐藏',
     PRIMARY Key(`id`)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci comment '流水线变量';
+
+-- 添加响应配置字段和初始值
+ALTER TABLE `md_app`
+    ADD COLUMN `resp_config` text NULL COMMENT '响应配置' AFTER `cookies`;
+UPDATE `md_app` SET `resp_config` = '{\"isValidCode\":true,\"codeValue\":200}';
+
+ALTER TABLE `md_api`
+    ADD COLUMN `resp_config` text NULL COMMENT '响应配置' AFTER `data_mode`;
+UPDATE `md_api` SET `resp_config` = '{\"mode\":\"reuse\",\"isValidCode\":true,\"codeValue\":200}';
