@@ -134,7 +134,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // 根据配置的规则，校验响应是否成功
         // 获取API的响应配置
         Map<String, Object> respConfigMap = api.getRespConfig();
-        // 获取响应配置复用模式
+        // 获取响应配置模式，默认复用应用的配置
         String mode = MapUtil.getStr(respConfigMap, MyDataConstant.RESP_CONFIG_MODE, MyDataConstant.RESP_CONFIG_MODE_REUSE);
         // 若是复用APP，则改用APP的响应配置
         if (MyDataConstant.RESP_CONFIG_MODE_REUSE.equals(mode)) {
@@ -166,8 +166,8 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             String configBodyValue = responseConfig.getBodyValue();
 
             // 对比内容是否一致
-            if (StringUtil.equals(responseValue, configBodyValue)) {
-                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码内容不符合配置，实际{} != 配置{}", responseValue, configBodyValue);
+            if (!StringUtil.equals(responseValue, configBodyValue)) {
+                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码内容不符合配置，配置规则 {}={}，实际结果{}", jsonPath, configBodyValue, responseValue);
             }
         }
 
