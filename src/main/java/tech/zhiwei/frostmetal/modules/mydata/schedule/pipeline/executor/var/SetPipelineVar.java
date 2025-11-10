@@ -4,8 +4,8 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
-import tech.zhiwei.tool.core.ConvertUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 
 import java.util.List;
@@ -33,8 +33,9 @@ public class SetPipelineVar extends TaskExecutor {
 
         varMappings.forEach(varMapping -> {
             String varCode = varMapping.get("varCode");
+            String varType = StringUtil.nullToDefault(varMapping.get("varType"), MyDataConstant.DATA_TYPE_STRING);
             if (StringUtil.isNotEmpty(varCode)) {
-                Object varValue = ConvertUtil.convert(varMapping.get("varValue"));
+                Object varValue = MyDataUtil.convertDataType(varMapping.get("varValue"), varType);
                 jobContextData.put(varCode, varValue);
                 log("设置变量 {} = {}", varCode, varValue);
             }

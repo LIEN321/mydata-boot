@@ -11,18 +11,21 @@ import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineVar;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineHistoryService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.frostmetal.system.entity.User;
 import tech.zhiwei.frostmetal.system.service.IUserService;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -57,6 +60,7 @@ public class PipelineJob implements InterruptableJob {
     private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
     private final IUserService userService = SpringUtil.getBean(IUserService.class);
     private final PipelineScheduler pipelineScheduler = SpringUtil.getBean(PipelineScheduler.class);
+    private final IPipelineVarService pipelineVarService = SpringUtil.getBean(IPipelineVarService.class);
 
     private volatile boolean interrupted = false;
 
@@ -65,27 +69,45 @@ public class PipelineJob implements InterruptableJob {
 
     private final MydataConfiguration mydataConfig = SpringUtil.getBean(MydataConfiguration.class);
 
-    public void execute(Map<String, Object> paramMap, Long pipelineId, Integer triggerType) throws JobExecutionException {
-        // 流水线参数
-        Map<String, Object> triggerParam = ObjectUtil.cloneByStream(paramMap);
-        triggerParam.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
-        triggerParam.remove(SysConstant.TENANT_ID);
-        triggerParam.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
-        // 流水线参数存入流程全局变量
-        jobContextData.putAll(triggerParam);
-
-        // 流水线内 存储已认证的App
-        jobContextData.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, App>());
-
+    /**
+     * 执行流水线
+     *
+     * @param triggerParam 触发流水线的入参
+     * @param pipelineId   流水线id
+     * @param triggerType  触发类型
+     * @throws JobExecutionException 任务异常
+     */
+    public void execute(Map<String, Object> triggerParam, Long pipelineId, Integer triggerType) throws JobExecutionException {
         // 开始时间
         Date historyStartTime = new Date();
 
         log.info("PipelineJob execute");
 
+        // 触发流水线的参数 存入流程全局变量
+        jobContextData.putAll(triggerParam);
+
+        // 流水线执行时 用于存储已认证应用的Map
+        jobContextData.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, PipelineApp>());
+
         // 查询流水线记录
         Pipeline pipeline = pipelineService.getById(pipelineId);
         if (pipeline == null) {
             throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
+        }
+
+        // 流水线多次触发 进入等待队列，若连续失败 则会连续发送邮件
+        // 检查流水线是否启用 定时或webhook（非手动触发执行）
+        if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && !(pipeline.getIsSchedule() || pipeline.getIsWebhook())) {
+            throw new JobExecutionException(StringUtil.format("执行失败：流水线未启用定时或webhook"));
+        }
+
+        // 查询流水线变量
+        List<PipelineVar> pipelineVars = pipelineVarService.listByPipeline(pipelineId);
+        // 流水线变量有效时，存入流水线上下文
+        if (CollectionUtil.isNotEmpty(pipelineVars)) {
+            pipelineVars.forEach(var -> {
+                jobContextData.put(var.getVarCode(), MyDataUtil.convertDataType(var.getVarValue(), var.getVarType()));
+            });
         }
 
         // 流水线所属项目
@@ -172,6 +194,11 @@ public class PipelineJob implements InterruptableJob {
                         taskExecutor.execute(jobContextData);
 
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                    } catch (StopPipelineException e) {
+                        // 停止流水线
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+                        // 抛出异常，结束流水线和后续任务
+                        throw e;
                     } catch (Exception e) {
                         // 异常，执行失败
                         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
@@ -278,12 +305,26 @@ public class PipelineJob implements InterruptableJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        // 流水线id
-        Long pipelineId = context.getJobDetail().getJobDataMap().getLong(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
-        // 流水线出发类型
-        Integer triggerType = context.getJobDetail().getJobDataMap().getInt(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+        Map<String, Object> jobDataMap = context.getJobDetail().getJobDataMap();
 
-        execute(context.getJobDetail().getJobDataMap(), pipelineId, triggerType);
+        // 取出租户id
+        String tenantId = (String) jobDataMap.remove(SysConstant.TENANT_ID);
+
+        try {
+            // 流水线id
+            Long pipelineId = (Long) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_PIPELINE_ID);
+            // 流水线出发类型
+            Integer triggerType = (Integer) jobDataMap.remove(MyDataConstant.JOB_DATA_KEY_TRIGGER_TYPE);
+
+            // 执行流水线
+            execute(jobDataMap, pipelineId, triggerType);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            // throw new JobExecutionException(e);
+        } finally {
+            // 放回租户id
+            jobDataMap.put(SysConstant.TENANT_ID, tenantId);
+        }
     }
 
     @Override

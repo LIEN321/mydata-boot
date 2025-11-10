@@ -70,4 +70,10 @@ public class App extends TenantEntity {
      */
     @TableField(typeHandler = Fastjson2TypeHandler.class)
     private Map<String, Object> authConfig;
+
+    /**
+     * 响应配置
+     */
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> respConfig;
 }

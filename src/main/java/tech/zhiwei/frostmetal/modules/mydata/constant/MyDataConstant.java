@@ -31,7 +31,7 @@ public interface MyDataConstant {
      */
     int MAX_DESC_LENGTH = 1024;
 
-    // ------------------------------ API常量 ------------------------------
+    // ------------------------------ APP & API常量 ------------------------------
     /**
      * 请求发送数据的方式：form
      */
@@ -73,6 +73,41 @@ public interface MyDataConstant {
      * http query
      */
     String HTTP_QUERY = "query";
+
+    /* APP、API 响应配置 */
+    /**
+     * 响应配置key：配置模式
+     */
+    String RESP_CONFIG_MODE = "mode";
+    /**
+     * API复用APP的配置
+     */
+    String RESP_CONFIG_MODE_REUSE = "reuse";
+    /**
+     * API
+     */
+    String RESP_CONFIG_MODE_CUSTOM = "custom";
+    /**
+     * 响应配置key：是否验证响应码
+     */
+    String RESP_CONFIG_IS_VALID_CODE = "isValidCode";
+    /**
+     * 响应配置key：响应码值
+     */
+    String RESP_CONFIG_CODE_VALUE = "codeValue";
+    /**
+     * 响应配置key：是否启用响应体
+     */
+    String RESP_CONFIG_IS_VALID_BODY = "isValidBody";
+    /**
+     * 响应配置key：响应体json路径
+     */
+    String RESP_CONFIG_BODY_JSON_PATH = "bodyJsonPath";
+
+    /**
+     * 响应配置key：响应体值
+     */
+    String RESP_CONFIG_BODY_VALUE = "bodyValue";
 
     // ------------------------------ 流水线任务常量 ------------------------------
 

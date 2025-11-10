@@ -96,4 +96,10 @@ public class AppApi extends TenantEntity {
      * 数据结构模式，1-对象、2-集合
      */
     private Integer dataMode;
+
+    /**
+     * 响应配置
+     */
+    @TableField(typeHandler = Fastjson2TypeHandler.class)
+    private Map<String, Object> respConfig;
 }

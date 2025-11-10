@@ -159,20 +159,13 @@ public class MyDataUtil {
             if (StrUtil.isEmpty(stringValue)) {
                 return value;
             }
-            switch (targetType) {
-                case MyDataConstant.DATA_TYPE_INT:
-                    convertValue = NumberUtil.parseInt(StrUtil.toString(value));
-                    break;
-                case MyDataConstant.DATA_TYPE_STRING:
-                    convertValue = StrUtil.toString(value);
-                    break;
-                case MyDataConstant.DATA_TYPE_DATE:
-                    convertValue = DateUtil.parse(StrUtil.toString(value));
-                    break;
-                case MyDataConstant.DATA_TYPE_NUMBER:
-                    convertValue = NumberUtil.parseNumber(StrUtil.toString(value));
-                    break;
-            }
+            convertValue = switch (targetType) {
+                case MyDataConstant.DATA_TYPE_INT -> NumberUtil.parseInt(StrUtil.toString(value));
+                case MyDataConstant.DATA_TYPE_STRING -> StrUtil.toString(value);
+                case MyDataConstant.DATA_TYPE_DATE -> DateUtil.parse(StrUtil.toString(value));
+                case MyDataConstant.DATA_TYPE_NUMBER -> NumberUtil.parseNumber(StrUtil.toString(value));
+                default -> convertValue;
+            };
         }
 
         return convertValue;
@@ -328,6 +321,10 @@ public class MyDataUtil {
         // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
         if (!(o1 instanceof Comparable && o2 instanceof Comparable)) {
             throw new IllegalArgumentException(StringUtil.format("条件无效：{}或{} 无法进行对比", o1, o2));
+        }
+
+        if (o1.getClass() != o2.getClass()) {
+            throw new IllegalArgumentException(StringUtil.format("条件值 {}({}) 与 {}({}) 类型不同，无法进行对比", o1, o1.getClass().getSimpleName(), o2, o2.getClass().getSimpleName()));
         }
 
         Comparable c1 = (Comparable) o1;

@@ -12,6 +12,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.util.RandomUtil;
@@ -29,6 +30,7 @@ import java.util.List;
 public class PipelineService extends BaseService<PipelineMapper, Pipeline> implements IPipelineService {
 
     private IPipelineTaskService pipelineTaskService;
+    private IPipelineVarService pipelineVarService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -51,6 +53,9 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
 
         // 保存编排任务列表
         pipelineTaskService.saveTasksByPipeline(pipeline.getId(), pipelineDTO.getTasks());
+
+        // 保存流水线变量列表
+        pipelineVarService.saveVariablesByPipeline(pipeline.getId(), pipelineDTO.getVariables());
 
         return pipeline.getId();
     }

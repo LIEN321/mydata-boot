@@ -13,8 +13,6 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiR
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.ApiTaskExecutor;
-import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobApiService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -120,8 +118,8 @@ public class GetJsonFromApi extends ApiTaskExecutor {
             log("第{}次调用接口", loopCount);
 
             // 调用接口 获取json
-            PipelineApiResponse apiResponse = JobApiService.callApi(this, authedApp, api, batchParams, bizDataMap, fieldTypeMapping);
-            String originJsonString = apiResponse.getData();
+            PipelineApiResponse apiResponse = callApi(authedApp, api, batchParams, bizDataMap);
+            String originJsonString = apiResponse.getBody();
             // log("\t获得JSON：{}", originJsonString);
 
             // json为空则结束
@@ -135,6 +133,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
 
             if (JobJsonService.hasNoData(subPipelineJson)) {
                 error("没有有效的业务数据，结束执行");
+                break;
             }
 
             // 对比上一次数据

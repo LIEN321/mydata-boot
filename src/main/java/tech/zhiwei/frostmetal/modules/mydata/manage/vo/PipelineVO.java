@@ -78,6 +78,9 @@ public class PipelineVO extends BaseVO {
     @Schema(description = "流水线任务列表")
     private List<PipelineTaskVO> tasks;
 
+    @Schema(description = "流水线变量列表")
+    private List<PipelineVarVO> variables;
+
     @Schema(description = "下次执行时间")
     private Date nextFireTime;
 

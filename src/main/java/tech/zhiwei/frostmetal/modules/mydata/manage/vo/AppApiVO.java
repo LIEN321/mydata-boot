@@ -69,4 +69,7 @@ public class AppApiVO extends BaseVO {
 
     @Schema(description = "数据结构模式，1-对象、2-集合")
     private Integer dataMode;
+
+    @Schema(description = "响应配置")
+    private Map<String, Object> respConfig;
 }

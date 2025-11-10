@@ -48,4 +48,7 @@ public class AppVO extends BaseVO {
 
     @Schema(description = "认证配置")
     private Map<String, Object> authConfig;
+
+    @Schema(description = "响应配置")
+    private Map<String, Object> respConfig;
 }

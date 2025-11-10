@@ -45,4 +45,7 @@ public class AppDTO extends BaseDTO {
 
     @Schema(description = "认证配置")
     private Map<String, Object> authConfig;
+
+    @Schema(description = "响应配置")
+    private Map<String, Object> respConfig;
 }
