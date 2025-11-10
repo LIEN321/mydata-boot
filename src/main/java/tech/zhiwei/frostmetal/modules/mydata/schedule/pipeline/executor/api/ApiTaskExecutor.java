@@ -167,7 +167,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
             // 对比内容是否一致
             if (!StringUtil.equals(responseValue, configBodyValue)) {
-                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码内容不符合配置，配置规则 {}={}，实际结果{}", jsonPath, configBodyValue, responseValue);
+                throw ExceptionUtil.wrapRuntime("API响应校验不通过，原因：响应码内容不符合配置，配置规则 path({})={}，实际结果path({})={}", jsonPath, configBodyValue, jsonPath, responseValue);
             }
         }
 
