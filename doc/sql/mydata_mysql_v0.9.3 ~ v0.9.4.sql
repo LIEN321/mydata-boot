@@ -23,9 +23,9 @@ CREATE TABLE `md_pipeline_var`(
 
 -- 添加响应配置字段和初始值
 ALTER TABLE `md_app`
-    ADD COLUMN `resp_config` text NULL COMMENT '响应配置' AFTER `cookies`;
+    ADD COLUMN `resp_config` text NULL COMMENT '响应配置';
 UPDATE `md_app` SET `resp_config` = '{\"isValidCode\":true,\"codeValue\":200}';
 
 ALTER TABLE `md_api`
-    ADD COLUMN `resp_config` text NULL COMMENT '响应配置' AFTER `data_mode`;
+    ADD COLUMN `resp_config` text NULL COMMENT '响应配置';
 UPDATE `md_api` SET `resp_config` = '{\"mode\":\"reuse\",\"isValidCode\":true,\"codeValue\":200}';
