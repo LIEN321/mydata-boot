@@ -196,6 +196,13 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
         // 替换业务数据变量值
         try {
+            url = JobVarService.processDataFieldVar(url, bizData);
+            url = JobVarService.processDataFieldVar(url, jobContextData);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
+        }
+        try {
             JobVarService.processDataFieldVar(queryParams, bizData);
             JobVarService.processDataFieldVar(queryParams, jobContextData);
         } catch (Exception e) {
