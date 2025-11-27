@@ -1,6 +1,7 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline;
 
 import cn.hutool.core.date.DateUnit;
+import com.yomahub.liteflow.core.FlowExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
@@ -8,12 +9,12 @@ import org.quartz.JobExecutionException;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
+import tech.zhiwei.frostmetal.modules.mydata.constant.LiteFlowConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineVar;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
@@ -69,6 +70,8 @@ public class PipelineJob implements InterruptableJob {
 
     private final MydataConfiguration mydataConfig = SpringUtil.getBean(MydataConfiguration.class);
 
+    private FlowExecutor flowExecutor = SpringUtil.getBean(FlowExecutor.class);
+
     /**
      * 执行流水线
      *
@@ -110,12 +113,6 @@ public class PipelineJob implements InterruptableJob {
             });
         }
 
-        // 流水线所属项目
-        Project project = MyDataCache.getProject(pipeline.getProjectId());
-        // 流水线创建者
-        User creator = userService.getById(pipeline.getCreateUser());
-        String creatorEmail = creator.getEmail();
-
         // 创建流水线的执行记录
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
@@ -131,108 +128,133 @@ public class PipelineJob implements InterruptableJob {
         pipeline.setLatestHistoryId(historyId);
         pipelineService.updateById(pipeline);
 
+        /*
+        改用LiteFlow执行流水线的任务
         // 查询流水线任务列表
-        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
+        // List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
 
         // 任务 与 日志 的id映射
-        Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
-        if (CollectionUtil.isNotEmpty(tasks)) {
-            // 创建流水线的执行日志
-            tasks.forEach(task -> {
-                PipelineLog pipelineLog = new PipelineLog();
-                pipelineLog.setPipelineId(pipelineId);
-                pipelineLog.setHistoryId(historyId);
-                pipelineLog.setTaskType(task.getTaskType());
-                pipelineLog.setTaskName(task.getTaskName());
-                pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
-                pipelineLogService.save(pipelineLog);
-
-                taskLogIdMapping.put(task.getId(), pipelineLog.getId());
-            });
-        }
+        // Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
+        // if (CollectionUtil.isNotEmpty(tasks)) {
+        // 创建流水线的执行日志
+        // tasks.forEach(task -> {
+        //         PipelineLog pipelineLog = new PipelineLog();
+        //         pipelineLog.setPipelineId(pipelineId);
+        //         pipelineLog.setHistoryId(historyId);
+        //         pipelineLog.setTaskType(task.getTaskType());
+        //         pipelineLog.setTaskName(task.getTaskName());
+        //         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+        //         pipelineLogService.save(pipelineLog);
+        //
+        //         taskLogIdMapping.put(task.getId(), pipelineLog.getId());
+        //     });
+        // }
+         */
 
         // 待更新的流水线历史记录
         PipelineHistory pipelineHistory = new PipelineHistory();
         pipelineHistory.setId(historyId);
 
         try {
-            if (CollectionUtil.isNotEmpty(tasks)) {
-                for (PipelineTask pipelineTask : tasks) {
-                    // 任务开始
-                    Date taskStartTime = new Date();
-                    PipelineLog pipelineLog = new PipelineLog();
-                    pipelineLog.setId(taskLogIdMapping.get(pipelineTask.getId()));
-                    // 更新任务日志的开始时间
-                    pipelineLog.setStartTime(taskStartTime);
+            /*
+            改用LiteFlow执行流水线的任务
+            // if (CollectionUtil.isNotEmpty(tasks)) {
+            //     for (PipelineTask pipelineTask : tasks) {
+            //         // 任务开始
+            //         // Date taskStartTime = new Date();
+            //         // PipelineLog pipelineLog = new PipelineLog();
+            //         // pipelineLog.setId(taskLogIdMapping.get(pipelineTask.getId()));
+            //         // 更新任务日志的开始时间
+            //         // pipelineLog.setStartTime(taskStartTime);
+            //
+            //         // if (interrupted) {
+            //         //     // 停止执行流水线
+            //         //     // 更新执行记录为中止
+            //         //     pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+            //         //     // 更新任务日志为中止
+            //         //     pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+            //         //     break;
+            //         // }
+            //
+            //         // 执行任务
+            //         // TaskExecutor taskExecutor = TaskExecutor.create(pipelineTask, pipelineLog);
+            //
+            //         // try {
+            //         //     // 任务禁用状态
+            //         //     // if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
+            //         //     //     // 禁用的任务 状态为跳过
+            //         //     //     pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
+            //         //     //     pipelineLog.setTaskLog("该任务已禁用，不执行。");
+            //         //     //     continue;
+            //         //     // }
+            //         //
+            //         //     // 更新任务日志的执行状态
+            //         //     // pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+            //         //     // pipelineLogService.updateById(pipelineLog);
+            //         //
+            //         //     // 执行任务
+            //         //     taskExecutor.execute(jobContextData);
+            //         //
+            //         //     pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+            //         // } catch (StopPipelineException e) {
+            //         //     // 停止流水线
+            //         //     pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+            //         //     // 抛出异常，结束流水线和后续任务
+            //         //     throw e;
+            //         // } catch (Exception e) {
+            //         //     // 异常，执行失败
+            //         //     pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            //         //     log.error(e.getMessage(), e);
+            //         //
+            //         //     // 判断preCondition，默认成功才继续
+            //         //     Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
+            //         //     // 若为 总是继续，则不抛出异常，继续下个task
+            //         //     if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
+            //         //         taskExecutor.log("任务设置为 失败继续执行...");
+            //         //         continue;
+            //         //     }
+            //         //
+            //         //     // 抛出异常，结束流水线和后续任务
+            //         //     throw e;
+            //         // } finally {
+            //             // 任务执行结束
+            //             // 更新任务日志的结束时间
+            //             // Date taskEndTime = new Date();
+            //             // pipelineLog.setEndTime(taskEndTime);
+            //             // 计算任务执行的耗时
+            //             // pipelineLog.setExecutionTime(DateUtil.between(taskStartTime, taskEndTime, DateUnit.SECOND));
+            //             // try {
+            //             //     // 更新任务日志
+            //             //     pipelineLogService.updateById(pipelineLog);
+            //             // } catch (Exception e) {
+            //             //     // 更新任务日志失败，则停止任务
+            //             //     pipelineLogService.failLog(pipelineLog.getId());
+            //             //     log.error(e.getMessage(), e);
+            //             //     throw e;
+            //             // }
+            //         }
+            //     }
+            // }
+             */
 
-                    if (interrupted) {
-                        // 停止执行流水线
-                        // 更新执行记录为中止
-                        pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
-                        // 更新任务日志为中止
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
-                        break;
-                    }
-
-                    // 执行任务
-                    TaskExecutor taskExecutor = TaskExecutor.create(pipelineTask, pipelineLog);
-
-                    try {
-                        // 任务禁用状态
-                        if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
-                            // 禁用的任务 状态为跳过
-                            pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
-                            pipelineLog.setTaskLog("该任务已禁用，不执行。");
-                            continue;
-                        }
-
-                        // 更新任务日志的执行状态
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
-                        pipelineLogService.updateById(pipelineLog);
-
+            // 获取流水线的el
+            String el = pipeline.getLiteflowEl();
+            if (StringUtil.isNotEmpty(el)) {
+                Map<String, Object> params = MapUtil.newHashMap();
+                params.put(LiteFlowConstant.BIND_KEY_HISTORY_ID, historyId);
+                flowExecutor.execute2RespWithEL(el, params, null, jobContextData);
+            } else {
+                // 查询流水线任务列表
+                List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
+                if (CollectionUtil.isNotEmpty(tasks)) {
+                    for (PipelineTask task : tasks) {
                         // 执行任务
-                        taskExecutor.execute(jobContextData);
-
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
-                    } catch (StopPipelineException e) {
-                        // 停止流水线
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
-                        // 抛出异常，结束流水线和后续任务
-                        throw e;
-                    } catch (Exception e) {
-                        // 异常，执行失败
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
-                        log.error(e.getMessage(), e);
-
-                        // 判断preCondition，默认成功才继续
-                        Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
-                        // 若为 总是继续，则不抛出异常，继续下个task
-                        if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
-                            taskExecutor.log("任务设置为 失败继续执行...");
-                            continue;
-                        }
-
-                        // 抛出异常，结束流水线和后续任务
-                        throw e;
-                    } finally {
-                        // 任务执行结束
-                        // 更新任务日志的结束时间
-                        Date taskEndTime = new Date();
-                        pipelineLog.setEndTime(taskEndTime);
-                        // 计算任务执行的耗时
-                        pipelineLog.setExecutionTime(DateUtil.between(taskStartTime, taskEndTime, DateUnit.SECOND));
-                        try {
-                            // 更新任务日志
-                            pipelineLogService.updateById(pipelineLog);
-                        } catch (Exception e) {
-                            // 更新任务日志失败，则停止任务
-                            pipelineLogService.failLog(pipelineLog.getId());
-                            log.error(e.getMessage(), e);
-                            throw e;
-                        }
+                        TaskExecutor taskExecutor = TaskExecutor.create(task);
+                        taskExecutor.execute(historyId, task.getId(), jobContextData);
                     }
                 }
             }
+
             if (pipelineHistory.getExecutionStatus() == null) {
                 // 流水线执行成功
                 pipelineHistory.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
@@ -260,6 +282,11 @@ public class PipelineJob implements InterruptableJob {
         pipelineHistory.setExecutionTime(DateUtil.between(historyStartTime, historyEndTime, DateUnit.SECOND));
         pipelineHistoryService.updateById(pipelineHistory);
 
+        // 流水线所属项目
+        Project project = MyDataCache.getProject(pipeline.getProjectId());
+        // 流水线创建者
+        User creator = userService.getById(pipeline.getCreateUser());
+        String creatorEmail = creator.getEmail();
         // 根据流水线的邮件通知配置，发送通知邮件
         Boolean isEmail = pipeline.getIsEmail();
         if (isEmail) {

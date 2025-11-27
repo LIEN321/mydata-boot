@@ -3,8 +3,6 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var;
 import cn.hutool.json.JSON;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
@@ -24,9 +22,9 @@ import java.util.Map;
 @Slf4j
 public class ParseJsonToVar extends TaskExecutor {
 
-    public ParseJsonToVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public ParseJsonToVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

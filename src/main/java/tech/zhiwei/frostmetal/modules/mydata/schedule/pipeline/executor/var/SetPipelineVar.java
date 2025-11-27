@@ -1,8 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var;
 
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -18,9 +16,9 @@ import java.util.Map;
  * @since 2025/9/19
  */
 public class SetPipelineVar extends TaskExecutor {
-    public SetPipelineVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public SetPipelineVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

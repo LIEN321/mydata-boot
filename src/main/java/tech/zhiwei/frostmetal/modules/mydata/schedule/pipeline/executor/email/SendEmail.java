@@ -1,7 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email;
 
 import tech.zhiwei.frostmetal.modules.mydata.mail.MailSender;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -17,9 +16,9 @@ import java.util.Map;
  * @since 2024/12/11
  */
 public class SendEmail extends TaskExecutor {
-    public SendEmail(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public SendEmail(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    // super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

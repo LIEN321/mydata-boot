@@ -3,7 +3,6 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipelin
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionException;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
@@ -28,9 +27,9 @@ public class TriggerPipeline extends TaskExecutor {
 
     private final PipelineScheduler pipelineScheduler = SpringUtil.getBean(PipelineScheduler.class);
 
-    public TriggerPipeline(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public TriggerPipeline(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

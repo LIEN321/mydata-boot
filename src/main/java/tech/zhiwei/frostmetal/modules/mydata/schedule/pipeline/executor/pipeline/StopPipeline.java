@@ -1,7 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineCondition;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
@@ -23,9 +22,9 @@ import java.util.Map;
 @Slf4j
 public class StopPipeline extends TaskExecutor {
 
-    public StopPipeline(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public StopPipeline(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

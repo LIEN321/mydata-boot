@@ -1,7 +1,10 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor;
 
+import cn.hutool.core.date.DateUnit;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
@@ -9,6 +12,8 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
+import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -29,11 +34,14 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.webhook.
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.lang.AssertUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
 import tech.zhiwei.tool.util.ArrayUtil;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -45,54 +53,144 @@ import java.util.Map;
  */
 @Getter
 @Slf4j
+@NoArgsConstructor
 public abstract class TaskExecutor {
-    private final PipelineTask pipelineTask;
-    private final PipelineLog pipelineLog;
+    private PipelineTask pipelineTask;
+    private PipelineLog pipelineLog;
     private final IDataFieldService dataFieldService = SpringUtil.getBean(IDataFieldService.class);
+    private final IPipelineTaskService taskService = SpringUtil.getBean(IPipelineTaskService.class);
+    private final IPipelineLogService pipelineLogService = SpringUtil.getBean(IPipelineLogService.class);
 
-    public TaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        this.pipelineTask = pipelineTask;
-        this.pipelineLog = pipelineLog;
-    }
+    // protected TaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     this.pipelineTask = pipelineTask;
+    //     this.pipelineLog = pipelineLog;
+    // }
 
     // 工厂方法
-    public static TaskExecutor create(PipelineTask task, PipelineLog log) {
+    public static TaskExecutor create(PipelineTask task) {
         return switch (task.getTaskType()) {
             // 从API获取JSON
-            case MyDataConstant.TASK_TYPE_API_GET_JSON -> new GetJsonFromApi(task, log);
+            case MyDataConstant.TASK_TYPE_API_GET_JSON -> new GetJsonFromApi();
             // 向API发送数据
-            case MyDataConstant.TASK_TYPE_API_SEND_DATA -> new SendDataToApi(task, log);
+            case MyDataConstant.TASK_TYPE_API_SEND_DATA -> new SendDataToApi();
             // 从Webhook接收JSON
-            case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook(task, log);
+            case MyDataConstant.TASK_TYPE_WEBHOOK_GET_JSON -> new GetJsonFromWebhook();
             // 用Webhook触发流水线
-            case MyDataConstant.TASK_TYPE_TRIGGER_PIPELINE -> new TriggerPipeline(task, log);
+            case MyDataConstant.TASK_TYPE_TRIGGER_PIPELINE -> new TriggerPipeline();
             // 用Webhook触发流水线
-            case MyDataConstant.TASK_TYPE_STOP_PIPELINE -> new StopPipeline(task, log);
+            case MyDataConstant.TASK_TYPE_STOP_PIPELINE -> new StopPipeline();
             // JSON转数据
-            case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData(task, log);
+            case MyDataConstant.TASK_TYPE_JSON_TO_DATA -> new ParseJsonToData();
             // 数据转JSON
-            case MyDataConstant.TASK_TYPE_DATA_TO_JSON -> new ParseDataToJson(task, log);
+            case MyDataConstant.TASK_TYPE_DATA_TO_JSON -> new ParseDataToJson();
             // 过滤数据
-            case MyDataConstant.TASK_TYPE_FILTER_DATA -> new FilterData(task, log);
+            case MyDataConstant.TASK_TYPE_FILTER_DATA -> new FilterData();
             // 处理数据
-            case MyDataConstant.TASK_TYPE_PROCESS_DATA -> new ProcessData(task, log);
+            case MyDataConstant.TASK_TYPE_PROCESS_DATA -> new ProcessData();
             // 数据写入Excel
-            case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> new WriteDataToExcel(task, log);
+            case MyDataConstant.TASK_TYPE_WRITE_EXCEL -> new WriteDataToExcel();
             // 保存数据到数仓
-            case MyDataConstant.TASK_TYPE_SAVE_DATA -> new SaveDataToWarehouse(task, log);
+            case MyDataConstant.TASK_TYPE_SAVE_DATA -> new SaveDataToWarehouse();
             // 从数仓查询数据
-            case MyDataConstant.TASK_TYPE_QUERY_DATA -> new QueryDataFromWarehouse(task, log);
+            case MyDataConstant.TASK_TYPE_QUERY_DATA -> new QueryDataFromWarehouse();
             // 从数仓清空指定数据集合
-            case MyDataConstant.TASK_TYPE_REMOVE_DATA -> new RemoveData(task, log);
+            case MyDataConstant.TASK_TYPE_REMOVE_DATA -> new RemoveData();
             // 发送邮件
-            case MyDataConstant.TASK_TYPE_SEND_EMAIL -> new SendEmail(task, log);
+            case MyDataConstant.TASK_TYPE_SEND_EMAIL -> new SendEmail();
             // JSON值存入变量
-            case MyDataConstant.TASK_TYPE_JSON_TO_VAR -> new ParseJsonToVar(task, log);
+            case MyDataConstant.TASK_TYPE_JSON_TO_VAR -> new ParseJsonToVar();
             // 设置变量
-            case MyDataConstant.TASK_TYPE_SET_PIPELINE_VAR -> new SetPipelineVar(task, log);
+            case MyDataConstant.TASK_TYPE_SET_PIPELINE_VAR -> new SetPipelineVar();
             // 其他不支持
             default -> throw new IllegalArgumentException("不支持的任务类型: " + task.getTaskType());
         };
+    }
+
+    /**
+     * 执行指定的流水线任务
+     *
+     * @param taskId         流水线任务id
+     * @param jobContextData 上下文数据
+     */
+    public final void execute(Long historyId, Long taskId, Map<String, Object> jobContextData) {
+        PipelineTask pipelineTask = taskService.getById(taskId);
+        AssertUtil.notNull(pipelineTask);
+        this.pipelineTask = pipelineTask;
+
+        // 流水线id
+        Long pipelineId = pipelineTask.getPipelineId();
+
+        // 任务开始
+        Date taskStartTime = new Date();
+        PipelineLog pipelineLog = new PipelineLog();
+        pipelineLog.setPipelineId(pipelineId);
+        pipelineLog.setHistoryId(historyId);
+        pipelineLog.setTaskType(pipelineTask.getTaskType());
+        pipelineLog.setTaskName(pipelineTask.getTaskName());
+        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+        pipelineLog.setStartTime(taskStartTime);
+        pipelineLogService.save(pipelineLog);
+
+        this.pipelineLog = pipelineLog;
+
+        try {
+
+            // 任务禁用状态
+            if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
+                // 禁用的任务 状态为跳过
+                pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
+                pipelineLog.setTaskLog("该任务已禁用，不执行。");
+                return;
+            }
+
+            // 更新任务日志的执行状态
+            pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
+            pipelineLogService.updateById(pipelineLog);
+
+            // 执行任务
+            doExecute(jobContextData);
+
+            // 执行成功
+            pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+        } catch (StopPipelineException e) {
+            // 停止流水线
+            pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+            // 抛出异常，结束流水线和后续任务
+            throw e;
+        } catch (Exception e) {
+            // 异常，执行失败
+            pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            log.error(e.getMessage(), e);
+
+            // 判断preCondition，默认成功才继续
+            Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
+            // 若为 总是继续，则不抛出异常，继续下个task
+            if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
+                log.info("任务设置为 失败继续执行...");
+                return;
+            }
+
+            // 抛出异常，结束流水线和后续任务
+            throw e;
+        } finally {
+            // 任务执行结束
+            // 更新任务日志的结束时间
+            Date taskEndTime = new Date();
+            pipelineLog.setEndTime(taskEndTime);
+
+            // 计算任务执行的耗时
+            pipelineLog.setExecutionTime(DateUtil.between(taskStartTime, taskEndTime, DateUnit.SECOND));
+
+            try {
+                // 更新任务日志
+                pipelineLogService.updateById(pipelineLog);
+            } catch (Exception e) {
+                // 更新任务日志失败，则停止任务
+                pipelineLogService.failLog(pipelineLog.getId());
+                log.error(e.getMessage(), e);
+                throw e;
+            }
+        }
     }
 
     /**
@@ -100,27 +198,27 @@ public abstract class TaskExecutor {
      *
      * @param jobContextData 上下文数据
      */
-    public final void execute(Map<String, Object> jobContextData) {
-        log("[{}] 开始执行", pipelineTask.getTaskName());
-        if (MapUtil.isNotEmpty(jobContextData)) {
-            // StringBuffer logInfo = new StringBuffer();
-            // jobContextData.forEach((k, v) -> {
-            //     logInfo.append(StringUtil.format("\t{} = {}\n", k, v));
-            // });
-            // log("输入参数：\n" + logInfo.toString());
-        }
-
-        try {
-            doExecute(jobContextData);
-            log("[{}] 执行完成。", pipelineTask.getTaskName());
-        } catch (StopPipelineException e) {
-            log("[{}] 执行停止。", pipelineTask.getTaskName());
-            throw e;
-        } catch (Exception e) {
-            error("[{}] 执行失败：{}", pipelineTask.getTaskName(), e.getMessage());
-            throw e;
-        }
-    }
+    // public final void execute(Map<String, Object> jobContextData) {
+    //     log("[{}] 开始执行", pipelineTask.getTaskName());
+    //     if (MapUtil.isNotEmpty(jobContextData)) {
+    //         // StringBuffer logInfo = new StringBuffer();
+    //         // jobContextData.forEach((k, v) -> {
+    //         //     logInfo.append(StringUtil.format("\t{} = {}\n", k, v));
+    //         // });
+    //         // log("输入参数：\n" + logInfo.toString());
+    //     }
+    //
+    //     try {
+    //         doExecute(jobContextData);
+    //         log("[{}] 执行完成。", pipelineTask.getTaskName());
+    //     } catch (StopPipelineException e) {
+    //         log("[{}] 执行停止。", pipelineTask.getTaskName());
+    //         throw e;
+    //     } catch (Exception e) {
+    //         error("[{}] 执行失败：{}", pipelineTask.getTaskName(), e.getMessage());
+    //         throw e;
+    //     }
+    // }
 
     /**
      * 执行任务的抽象方法，子类实现具体逻辑

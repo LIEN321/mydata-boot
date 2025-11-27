@@ -3,8 +3,6 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehou
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
@@ -31,9 +29,9 @@ public class SaveDataToWarehouse extends TaskExecutor {
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
     private final IBizDataService bizDataService = SpringUtil.getBean(IBizDataService.class);
 
-    public SaveDataToWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public SaveDataToWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
