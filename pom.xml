@@ -7,7 +7,7 @@
     <groupId>tech.zhiwei</groupId>
     <artifactId>mydata-boot</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.4</version>
+    <version>0.10.0</version>
 
     <properties>
         <!-- zhiwei -->
@@ -30,6 +30,8 @@
         <maven.plugin.version>3.13.0</maven.plugin.version>
         <!-- freemarker -->
         <freemarker.version>2.3.33</freemarker.version>
+        <!-- lite flow -->
+        <liteflow.version>2.15.1</liteflow.version>
         <!-- encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -132,6 +134,17 @@
                 <groupId>com.sun.mail</groupId>
                 <artifactId>javax.mail</artifactId>
                 <version>1.6.2</version>
+            </dependency>
+            <!-- lite flow -->
+            <dependency>
+                <groupId>com.yomahub</groupId>
+                <artifactId>liteflow-spring-boot-starter</artifactId>
+                <version>${liteflow.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yomahub</groupId>
+                <artifactId>liteflow-el-builder</artifactId>
+                <version>${liteflow.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -246,6 +259,15 @@
             <groupId>com.sun.mail</groupId>
             <artifactId>javax.mail</artifactId>
             <version>1.6.2</version>
+        </dependency>
+        <!-- lite flow -->
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-el-builder</artifactId>
         </dependency>
 
         <!-- junit -->
