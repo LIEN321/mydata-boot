@@ -2,19 +2,27 @@ package tech.zhiwei.frostmetal.modules.mydata.manage.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.yomahub.liteflow.builder.el.ELBus;
+import com.yomahub.liteflow.builder.el.ELWrapper;
+import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.constant.LiteFlowConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
+import tech.zhiwei.tool.util.ArrayUtil;
 import tech.zhiwei.tool.util.RandomUtil;
 
 import java.util.List;
@@ -57,6 +65,8 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
         // 保存流水线变量列表
         pipelineVarService.saveVariablesByPipeline(pipeline.getId(), pipelineDTO.getVariables());
 
+        buildLiteFlowEl(pipeline);
+
         return pipeline.getId();
     }
 
@@ -79,5 +89,41 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
         LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Pipeline::getProjectId, projectId);
         return list(queryWrapper);
+    }
+
+    /**
+     * 为流水线构造LiteFlow的EL表达式
+     *
+     * @param pipeline 流水线
+     */
+    private void buildLiteFlowEl(Pipeline pipeline) {
+        Long pipelineId = pipeline.getId();
+
+        // 查询最新的任务列表
+        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
+
+        if (CollectionUtil.isNotEmpty(tasks)) {
+            List<ELWrapper> elWrappers = CollectionUtil.newArrayList();
+            // 遍历所有任务
+            for (PipelineTask task : tasks) {
+                // 根据任务类型、任务id 构建EL的节点
+                elWrappers.add(ELBus.element(task.getTaskType())
+                        .bind(LiteFlowConstant.BIND_KEY_TASK_ID, task.getId().toString())
+                );
+            }
+
+            // TODO 暂时用串联模式，后续根据前端一起调整为复杂模式
+            // 将所有节点生成 串联 的EL
+            if (CollectionUtil.isNotEmpty(elWrappers)) {
+                String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).toEL();
+                // 校验EL是否正确
+                boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
+                AssertUtil.isTrue(isValid, "校验失败：配置的任务无法执行（LiteFLow），请重试或反馈问题！");
+
+                // 保存EL
+                pipeline.setLiteflowEl(liteflowEl);
+                updateById(pipeline);
+            }
+        }
     }
 }
