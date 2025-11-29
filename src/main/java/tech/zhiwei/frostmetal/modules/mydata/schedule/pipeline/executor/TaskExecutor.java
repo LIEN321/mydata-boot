@@ -112,7 +112,7 @@ public abstract class TaskExecutor {
      * @param taskId         流水线任务id
      * @param jobContextData 上下文数据
      */
-    public final void execute(Long historyId, Long taskId, Map<String, Object> jobContextData) {
+    public final void execute(Long historyId, Long taskId, Long taskLogId, Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = taskService.getById(taskId);
         AssertUtil.notNull(pipelineTask);
         this.pipelineTask = pipelineTask;
@@ -123,13 +123,13 @@ public abstract class TaskExecutor {
         // 任务开始
         Date taskStartTime = new Date();
         PipelineLog pipelineLog = new PipelineLog();
+        pipelineLog.setId(taskLogId);
         pipelineLog.setPipelineId(pipelineId);
         pipelineLog.setHistoryId(historyId);
         pipelineLog.setTaskType(pipelineTask.getTaskType());
         pipelineLog.setTaskName(pipelineTask.getTaskName());
         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
         pipelineLog.setStartTime(taskStartTime);
-        pipelineLogService.save(pipelineLog);
 
         this.pipelineLog = pipelineLog;
 

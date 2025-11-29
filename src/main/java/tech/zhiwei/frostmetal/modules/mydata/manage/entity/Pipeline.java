@@ -121,9 +121,4 @@ public class Pipeline extends TenantEntity {
      * 连续失败次数
      */
     private Integer consecutiveFailures;
-
-    /**
-     * LiteFlow的EL表达式
-     */
-    private String liteflowEl;
 }

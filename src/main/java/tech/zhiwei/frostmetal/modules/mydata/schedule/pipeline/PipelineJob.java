@@ -1,6 +1,9 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline;
 
 import cn.hutool.core.date.DateUnit;
+import com.yomahub.liteflow.builder.el.ELBus;
+import com.yomahub.liteflow.builder.el.ELWrapper;
+import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
 import com.yomahub.liteflow.core.FlowExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
@@ -15,6 +18,7 @@ import tech.zhiwei.frostmetal.modules.mydata.mail.MyDataMail;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineHistoryDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineHistory;
+import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineVar;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
@@ -23,6 +27,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.LFNodeBinding;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
@@ -31,6 +36,8 @@ import tech.zhiwei.frostmetal.system.entity.User;
 import tech.zhiwei.frostmetal.system.service.IUserService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.json.JsonUtil;
+import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
@@ -128,28 +135,26 @@ public class PipelineJob implements InterruptableJob {
         pipeline.setLatestHistoryId(historyId);
         pipelineService.updateById(pipeline);
 
-        /*
-        改用LiteFlow执行流水线的任务
         // 查询流水线任务列表
-        // List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
+        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
 
+        // 先创建任务的执行记录log，状态为待执行
         // 任务 与 日志 的id映射
-        // Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
-        // if (CollectionUtil.isNotEmpty(tasks)) {
-        // 创建流水线的执行日志
-        // tasks.forEach(task -> {
-        //         PipelineLog pipelineLog = new PipelineLog();
-        //         pipelineLog.setPipelineId(pipelineId);
-        //         pipelineLog.setHistoryId(historyId);
-        //         pipelineLog.setTaskType(task.getTaskType());
-        //         pipelineLog.setTaskName(task.getTaskName());
-        //         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
-        //         pipelineLogService.save(pipelineLog);
-        //
-        //         taskLogIdMapping.put(task.getId(), pipelineLog.getId());
-        //     });
-        // }
-         */
+        Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
+        if (CollectionUtil.isNotEmpty(tasks)) {
+            // 创建流水线的执行日志
+            tasks.forEach(task -> {
+                PipelineLog pipelineLog = new PipelineLog();
+                pipelineLog.setPipelineId(pipelineId);
+                pipelineLog.setHistoryId(historyId);
+                pipelineLog.setTaskType(task.getTaskType());
+                pipelineLog.setTaskName(task.getTaskName());
+                pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+                pipelineLogService.save(pipelineLog);
+
+                taskLogIdMapping.put(task.getId(), pipelineLog.getId());
+            });
+        }
 
         // 待更新的流水线历史记录
         PipelineHistory pipelineHistory = new PipelineHistory();
@@ -238,19 +243,21 @@ public class PipelineJob implements InterruptableJob {
              */
 
             // 获取流水线的el
-            String el = pipeline.getLiteflowEl();
+            // String el = pipeline.getLiteflowEl();
+            String el = buildLiteFlowEl(tasks, taskLogIdMapping);
             if (StringUtil.isNotEmpty(el)) {
+                // 新版按EL规则执行
                 Map<String, Object> params = MapUtil.newHashMap();
                 params.put(LiteFlowConstant.BIND_KEY_HISTORY_ID, historyId);
                 flowExecutor.execute2RespWithEL(el, params, null, jobContextData);
             } else {
+                // 旧版按顺序执行任务
                 // 查询流水线任务列表
-                List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
                 if (CollectionUtil.isNotEmpty(tasks)) {
                     for (PipelineTask task : tasks) {
                         // 执行任务
                         TaskExecutor taskExecutor = TaskExecutor.create(task);
-                        taskExecutor.execute(historyId, task.getId(), jobContextData);
+                        taskExecutor.execute(historyId, task.getId(), taskLogIdMapping.get(task.getId()), jobContextData);
                     }
                 }
             }
@@ -358,5 +365,40 @@ public class PipelineJob implements InterruptableJob {
     public void interrupt() {
         log.info("job interrupted");
         interrupted = true;
+    }
+
+    /**
+     * 为流水线构造LiteFlow的EL表达式
+     *
+     * @param tasks            待执行的任务列表
+     * @param taskLogIdMapping 任务与执行记录的id映射
+     */
+    private String buildLiteFlowEl(List<PipelineTask> tasks, Map<Long, Long> taskLogIdMapping) {
+        if (CollectionUtil.isEmpty(tasks)) {
+            return null;
+        }
+        List<ELWrapper> elWrappers = CollectionUtil.newArrayList();
+        // 遍历所有任务
+        for (PipelineTask task : tasks) {
+            LFNodeBinding nodeBinding = new LFNodeBinding();
+            nodeBinding.setTaskId(task.getId());
+            nodeBinding.setTaskLogId(taskLogIdMapping.get(task.getId()));
+            // 根据任务类型、任务id 构建EL的节点
+            elWrappers.add(ELBus.element(task.getTaskType())
+                    .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
+            );
+        }
+
+        // TODO 暂时用串联模式，后续根据前端一起调整为复杂模式
+        // 将所有节点生成 串联 的EL
+        if (CollectionUtil.isEmpty(elWrappers)) {
+            return null;
+        }
+        String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).toEL();
+        // 校验EL是否正确
+        boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
+        AssertUtil.isTrue(isValid, "校验失败：配置的任务无法执行（LiteFLow），请重试或反馈问题！");
+
+        return liteflowEl;
     }
 }

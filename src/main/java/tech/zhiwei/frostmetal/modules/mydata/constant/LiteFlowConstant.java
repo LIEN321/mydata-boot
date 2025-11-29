@@ -14,7 +14,7 @@ public interface LiteFlowConstant {
     String BIND_KEY_HISTORY_ID = "history_id";
 
     /**
-     * 流水线节点bind key：待执行的任务id
+     * 流水线节点bind key：节点绑定的对象
      */
-    String BIND_KEY_TASK_ID = "task_id";
+    String BIND_KEY_NODE_BINDING = "node_binding";
 }
