@@ -53,6 +53,7 @@ public class SendEmail extends TaskExecutor {
             file = (File) jobContextData.get(fileKey);
             if (file == null) {
                 error("发送失败，前置任务没有生成文件，变量名为{}", fileKey);
+                throw new IllegalArgumentException("发送邮件失败，配置的附件文件无效");
             }
         }
 

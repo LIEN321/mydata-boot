@@ -362,7 +362,7 @@ public abstract class TaskExecutor {
     }
 
     /**
-     * 记录任务异常日志
+     * 只记录任务异常日志，不抛异常
      *
      * @param message 日志内容
      * @param params  占位符参数值
