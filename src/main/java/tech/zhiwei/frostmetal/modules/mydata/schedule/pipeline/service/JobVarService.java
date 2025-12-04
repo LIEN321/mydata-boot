@@ -4,6 +4,7 @@ import cn.hutool.core.util.ReUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
+import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -166,7 +167,8 @@ public class JobVarService {
                     value = MyDataUtil.formatData(bizData.get(field), targetType);
                 }
             } else {
-                value = StringUtil.toStringOrNull(bizData.get(field));
+                // 支持${var}和${obj.prop}表达式
+                value = StringUtil.toStringOrNull(BeanUtil.getProperty(bizData, field));
             }
 //            if (value == null) {
 //                 throw new IllegalArgumentException(StringUtil.format("无法获取参数 {} 的值", field));
