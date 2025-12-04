@@ -41,14 +41,14 @@ public class SendEmail extends TaskExecutor {
 //            error("发送邮件失败，邮件主题无效");
             throw new IllegalArgumentException("发送邮件失败，邮件主题无效");
         }
-        JobVarService.processDataFieldVar(subject, jobContextData);
+        subject = JobVarService.processDataFieldVar(subject, jobContextData);
 
         String content = emailConfig.get("CONTENT");
         if (StringUtil.isEmpty(content)) {
 //            error("发送邮件失败，邮件内容无效");
             throw new IllegalArgumentException("发送邮件失败，邮件内容无效");
         }
-        JobVarService.processDataFieldVar(content, jobContextData);
+        content = JobVarService.processDataFieldVar(content, jobContextData);
 
         String fileKey = emailConfig.get("FILE");
         File file = null;
