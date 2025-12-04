@@ -35,6 +35,7 @@ public class SendEmail extends TaskExecutor {
 //            error("发送邮件失败，收件人地址无效");
             throw new IllegalArgumentException("发送邮件失败，收件人地址无效");
         }
+        address = JobVarService.processDataFieldVar(address, jobContextData);
 
         String subject = emailConfig.get("SUBJECT");
         if (StringUtil.isEmpty(subject)) {
