@@ -5,6 +5,7 @@ import com.yomahub.liteflow.builder.el.ELBus;
 import com.yomahub.liteflow.builder.el.ELWrapper;
 import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
 import com.yomahub.liteflow.core.FlowExecutor;
+import com.yomahub.liteflow.flow.LiteflowResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
@@ -249,7 +250,10 @@ public class PipelineJob implements InterruptableJob {
                 // 新版按EL规则执行
                 Map<String, Object> params = MapUtil.newHashMap();
                 params.put(LiteFlowConstant.BIND_KEY_HISTORY_ID, historyId);
-                flowExecutor.execute2RespWithEL(el, params, null, jobContextData);
+                LiteflowResponse response = flowExecutor.execute2RespWithEL(el, params, null, jobContextData);
+                if (!response.isSuccess()) {
+                    throw response.getCause();
+                }
             } else {
                 // 旧版按顺序执行任务
                 // 查询流水线任务列表
