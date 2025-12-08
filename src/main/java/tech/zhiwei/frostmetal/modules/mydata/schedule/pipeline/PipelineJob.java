@@ -39,6 +39,7 @@ import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
+import tech.zhiwei.tool.lang.ExceptionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
@@ -106,21 +107,6 @@ public class PipelineJob implements InterruptableJob {
             throw new JobExecutionException(StringUtil.format("执行失败：流水线不存在，id={}！", pipelineId));
         }
 
-        // 流水线多次触发 进入等待队列，若连续失败 则会连续发送邮件
-        // 检查流水线是否启用 定时或webhook（非手动触发执行）
-        if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && !(pipeline.getIsSchedule() || pipeline.getIsWebhook())) {
-            throw new JobExecutionException(StringUtil.format("执行失败：流水线未启用定时或webhook"));
-        }
-
-        // 查询流水线变量
-        List<PipelineVar> pipelineVars = pipelineVarService.listByPipeline(pipelineId);
-        // 流水线变量有效时，存入流水线上下文
-        if (CollectionUtil.isNotEmpty(pipelineVars)) {
-            pipelineVars.forEach(var -> {
-                jobContextData.put(var.getVarCode(), MyDataUtil.convertDataType(var.getVarValue(), var.getVarType()));
-            });
-        }
-
         // 创建流水线的执行记录
         PipelineHistoryDTO pipelineHistoryDTO = new PipelineHistoryDTO();
         pipelineHistoryDTO.setPipelineId(pipelineId);
@@ -136,32 +122,94 @@ public class PipelineJob implements InterruptableJob {
         pipeline.setLatestHistoryId(historyId);
         pipelineService.updateById(pipeline);
 
-        // 查询流水线任务列表
-        List<PipelineTask> tasks = pipelineTaskService.listByPipeline(pipelineId);
-
-        // 先创建任务的执行记录log，状态为待执行
-        // 任务 与 日志 的id映射
-        Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
-        if (CollectionUtil.isNotEmpty(tasks)) {
-            // 创建流水线的执行日志
-            tasks.forEach(task -> {
-                PipelineLog pipelineLog = new PipelineLog();
-                pipelineLog.setPipelineId(pipelineId);
-                pipelineLog.setHistoryId(historyId);
-                pipelineLog.setTaskType(task.getTaskType());
-                pipelineLog.setTaskName(task.getTaskName());
-                pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
-                pipelineLogService.save(pipelineLog);
-
-                taskLogIdMapping.put(task.getId(), pipelineLog.getId());
-            });
-        }
-
         // 待更新的流水线历史记录
         PipelineHistory pipelineHistory = new PipelineHistory();
         pipelineHistory.setId(historyId);
 
         try {
+            // 开始流水线的初始化步骤
+            Date initStartTime = new Date();
+            PipelineLog pipelineInitLog = new PipelineLog();
+            pipelineInitLog.setPipelineId(pipelineId);
+            pipelineInitLog.setHistoryId(historyId);
+            pipelineInitLog.setTaskType(MyDataConstant.TASK_TYPE_PIPELINE_INIT);
+            pipelineInitLog.setTaskName(MyDataConstant.TASK_TYPE_PIPELINE_INIT_NAME);
+            pipelineInitLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+            pipelineInitLog.setStartTime(initStartTime);
+            pipelineLogService.save(pipelineInitLog);
+
+            StringBuilder initLog = new StringBuilder();
+
+            List<PipelineTask> tasks;
+            // 任务 与 日志 的id映射
+            Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
+            try {
+                // 检测流水线是否启用
+                AssertUtil.equals(pipeline.getStatus(), SysConstant.STATUS_ENABLED, "操作失败：流水线已禁用！");
+                initLog.append("检测流水线启用状态：已启用\n");
+
+                // 流水线多次触发 进入等待队列，若连续失败 则会连续发送邮件
+                // 检查流水线是否启用 定时或webhook（非手动触发执行）
+                if (!MyDataConstant.JOB_TRIGGER_TYPE_MANUAL.equals(triggerType) && !(pipeline.getIsSchedule() || pipeline.getIsWebhook())) {
+                    throw new JobExecutionException(StringUtil.format("执行失败：流水线未启用定时或webhook"));
+                }
+
+                // 查询流水线变量
+                List<PipelineVar> pipelineVars = pipelineVarService.listByPipeline(pipelineId);
+                // 流水线变量有效时，存入流水线上下文
+                if (CollectionUtil.isNotEmpty(pipelineVars)) {
+                    pipelineVars.forEach(var -> {
+                        try {
+                            jobContextData.put(var.getVarCode(), MyDataUtil.convertDataType(var.getVarValue(), var.getVarType()));
+                        } catch (Exception e) {
+                            throw ExceptionUtil.wrapRuntime("流水线变量 {}={}({}) 解析失败，{}"
+                                    , var.getVarCode(), var.getVarValue(), var.getVarType(), e.getMessage()
+                            );
+                        }
+                    });
+                }
+                initLog.append(StringUtil.format("初始化流水线变量，共{}个\n", pipelineVars.size()));
+
+                // 查询流水线任务列表
+                tasks = pipelineTaskService.listByPipeline(pipelineId);
+                initLog.append(StringUtil.format("查询流水线任务，共{}个\n", tasks.size()));
+
+                // 先创建任务的执行记录log，状态为待执行
+                if (CollectionUtil.isNotEmpty(tasks)) {
+                    // 创建流水线的执行日志
+                    tasks.forEach(task -> {
+                        PipelineLog pipelineLog = new PipelineLog();
+                        pipelineLog.setPipelineId(pipelineId);
+                        pipelineLog.setHistoryId(historyId);
+                        pipelineLog.setTaskType(task.getTaskType());
+                        pipelineLog.setTaskName(task.getTaskName());
+                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+                        pipelineLogService.save(pipelineLog);
+
+                        taskLogIdMapping.put(task.getId(), pipelineLog.getId());
+                    });
+                    initLog.append("初始化流水线任务的执行记录\n");
+                }
+
+                // 初始化成功
+                pipelineInitLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
+                initLog.append("初始化成功\n");
+            } catch (Exception e) {
+                // 初始化异常
+                initLog.append("初始化异常：").append(e.getMessage());
+                pipelineInitLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+                log.error(e.getMessage(), e);
+                throw e;
+            } finally {
+                // 更新初始化记录
+                Date initEndTime = new Date();
+                pipelineInitLog.setEndTime(initEndTime);
+                // 计算任务执行的耗时
+                pipelineInitLog.setExecutionTime(DateUtil.between(initStartTime, initEndTime, DateUnit.SECOND));
+                pipelineInitLog.setTaskLog(initLog.toString());
+                pipelineLogService.updateById(pipelineInitLog);
+            }
+
             /*
             改用LiteFlow执行流水线的任务
             // if (CollectionUtil.isNotEmpty(tasks)) {
