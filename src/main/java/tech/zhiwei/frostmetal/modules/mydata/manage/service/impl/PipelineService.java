@@ -86,7 +86,7 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
     @Override
     public void clonePipeline(Long pipelineId) {
         Pipeline pipeline = getById(pipelineId);
-        AssertUtil.notNull(pipeline, "复制失败：源流水线无效！");
+        AssertUtil.notNull(pipeline, "复制失败：源流水线不存在！");
 
         // 复制新流水线
         Pipeline clonePipeline = BeanUtil.copyProperties(pipeline, Pipeline.class
@@ -106,5 +106,25 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
 
         // 复制流水线变量
         pipelineVarService.cloneByPipeline(pipelineId, clonePipeline.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void enablePipeline(Long pipelineId) {
+        Pipeline pipeline = getById(pipelineId);
+        AssertUtil.notNull(pipeline, "操作失败：流水线不存在！");
+
+        pipeline.setStatus(SysConstant.STATUS_ENABLED);
+        updateById(pipeline);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void disablePipeline(Long pipelineId) {
+        Pipeline pipeline = getById(pipelineId);
+        AssertUtil.notNull(pipeline, "操作失败：流水线不存在！");
+
+        pipeline.setStatus(SysConstant.STATUS_DISABLED);
+        updateById(pipeline);
     }
 }

@@ -50,4 +50,18 @@ public interface IPipelineService extends IBaseService<Pipeline> {
      * @param pipelineId 源流水线id
      */
     void clonePipeline(Long pipelineId);
+
+    /**
+     * 启用流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    void enablePipeline(Long pipelineId);
+
+    /**
+     * 禁用流水线
+     *
+     * @param pipelineId 流水线id
+     */
+    void disablePipeline(Long pipelineId);
 }
