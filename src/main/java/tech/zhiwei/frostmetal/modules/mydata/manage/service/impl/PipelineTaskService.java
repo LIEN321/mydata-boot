@@ -69,4 +69,22 @@ public class PipelineTaskService extends BaseService<PipelineTaskMapper, Pipelin
             saveBatch(tasks);
         }
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void cloneByPipeline(Long sourcePipelineId, Long targetPipelineId) {
+        List<PipelineTask> tasks = listByPipeline(sourcePipelineId);
+        if (CollectionUtil.isEmpty(tasks)) {
+            return;
+        }
+
+        List<PipelineTask> cloneTasks = CollectionUtil.newArrayList();
+        tasks.forEach(task -> {
+            PipelineTask cloneTask = BeanUtil.copyProperties(task, PipelineTask.class, "id", "pipelineId", "createTime", "updateTime");
+            cloneTask.setPipelineId(targetPipelineId);
+            cloneTasks.add(cloneTask);
+        });
+
+        saveBatch(cloneTasks);
+    }
 }

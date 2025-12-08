@@ -153,4 +153,11 @@ public class PipelineController {
     public List<SelectVO> select(@RequestParam Long projectId) {
         return PipelineWrapper.getInstance().selectVOList(pipelineService.listByProject(projectId));
     }
+
+    @PostMapping("/clone/{id}")
+    @Operation(summary = "复制流水线", operationId = "clonePipeline")
+    public R<Boolean> clone(@PathVariable Long id) {
+        pipelineService.clonePipeline(id);
+        return R.success();
+    }
 }

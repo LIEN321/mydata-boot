@@ -60,4 +60,22 @@ public class PipelineVarService extends BaseService<PipelineVarMapper, PipelineV
             saveBatch(newVariables);
         }
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void cloneByPipeline(Long sourcePipelineId, Long targetPipelineId) {
+        List<PipelineVar> vars = listByPipeline(sourcePipelineId);
+        if (CollectionUtil.isEmpty(vars)) {
+            return;
+        }
+
+        List<PipelineVar> cloneVars = CollectionUtil.newArrayList();
+        vars.forEach(var -> {
+            PipelineVar cloneVar = BeanUtil.copyProperties(var, PipelineVar.class, "id", "pipelineId", "createTime", "updateTime");
+            cloneVar.setPipelineId(targetPipelineId);
+            cloneVars.add(cloneVar);
+        });
+
+        saveBatch(cloneVars);
+    }
 }

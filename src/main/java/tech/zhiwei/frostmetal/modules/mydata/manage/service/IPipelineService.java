@@ -43,4 +43,11 @@ public interface IPipelineService extends IBaseService<Pipeline> {
      * @return 流水线列表
      */
     List<Pipeline> listByProject(Long projectId);
+
+    /**
+     * 克隆流水线 生成新的流水线，流水线名称后追加 -副本 字样
+     *
+     * @param pipelineId 源流水线id
+     */
+    void clonePipeline(Long pipelineId);
 }

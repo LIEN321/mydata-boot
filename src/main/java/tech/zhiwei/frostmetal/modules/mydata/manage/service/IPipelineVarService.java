@@ -36,4 +36,12 @@ public interface IPipelineVarService extends IBaseService<PipelineVar> {
      * @param variables  变量列表
      */
     void saveVariablesByPipeline(Long pipelineId, List<PipelineVarDTO> variables);
+
+    /**
+     * 克隆指定流水线的任务
+     *
+     * @param sourcePipelineId 源流水线id
+     * @param targetPipelineId 新流水线id
+     */
+    void cloneByPipeline(Long sourcePipelineId, Long targetPipelineId);
 }
