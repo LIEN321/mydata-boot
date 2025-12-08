@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -117,6 +119,10 @@ public class PipelineController {
     @Operation(summary = "执行流水线", operationId = "executePipeline")
     public R<Boolean> execute(@PathVariable Long id) {
         Pipeline pipeline = pipelineService.getById(id);
+
+        if (ObjectUtil.notEqual(pipeline.getStatus(), SysConstant.STATUS_ENABLED)) {
+            return R.fail("执行失败：流水线已禁用！");
+        }
 
         // 查询流水线任务列表
         List<PipelineTask> tasks = pipelineTaskService.listEnabledByPipeline(id);

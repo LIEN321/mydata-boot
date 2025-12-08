@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tech.zhiwei.frostmetal.core.base.common.R;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
@@ -81,6 +82,7 @@ public class PipelineWebhookEndpoint {
         AssertUtil.notNull(pipelineId, "操作失败：参数pipelineId={} 无效！", pipelineId);
         Pipeline pipeline = pipelineService.getById(pipelineId);
         AssertUtil.notNull(pipeline, "操作失败：参数pipelineId={} 无效！", pipelineId);
+        AssertUtil.equals(pipeline.getStatus(), SysConstant.STATUS_ENABLED, "操作失败：流水线已禁用！");
         AssertUtil.isTrue(pipeline.getIsWebhook(), "操作失败：流水线未启动webhook 无法执行！");
 
         Integer authType = pipeline.getWebhookAuthType();
