@@ -212,6 +212,8 @@ public class PipelineJob implements InterruptableJob {
                 // 计算任务执行的耗时
                 pipelineInitLog.setExecutionTime(DateUtil.between(initStartTime, initEndTime, DateUnit.SECOND));
                 pipelineInitLog.setTaskLog(initLog.toString());
+                // 初始化记录执行次数置1
+                pipelineInitLog.setExecutionCount(1);
                 pipelineLogService.updateById(pipelineInitLog);
             }
 

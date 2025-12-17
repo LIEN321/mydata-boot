@@ -63,4 +63,9 @@ public class PipelineHistory extends TenantEntity {
      * 执行状态
      */
     private Integer executionStatus;
+
+    /**
+     * 执行次数
+     */
+    private Integer executionCount;
 }

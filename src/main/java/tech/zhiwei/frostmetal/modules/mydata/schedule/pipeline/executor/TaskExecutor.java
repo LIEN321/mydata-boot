@@ -122,14 +122,19 @@ public abstract class TaskExecutor {
 
         // 任务开始
         Date taskStartTime = new Date();
-        PipelineLog pipelineLog = new PipelineLog();
-        pipelineLog.setId(taskLogId);
-        pipelineLog.setPipelineId(pipelineId);
-        pipelineLog.setHistoryId(historyId);
-        pipelineLog.setTaskType(pipelineTask.getTaskType());
-        pipelineLog.setTaskName(pipelineTask.getTaskName());
+        PipelineLog pipelineLog = pipelineLogService.getById(taskLogId);
+        // pipelineLog.setId(taskLogId);
+        // pipelineLog.setPipelineId(pipelineId);
+        // pipelineLog.setHistoryId(historyId);
+        // pipelineLog.setTaskType(pipelineTask.getTaskType());
+        // pipelineLog.setTaskName(pipelineTask.getTaskName());
         pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
         pipelineLog.setStartTime(taskStartTime);
+
+        // 执行次数
+        int executionCount = ObjectUtil.defaultIfNull(pipelineLog.getExecutionCount(), 0);
+        executionCount++;
+        pipelineLog.setExecutionCount(executionCount);
 
         this.pipelineLog = pipelineLog;
 

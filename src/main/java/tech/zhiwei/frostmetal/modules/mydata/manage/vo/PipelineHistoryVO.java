@@ -47,4 +47,7 @@ public class PipelineHistoryVO extends BaseVO {
 
     @Schema(description = "执行状态")
     private Integer executionStatus;
+
+    @Schema(description = "执行次数")
+    private Integer executionCount;
 }
