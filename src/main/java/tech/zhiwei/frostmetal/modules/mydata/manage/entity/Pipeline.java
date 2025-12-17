@@ -121,4 +121,9 @@ public class Pipeline extends TenantEntity {
      * 连续失败次数
      */
     private Integer consecutiveFailures;
+
+    /**
+     * 失败重试次数，默认0：不重试
+     */
+    private Integer retry;
 }

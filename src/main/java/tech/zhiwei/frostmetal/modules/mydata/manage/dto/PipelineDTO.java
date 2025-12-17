@@ -72,4 +72,7 @@ public class PipelineDTO extends BaseDTO {
 
     @Schema(description = "任务变量列表")
     private List<PipelineVarDTO> variables;
+
+    @Schema(description = "失败重试次数，默认0：不重试")
+    private Integer retry;
 }

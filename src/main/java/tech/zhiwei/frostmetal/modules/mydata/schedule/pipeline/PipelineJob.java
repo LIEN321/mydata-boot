@@ -143,6 +143,8 @@ public class PipelineJob implements InterruptableJob {
             List<PipelineTask> tasks;
             // 任务 与 日志 的id映射
             Map<Long, Long> taskLogIdMapping = MapUtil.newHashMap();
+            // 获取流水线的el
+            String el = null;
             try {
                 // 检测流水线是否启用
                 AssertUtil.equals(pipeline.getStatus(), SysConstant.STATUS_ENABLED, "操作失败：流水线已禁用！");
@@ -191,6 +193,9 @@ public class PipelineJob implements InterruptableJob {
                     initLog.append("初始化流水线任务的执行记录\n");
                 }
 
+                el = buildLiteFlowEl(pipeline, tasks, taskLogIdMapping);
+                initLog.append("流水线待执行的EL=").append(el).append("\n");
+
                 // 初始化成功
                 pipelineInitLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
                 initLog.append("初始化成功\n");
@@ -210,8 +215,6 @@ public class PipelineJob implements InterruptableJob {
                 pipelineLogService.updateById(pipelineInitLog);
             }
 
-            // 获取流水线的el
-            String el = buildLiteFlowEl(tasks, taskLogIdMapping);
             if (StringUtil.isNotEmpty(el)) {
                 // 新版按EL规则执行
                 Map<String, Object> params = MapUtil.newHashMap();
@@ -343,7 +346,7 @@ public class PipelineJob implements InterruptableJob {
      * @param tasks            待执行的任务列表
      * @param taskLogIdMapping 任务与执行记录的id映射
      */
-    private String buildLiteFlowEl(List<PipelineTask> tasks, Map<Long, Long> taskLogIdMapping) {
+    private String buildLiteFlowEl(Pipeline pipeline, List<PipelineTask> tasks, Map<Long, Long> taskLogIdMapping) {
         if (CollectionUtil.isEmpty(tasks)) {
             return null;
         }
@@ -364,7 +367,14 @@ public class PipelineJob implements InterruptableJob {
         if (CollectionUtil.isEmpty(elWrappers)) {
             return null;
         }
-        String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).toEL();
+        int retry = ObjectUtil.defaultIfNull(pipeline.getRetry(), 0);
+        if (retry < 0) {
+            retry = 0;
+        }
+        if (retry > 10) {
+            retry = 10;
+        }
+        String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).retry(retry).toEL();
         // 校验EL是否正确
         boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
         AssertUtil.isTrue(isValid, "校验失败：配置的任务无法执行（LiteFLow），请重试或反馈问题！");

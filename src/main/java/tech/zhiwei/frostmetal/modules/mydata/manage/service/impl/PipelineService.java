@@ -15,6 +15,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.lang.AssertUtil;
+import tech.zhiwei.tool.lang.ExceptionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.util.RandomUtil;
 
@@ -36,6 +37,11 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long savePipeline(PipelineDTO pipelineDTO) {
+        int retry = ObjectUtil.defaultIfNull(pipelineDTO.getRetry(), 0);
+        if (retry < 0 || retry > 10) {
+            throw ExceptionUtil.wrapRuntime("操作失败：重试次数不在[0~10]时间！");
+        }
+
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
         if (pipeline.getId() == null) {
             pipeline.setWebhookCode(RandomUtil.randomString(64));
