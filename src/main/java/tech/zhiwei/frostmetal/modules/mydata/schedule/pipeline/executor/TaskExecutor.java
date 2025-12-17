@@ -139,12 +139,13 @@ public abstract class TaskExecutor {
         this.pipelineLog = pipelineLog;
 
         try {
+            log("========== 任务开始执行，第{}次 ==========", executionCount);
 
             // 任务禁用状态
             if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
                 // 禁用的任务 状态为跳过
                 pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
-                pipelineLog.setTaskLog("该任务已禁用，不执行。");
+                log("该任务已禁用，不执行。");
                 return;
             }
 
@@ -160,17 +161,22 @@ public abstract class TaskExecutor {
         } catch (StopPipelineException e) {
             // 停止流水线
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
+            // 记录异常
+            error(e.getMessage());
             // 抛出异常，结束流水线和后续任务
             throw e;
         } catch (Exception e) {
             // 异常，执行失败
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_FAILED);
+            // 记录异常
+            error(e.getMessage());
             log.error(e.getMessage(), e);
 
             // 判断preCondition，默认成功才继续
             Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
             // 若为 总是继续，则不抛出异常，继续下个task
             if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
+                log("因任务设置为\"失败继续执行\"，流水线继续执行...");
                 log.info("任务设置为 失败继续执行...");
                 return;
             }
