@@ -33,7 +33,7 @@ public class SetPipelineVar extends TaskExecutor {
 
         varMappings.forEach(varMapping -> {
             String varCode = varMapping.get("varCode");
-            String varType = StringUtil.nullToDefault(varMapping.get("varType"), MyDataConstant.DATA_TYPE_STRING);
+            String varType = StringUtil.emptyIfNull(varMapping.get("varType"));
             if (StringUtil.isNotEmpty(varCode)) {
                 // 替换${var.property}表达式的值
                 Object varValue = JobVarService.processDataFieldVar(varMapping.get("varValue"), jobContextData);
