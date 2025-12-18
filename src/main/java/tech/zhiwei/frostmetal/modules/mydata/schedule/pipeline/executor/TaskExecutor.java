@@ -161,8 +161,6 @@ public abstract class TaskExecutor {
         } catch (StopPipelineException e) {
             // 停止流水线
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_STOPPED);
-            // 记录异常
-            error(e.getMessage());
             // 抛出异常，结束流水线和后续任务
             throw e;
         } catch (Exception e) {
