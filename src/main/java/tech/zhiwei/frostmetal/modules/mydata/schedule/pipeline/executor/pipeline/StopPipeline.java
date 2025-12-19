@@ -5,6 +5,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineCondition;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.util.PipelineUtil;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.frostmetal.modules.mydata.util.StringParser;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -49,7 +50,7 @@ public class StopPipeline extends TaskExecutor {
             Object param = jobContextData.get(key);
             String op = condition.getOp();
             Object value = StringParser.autoParse((String) condition.getValue());
-            if (MyDataUtil.compare(param, op, value)) {
+            if (PipelineUtil.compare(param, op, value)) {
                 log(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
                 throw new StopPipelineException();
             }
