@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import org.quartz.SchedulerException;
 import org.quartz.UnableToInterruptJobException;
 import org.springframework.stereotype.Component;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
@@ -43,7 +44,7 @@ public class PipelineScheduler {
             return;
         }
         // 获取定时执行的状态
-        boolean isSchedule = pipeline.getIsSchedule();
+        boolean isSchedule = (pipeline.getStatus() == SysConstant.STATUS_ENABLED) && pipeline.getIsSchedule();
         if (isSchedule) {
             // 若启用，则加入调度
             schedulePipeline(pipeline);

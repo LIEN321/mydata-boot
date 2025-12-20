@@ -171,6 +171,8 @@ public class PipelineController {
     @Operation(summary = "启用流水线", operationId = "enablePipeline")
     public R<Boolean> enable(@PathVariable Long id) {
         pipelineService.enablePipeline(id);
+        // 调整调度
+        pipelineScheduler.update(id);
         return R.success();
     }
 
@@ -178,6 +180,8 @@ public class PipelineController {
     @Operation(summary = "禁用流水线", operationId = "disablePipeline")
     public R<Boolean> disable(@PathVariable Long id) {
         pipelineService.disablePipeline(id);
+        // 调整调度
+        pipelineScheduler.update(id);
         return R.success();
     }
 }
