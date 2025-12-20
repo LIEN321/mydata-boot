@@ -89,4 +89,7 @@ public class PipelineVO extends BaseVO {
 
     @Schema(description = "webhook标识编号")
     private String webhookCode;
+
+    @Schema(description = "失败重试次数，默认0：不重试")
+    private Integer retry;
 }

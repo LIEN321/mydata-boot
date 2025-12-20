@@ -44,4 +44,12 @@ public interface IPipelineTaskService extends IBaseService<PipelineTask> {
      * @param tasks      任务列表
      */
     void saveTasksByPipeline(Long pipelineId, List<PipelineTaskDTO> tasks);
+
+    /**
+     * 克隆指定流水线的任务
+     *
+     * @param sourcePipelineId 源流水线id
+     * @param targetPipelineId 新流水线id
+     */
+    void cloneByPipeline(Long sourcePipelineId, Long targetPipelineId);
 }

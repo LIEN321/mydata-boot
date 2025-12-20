@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
@@ -14,6 +15,8 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.tool.bean.BeanUtil;
+import tech.zhiwei.tool.lang.AssertUtil;
+import tech.zhiwei.tool.lang.ExceptionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.util.RandomUtil;
 
@@ -31,10 +34,16 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
 
     private IPipelineTaskService pipelineTaskService;
     private IPipelineVarService pipelineVarService;
+    private MydataConfiguration mydataConfig;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long savePipeline(PipelineDTO pipelineDTO) {
+        int retry = ObjectUtil.defaultIfNull(pipelineDTO.getRetry(), 0);
+        if (retry < mydataConfig.getPipelineRetryMinCount() || retry > mydataConfig.getPipelineRetryMaxCount()) {
+            throw ExceptionUtil.wrapRuntime("操作失败：重试次数不在[{}~{}]时间！", mydataConfig.getPipelineRetryMinCount(), mydataConfig.getPipelineRetryMaxCount());
+        }
+
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);
         if (pipeline.getId() == null) {
             pipeline.setWebhookCode(RandomUtil.randomString(64));
@@ -79,5 +88,51 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
         LambdaQueryWrapper<Pipeline> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Pipeline::getProjectId, projectId);
         return list(queryWrapper);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void clonePipeline(Long pipelineId) {
+        Pipeline pipeline = getById(pipelineId);
+        AssertUtil.notNull(pipeline, "复制失败：源流水线不存在！");
+
+        // 复制新流水线
+        Pipeline clonePipeline = BeanUtil.copyProperties(pipeline, Pipeline.class
+                , "id", "createTime", "updateTime", "consecutiveFailures", "webhookCode", "latestHistoryId"
+        );
+        clonePipeline.setConsecutiveFailures(0);
+        clonePipeline.setWebhookCode(RandomUtil.randomString(64));
+        clonePipeline.setPipelineName(clonePipeline.getPipelineName() + " - 副本");
+        clonePipeline.setIsSchedule(false);
+        clonePipeline.setIsWebhook(false);
+
+        boolean result = save(clonePipeline);
+        AssertUtil.isTrue(result, "复制失败：新流水线保存失败！");
+
+        // 复制流水线任务
+        pipelineTaskService.cloneByPipeline(pipelineId, clonePipeline.getId());
+
+        // 复制流水线变量
+        pipelineVarService.cloneByPipeline(pipelineId, clonePipeline.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void enablePipeline(Long pipelineId) {
+        Pipeline pipeline = getById(pipelineId);
+        AssertUtil.notNull(pipeline, "操作失败：流水线不存在！");
+
+        pipeline.setStatus(SysConstant.STATUS_ENABLED);
+        updateById(pipeline);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void disablePipeline(Long pipelineId) {
+        Pipeline pipeline = getById(pipelineId);
+        AssertUtil.notNull(pipeline, "操作失败：流水线不存在！");
+
+        pipeline.setStatus(SysConstant.STATUS_DISABLED);
+        updateById(pipeline);
     }
 }

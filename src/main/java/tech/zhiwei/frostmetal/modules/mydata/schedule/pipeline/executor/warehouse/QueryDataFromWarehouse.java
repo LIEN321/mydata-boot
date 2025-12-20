@@ -6,7 +6,6 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.data.BizDataFilter;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
@@ -31,9 +30,9 @@ import java.util.stream.Collectors;
 public class QueryDataFromWarehouse extends TaskExecutor {
     private final BizDataDAO bizDataDAO = SpringUtil.getBean(BizDataDAO.class);
 
-    public QueryDataFromWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public QueryDataFromWarehouse(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

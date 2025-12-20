@@ -1,9 +1,9 @@
 package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var;
 
+import cn.hutool.extra.expression.ExpressionUtil;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -18,9 +18,9 @@ import java.util.Map;
  * @since 2025/9/19
  */
 public class SetPipelineVar extends TaskExecutor {
-    public SetPipelineVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public SetPipelineVar(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
@@ -33,9 +33,18 @@ public class SetPipelineVar extends TaskExecutor {
 
         varMappings.forEach(varMapping -> {
             String varCode = varMapping.get("varCode");
-            String varType = StringUtil.nullToDefault(varMapping.get("varType"), MyDataConstant.DATA_TYPE_STRING);
+            String varType = StringUtil.emptyIfNull(varMapping.get("varType"));
             if (StringUtil.isNotEmpty(varCode)) {
-                Object varValue = MyDataUtil.convertDataType(varMapping.get("varValue"), varType);
+                // 替换${var.property}表达式的值
+                Object varValue = JobVarService.processDataFieldVar(varMapping.get("varValue"), jobContextData);
+                // 支持运算表达式
+                try {
+                    varValue = ExpressionUtil.eval(varValue.toString(), jobContextData);
+                } catch (Exception e) {
+                    // 忽略表达式解析异常，普通字符串、日期等内容不计算
+                }
+                // 转为指定类型
+                varValue = MyDataUtil.convertDataType(varValue, varType);
                 jobContextData.put(varCode, varValue);
                 log("设置变量 {} = {}", varCode, varValue);
             }

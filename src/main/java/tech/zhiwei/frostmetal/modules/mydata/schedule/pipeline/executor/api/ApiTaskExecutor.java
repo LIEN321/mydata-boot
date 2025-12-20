@@ -9,8 +9,6 @@ import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponseConfig;
@@ -72,9 +70,9 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
      */
     private Map<String, Object> jobContextData;
 
-    public ApiTaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public ApiTaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    // super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {
@@ -231,18 +229,26 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
-        this.log("\trequest url: [{}] {}", method, url);
-        this.log("\trequest param : {}", queryParams);
-        this.log("\trequest header : {}", reqHeaders);
-        this.log("\trequest form : {}", reqForm);
-        this.log("\trequest body : {}", reqBody);
+        this.log("""
+                        
+                        \trequest url: [{}] {}
+                        \trequest param : {}
+                        \trequest header : {}
+                        \trequest form : {}
+                        \trequest body : {}
+                        """
+                , method, url, queryParams, reqHeaders, reqForm, reqBody);
 
         // 发送请求，获取响应结果
         try (HttpResponse response = HttpUtil.send(method, url, queryParams, reqHeaders, reqForm, reqBody)) {
             String cookie = response.getCookieStr();
             String responseBody = response.body();
-            this.log("\tresponse status : {}", response.getStatus());
-            this.log("\tresponse body : {}", responseBody);
+            this.log("""
+                            
+                            \tresponse status : {}
+                            \tresponse body : {}
+                            """
+                    , response.getStatus(), responseBody);
 
             return new PipelineApiResponse(response.getStatus(), responseBody, cookie);
         }

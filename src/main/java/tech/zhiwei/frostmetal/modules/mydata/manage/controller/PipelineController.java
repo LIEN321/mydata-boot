@@ -1,5 +1,6 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import tech.zhiwei.frostmetal.core.base.common.P;
 import tech.zhiwei.frostmetal.core.base.common.PageParam;
 import tech.zhiwei.frostmetal.core.base.common.R;
 import tech.zhiwei.frostmetal.core.base.vo.SelectVO;
+import tech.zhiwei.frostmetal.core.constant.SysConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
@@ -118,6 +120,10 @@ public class PipelineController {
     public R<Boolean> execute(@PathVariable Long id) {
         Pipeline pipeline = pipelineService.getById(id);
 
+        if (ObjectUtil.notEqual(pipeline.getStatus(), SysConstant.STATUS_ENABLED)) {
+            return R.fail("执行失败：流水线已禁用！");
+        }
+
         // 查询流水线任务列表
         List<PipelineTask> tasks = pipelineTaskService.listEnabledByPipeline(id);
         if (CollectionUtil.isEmpty(tasks)) {
@@ -152,5 +158,30 @@ public class PipelineController {
     @Operation(summary = "查询流水线", operationId = "pipelineSelect")
     public List<SelectVO> select(@RequestParam Long projectId) {
         return PipelineWrapper.getInstance().selectVOList(pipelineService.listByProject(projectId));
+    }
+
+    @PostMapping("/clone/{id}")
+    @Operation(summary = "复制流水线", operationId = "clonePipeline")
+    public R<Boolean> clone(@PathVariable Long id) {
+        pipelineService.clonePipeline(id);
+        return R.success();
+    }
+
+    @PostMapping("/enable/{id}")
+    @Operation(summary = "启用流水线", operationId = "enablePipeline")
+    public R<Boolean> enable(@PathVariable Long id) {
+        pipelineService.enablePipeline(id);
+        // 调整调度
+        pipelineScheduler.update(id);
+        return R.success();
+    }
+
+    @PostMapping("/disable/{id}")
+    @Operation(summary = "禁用流水线", operationId = "disablePipeline")
+    public R<Boolean> disable(@PathVariable Long id) {
+        pipelineService.disablePipeline(id);
+        // 调整调度
+        pipelineScheduler.update(id);
+        return R.success();
     }
 }

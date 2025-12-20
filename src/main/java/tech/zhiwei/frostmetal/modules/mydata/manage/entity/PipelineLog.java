@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.entity.IdEntity;
+
+import java.io.Serial;
 import java.util.Date;
 
 /**
@@ -16,6 +18,8 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @TableName(value = "md_pipeline_log")
 public class PipelineLog extends IdEntity {
+    @Serial
+    private static final long serialVersionUID = 5341583702152848678L;
     /**
      * 所属流水线
      */
@@ -61,4 +65,8 @@ public class PipelineLog extends IdEntity {
      */
     private Integer executionStatus;
 
+    /**
+     * 执行次数
+     */
+    private Integer executionCount;
 }

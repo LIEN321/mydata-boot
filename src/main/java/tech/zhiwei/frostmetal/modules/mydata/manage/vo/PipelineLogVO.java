@@ -1,12 +1,14 @@
 package tech.zhiwei.frostmetal.modules.mydata.manage.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import tech.zhiwei.frostmetal.core.base.vo.BaseVO;
+
+import java.io.Serial;
 import java.util.Date;
 
 /**
@@ -16,9 +18,11 @@ import java.util.Date;
  * @since 2024/11/28
  */
 @Data
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "流水线执行日志")
 public class PipelineLogVO extends BaseVO {
+    @Serial
+    private static final long serialVersionUID = -5175799994578244897L;
     @Schema(description = "所属流水线")
     @JsonSerialize(using = ToStringSerializer.class)
     private Long pipelineId;
@@ -51,4 +55,6 @@ public class PipelineLogVO extends BaseVO {
     @Schema(description = "执行状态")
     private Integer executionStatus;
 
+    @Schema(description = "执行次数")
+    private Integer executionCount;
 }

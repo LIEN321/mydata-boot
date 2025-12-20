@@ -110,6 +110,8 @@ public interface MyDataConstant {
     String RESP_CONFIG_BODY_VALUE = "bodyValue";
 
     // ------------------------------ 流水线任务常量 ------------------------------
+    String TASK_TYPE_PIPELINE_INIT = "PIPELINE_INIT";
+    String TASK_TYPE_PIPELINE_INIT_NAME = "初始化流水线";
 
     /**
      * 任务类型：从API获取数据
@@ -149,7 +151,7 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_JSON_TO_DATA = "JSON_TO_DATA";
     /**
-     * 任务类型：JSON转数据
+     * 任务类型：数据转JSON
      */
     String TASK_TYPE_DATA_TO_JSON = "DATA_TO_JSON";
     /**

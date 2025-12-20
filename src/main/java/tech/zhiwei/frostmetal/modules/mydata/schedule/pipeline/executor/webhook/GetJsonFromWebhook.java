@@ -2,7 +2,6 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.webhook
 
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineLog;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
@@ -20,9 +19,9 @@ import java.util.Map;
 @Slf4j
 public class GetJsonFromWebhook extends TaskExecutor {
 
-    public GetJsonFromWebhook(PipelineTask pipelineTask, PipelineLog pipelineLog) {
-        super(pipelineTask, pipelineLog);
-    }
+    // public GetJsonFromWebhook(PipelineTask pipelineTask, PipelineLog pipelineLog) {
+    //     super(pipelineTask, pipelineLog);
+    // }
 
     @Override
     public void doExecute(Map<String, Object> jobContextData) {

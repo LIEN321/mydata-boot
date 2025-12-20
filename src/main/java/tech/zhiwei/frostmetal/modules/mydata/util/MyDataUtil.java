@@ -9,10 +9,8 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineCond
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
 import tech.zhiwei.tool.io.FileUtil;
-import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
-import tech.zhiwei.tool.util.ArrayUtil;
 import tech.zhiwei.tool.util.EnumUtil;
 import tech.zhiwei.tool.util.NumberUtil;
 import tech.zhiwei.tool.util.SystemUtil;
@@ -22,8 +20,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant.SINGLE_OPERATOR;
 
 /**
  * mydata 工具类
@@ -291,62 +287,5 @@ public class MyDataUtil {
         }
 
         return pipelineConditions;
-    }
-
-    /**
-     * 判断对象是否符合条件 o1 op o2
-     *
-     * @param o1       对象1
-     * @param operator
-     * @param o2       对象2
-     * @return 对比结果
-     */
-    public static boolean compare(Object o1, String operator, Object o2) {
-
-        if (ArrayUtil.contains(SINGLE_OPERATOR, operator)) {
-            return switch (operator) {
-                // not null
-                case MyDataConstant.CONDITION_NOT_NULL -> ObjectUtil.isNotNull(o1);
-                // not empty
-                case MyDataConstant.CONDITION_NOT_EMPTY -> ObjectUtil.isNotEmpty(o1);
-                // is null
-                case MyDataConstant.CONDITION_IS_NULL -> ObjectUtil.isNull(o1);
-                // is empty
-                case MyDataConstant.CONDITION_IS_EMPTY -> ObjectUtil.isEmpty(o1);
-
-                default -> throw new IllegalStateException("Unexpected value: " + operator);
-            };
-        }
-
-        // 判断业务数据值 和 过滤数据值 都可对比，否则过滤条件无效
-        if (!(o1 instanceof Comparable && o2 instanceof Comparable)) {
-            throw new IllegalArgumentException(StringUtil.format("条件无效：{}或{} 无法进行对比", o1, o2));
-        }
-
-        if (o1.getClass() != o2.getClass()) {
-            throw new IllegalArgumentException(StringUtil.format("条件值 {}({}) 与 {}({}) 类型不同，无法进行对比", o1, o1.getClass().getSimpleName(), o2, o2.getClass().getSimpleName()));
-        }
-
-        Comparable c1 = (Comparable) o1;
-        Comparable c2 = (Comparable) o2;
-
-        return switch (operator) {
-            // 等于
-            case MyDataConstant.CONDITION_EQ -> (ObjectUtil.compare(c1, c2) == 0);
-            // 不等于
-            case MyDataConstant.CONDITION_NE -> (ObjectUtil.compare(c1, c2) != 0);
-            // 大于
-            case MyDataConstant.CONDITION_GT -> (ObjectUtil.compare(c1, c2) > 0);
-            // 大于等于
-            case MyDataConstant.CONDITION_GTE -> (ObjectUtil.compare(c1, c2) >= 0);
-            // 小于
-            case MyDataConstant.CONDITION_LT -> (ObjectUtil.compare(c1, c2) < 0);
-            // 小于等于
-            case MyDataConstant.CONDITION_LTE -> (ObjectUtil.compare(c1, c2) <= 0);
-
-            default -> throw new IllegalArgumentException(
-                    StringUtil.format("过滤条件无效: 不支持的过滤操作 {}", operator)
-            );
-        };
     }
 }

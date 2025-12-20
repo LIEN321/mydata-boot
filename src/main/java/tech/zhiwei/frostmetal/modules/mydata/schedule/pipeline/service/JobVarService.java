@@ -4,8 +4,10 @@ import cn.hutool.core.util.ReUtil;
 import org.apache.commons.text.StringSubstitutor;
 import org.springframework.stereotype.Component;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
+import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.date.DateUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
 
@@ -166,7 +168,10 @@ public class JobVarService {
                     value = MyDataUtil.formatData(bizData.get(field), targetType);
                 }
             } else {
-                value = StringUtil.toStringOrNull(bizData.get(field));
+                // 支持${var}和${obj.prop}表达式
+                Object object = BeanUtil.getProperty(bizData, field);
+                // 当表达式结果（包括map、list等类型对象） 不为空，则返回，否则返回空字符串
+                value = ObjectUtil.isNotEmpty(object) ? object.toString() : StringUtil.EMPTY;
             }
 //            if (value == null) {
 //                 throw new IllegalArgumentException(StringUtil.format("无法获取参数 {} 的值", field));

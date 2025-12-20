@@ -44,4 +44,7 @@ public class PipelineTaskDTO {
 
     @Schema(description = "后续的前提条件")
     private Integer preCondition;
+
+    @Schema(description = "失败重试次数，默认0：不重试")
+    private Integer retry;
 }

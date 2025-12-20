@@ -68,4 +68,9 @@ public class PipelineTask extends TenantEntity {
      * 后续的前提条件：0-ALWAYS，1-SUCCESS
      */
     private Integer preCondition;
+
+    /**
+     * 失败重试次数，默认0：不重试
+     */
+    private Integer retry;
 }
