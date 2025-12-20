@@ -371,14 +371,8 @@ public class PipelineJob implements InterruptableJob {
         if (CollectionUtil.isEmpty(elWrappers)) {
             return null;
         }
-        int retry = ObjectUtil.defaultIfNull(pipeline.getRetry(), 0);
-        if (retry < 0) {
-            retry = 0;
-        }
-        if (retry > 10) {
-            retry = 10;
-        }
-        String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).retry(retry).toEL();
+        int pipelineRetry = ObjectUtil.defaultIfNull(pipeline.getRetry(), 0);
+        String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).retry(pipelineRetry).toEL();
         // 校验EL是否正确
         boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
         AssertUtil.isTrue(isValid, "校验失败：配置的任务无法执行（LiteFLow），请重试或反馈问题！");
