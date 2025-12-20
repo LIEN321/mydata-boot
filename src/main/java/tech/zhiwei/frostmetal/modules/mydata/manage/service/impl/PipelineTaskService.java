@@ -8,12 +8,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineTaskDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineTaskMapper;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
 import tech.zhiwei.tool.bean.BeanUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
+import tech.zhiwei.tool.lang.ExceptionUtil;
+import tech.zhiwei.tool.lang.ObjectUtil;
 
 import java.util.List;
 
@@ -26,6 +29,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class PipelineTaskService extends BaseService<PipelineTaskMapper, PipelineTask> implements IPipelineTaskService {
+    private MydataConfiguration mydataConfig;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -63,6 +67,10 @@ public class PipelineTaskService extends BaseService<PipelineTaskMapper, Pipelin
             List<PipelineTask> tasks = CollectionUtil.newArrayList();
             taskDTOList.forEach(taskDTO -> {
                 PipelineTask task = BeanUtil.copyProperties(taskDTO, PipelineTask.class);
+                int retry = ObjectUtil.defaultIfNull(taskDTO.getRetry(), 0);
+                if (retry < mydataConfig.getPipelineRetryMinCount() || retry > mydataConfig.getPipelineRetryMaxCount()) {
+                    throw ExceptionUtil.wrapRuntime("操作失败：重试次数不在[{}~{}]时间！", mydataConfig.getPipelineRetryMinCount(), mydataConfig.getPipelineRetryMaxCount());
+                }
                 task.setPipelineId(pipelineId);
                 tasks.add(task);
             });

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.zhiwei.frostmetal.core.base.service.BaseService;
 import tech.zhiwei.frostmetal.core.constant.SysConstant;
+import tech.zhiwei.frostmetal.modules.mydata.config.MydataConfiguration;
 import tech.zhiwei.frostmetal.modules.mydata.manage.dto.PipelineDTO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Pipeline;
 import tech.zhiwei.frostmetal.modules.mydata.manage.mapper.PipelineMapper;
@@ -33,13 +34,14 @@ public class PipelineService extends BaseService<PipelineMapper, Pipeline> imple
 
     private IPipelineTaskService pipelineTaskService;
     private IPipelineVarService pipelineVarService;
+    private MydataConfiguration mydataConfig;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long savePipeline(PipelineDTO pipelineDTO) {
         int retry = ObjectUtil.defaultIfNull(pipelineDTO.getRetry(), 0);
-        if (retry < 0 || retry > 10) {
-            throw ExceptionUtil.wrapRuntime("操作失败：重试次数不在[0~10]时间！");
+        if (retry < mydataConfig.getPipelineRetryMinCount() || retry > mydataConfig.getPipelineRetryMaxCount()) {
+            throw ExceptionUtil.wrapRuntime("操作失败：重试次数不在[{}~{}]时间！", mydataConfig.getPipelineRetryMinCount(), mydataConfig.getPipelineRetryMaxCount());
         }
 
         Pipeline pipeline = BeanUtil.copyProperties(pipelineDTO, Pipeline.class);

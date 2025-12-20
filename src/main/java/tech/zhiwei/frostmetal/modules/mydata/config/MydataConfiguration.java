@@ -27,4 +27,9 @@ public class MydataConfiguration {
 
     @Value("${mydata.pipeline.max-failure-count:5}")
     private int pipelineMaxFailureCount;
+
+    private int pipelineRetryMinCount = 0;
+
+    @Value("${mydata.pipeline.retry-max-count:10}")
+    private int pipelineRetryMaxCount;
 }

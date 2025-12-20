@@ -7,6 +7,9 @@ mydata:
     url: mongodb://root:root@svc-dev:27017/{}?authSource=admin&ssl=false
   secure:
     encrypt-db: false
+  pipeline:
+    # 流水线、任务节点重试次数的最大可配置值
+    retry-max-count: 10
 # ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
 
 # ⬇⬇⬇ frostmetal 框架配置 ⬇⬇⬇

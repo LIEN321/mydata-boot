@@ -355,11 +355,13 @@ public class PipelineJob implements InterruptableJob {
         List<ELWrapper> elWrappers = CollectionUtil.newArrayList();
         // 遍历所有任务
         for (PipelineTask task : tasks) {
+            int taskRetry = ObjectUtil.defaultIfNull(task.getRetry(), 0);
             LFNodeBinding nodeBinding = new LFNodeBinding();
             nodeBinding.setTaskId(task.getId());
             nodeBinding.setTaskLogId(taskLogIdMapping.get(task.getId()));
             // 根据任务类型、任务id 构建EL的节点
             elWrappers.add(ELBus.element(task.getTaskType())
+                    .retry(taskRetry)
                     .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
             );
         }
