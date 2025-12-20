@@ -25,7 +25,7 @@ public class MydataConfiguration {
     @Value("${mydata.mongodb.url}")
     private String mongodbUrl;
 
-    @Value("${mydata.pipeline.max-failure-count:5}")
+    @Value("${mydata.pipeline.failure-max-count:5}")
     private int pipelineMaxFailureCount;
 
     private int pipelineRetryMinCount = 0;
