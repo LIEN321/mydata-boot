@@ -1,6 +1,31 @@
 server:
   port: 81
 
+# ⬇⬇⬇ mydata配置 ⬇⬇⬇
+mydata:
+  mongodb:
+    url: mongodb://root:root@svc-dev:27017/{}?authSource=admin&ssl=false
+  secure:
+    encrypt-db: false
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
+
+# ⬇⬇⬇ frostmetal 框架配置 ⬇⬇⬇
+frostmetal:
+  tenant:
+    ignore-tables:
+      - sys_tenant
+  secure:
+    auth:
+      # 启用token认证拦截
+      enabled: true
+      # 自定义放行地址
+      skip-url:
+        - /demo/**
+        - /pipeline/*/webhook/*
+        - /reg/*
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
+
+# ⬇⬇⬇ spring配置 ⬇⬇⬇
 spring:
   profiles:
     active: dev
@@ -26,8 +51,15 @@ spring:
       uri: mongodb://root:root@svc-dev:27017/admin
   quartz:
     job-store-type: memory
+    properties:
+      org:
+        quartz:
+          threadPool:
+            # 线程数量
+            threadCount: 10
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
 
-# springdoc-openapi项目配置
+# ⬇⬇⬇ springdoc-openapi项目配置 ⬇⬇⬇
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -39,8 +71,9 @@ springdoc:
     - group: 'zhiwei'
       paths-to-match: '/**'
       packages-to-scan: tech.zhiwei
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
 
-# Sa-Token 配置
+# ⬇⬇⬇ Sa-Token 配置 ⬇⬇⬇
 sa-token:
   # token 名称（同时也是 cookie 名称）
   token-name: satoken
@@ -56,33 +89,14 @@ sa-token:
   token-style: uuid
   # 是否输出操作日志
   is-log: true
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
 
-#配置日志地址
+# ⬇⬇⬇ 配置日志地址 ⬇⬇⬇
 logging:
   config: classpath:log/logback_${spring.profiles.active}.xml
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
 
-
-# frostmetal 框架配置
-frostmetal:
-  tenant:
-    ignore-tables:
-      - sys_tenant
-  secure:
-    auth:
-      # 启用token认证拦截
-      enabled: true
-      # 自定义放行地址
-      skip-url:
-        - /demo/**
-        - /pipeline/*/webhook/*
-
-#mydata配置
-mydata:
-  mongodb:
-    url: mongodb://root:root@svc-dev:27017/{}?authSource=admin&ssl=false
-  secure:
-    encrypt-db: false
-
+# ⬇⬇⬇ 邮箱服务器配置 ⬇⬇⬇
 mail:
   # 邮件服务器的SMTP地址，可选，默认为smtp.<发件人邮箱后缀>
   host: 配置邮件服务器地址
@@ -96,3 +110,4 @@ mail:
   pass: 配置邮箱密码
   # 是否启用ssl
   ssl: true
+# ⬆⬆⬆ -------------------------------------------------------------------------------------------------------------- ⬆⬆⬆
