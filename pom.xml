@@ -7,7 +7,7 @@
     <groupId>tech.zhiwei</groupId>
     <artifactId>mydata-boot</artifactId>
     <packaging>jar</packaging>
-    <version>0.10.0</version>
+    <version>0.10.1</version>
 
     <properties>
         <!-- zhiwei -->
