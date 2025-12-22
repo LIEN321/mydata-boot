@@ -1,0 +1,109 @@
+version: '3'
+
+x-logging:
+  # 以 & 开头的字符串为模板命名 以 * 加上模板的名称引用模板
+  &default-logging
+    driver: json-file
+    options:
+      max-size: "100M"
+      max-file: "3"
+
+services:
+  mydata-mysql:
+    image: mysql:8.0.32
+    container_name: mydata-mysql
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+        MYSQL_ROOT_PASSWORD: mysql_root_password # *请设置MySQL的root管理员密码
+    volumes:
+      - "/opt/mydata/mysql/data/db:/var/lib/mysql"
+    networks:
+      - mydata-net
+
+  mydata-redis:
+    image: redis:6.2.6
+    container_name: mydata-redis
+    environment:
+      TZ: Asia/Shanghai
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+      - /opt/mydata/redis/data:/data
+      - /opt/mydata/redis/logs:/logs
+    command:
+      redis-server /etc/redis/redis.conf --appendonly yes
+    networks:
+      - mydata-net
+
+  mydata-mongodb:
+    image: mongo:4.4.15
+    container_name: mydata-mongodb
+    volumes:
+      - "/opt/mydata/mongodb/data/db:/data/db"
+    restart: always
+    command:
+      --auth
+    networks:
+      - mydata-net
+
+  mydata-boot:
+    image: lien321/mydata-boot:0.10.0
+    container_name: mydata-boot
+    environment:
+      - TZ=Asia/Shanghai
+    #network_mode: "host"
+    #ports:
+    #  - 8001:8001
+    volumes:
+      - "/opt/mydata/mydata-boot:/docker/springblade"
+    privileged: true
+    restart: always
+    command:
+       - --spring.profiles.active=prod
+       - --spring.datasource.url=jdbc:mysql://mydata-mysql:3306/mydata?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8 # 设置数据库连接地址
+       - --spring.datasource.username=root                # 设置数据库连接账号
+       - --spring.datasource.password=mysql_root_password # 设置数据库连接密码
+       - --spring.redis.host=mydata-redis               # 设置redis连接地址
+       - --spring.redis.database=0                        # 设置redis数据库索引
+       - --spring.data.mongodb.uri=mongodb://root:root@mydata-mongodb:27017/admin                     # 设置mongodb连接地址，用于连接和认证
+       - --mydata.mongodb.url=mongodb://root:root@mydata-mongodb:27017/{}?authSource=admin&ssl=false  # 动态连接mongodb数据库的url，保留大括号
+       - --mydata.secure.encrypt-db=true                                                              # 设置存储业务数据的库名是否加密
+       - --mail.host=   # *请设置Email服务端的地址
+       - --mail.port=   # *请设置Email服务端的端口
+       - --mail.from=   # *请设置Email服务端的发件人
+       - --mail.user=   # *请设置Email服务端的账号
+       - --mail.pass=   # *请设置Email服务端的密码
+    depends_on:
+      - mydata-mysql
+      - mydata-redis
+      - mydata-mongodb
+    networks:
+      - mydata-net
+
+  mydata-sword:
+    image: lien321/mydata-sword:0.10.0
+    container_name: mydata-sword
+    hostname: mydata-sword
+    #network_mode: "host"
+    ports:
+      - 80:80
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"   # nginx配置文件
+      # - "./cert:/etc/nginx/cert"                # ssl认证文件（可选）
+      - "/opt/mydata/mydata-sword/logs/nginx/:/var/log/nginx"
+    privileged: true
+    restart: always
+    logging: *default-logging
+    networks:
+      - mydata-net
+
+networks:
+  mydata-net:
