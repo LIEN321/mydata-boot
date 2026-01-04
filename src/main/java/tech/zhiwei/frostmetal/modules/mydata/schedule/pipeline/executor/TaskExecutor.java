@@ -361,6 +361,7 @@ public abstract class TaskExecutor {
         if (pipelineLog != null) {
             if (ArrayUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.length; i++) {
+                    // 临时减少参数长度，减少日志内容
                     params[i] = StringUtil.sub(StringUtil.toStringOrEmpty(params[i]), 0, 10000);
                 }
             }

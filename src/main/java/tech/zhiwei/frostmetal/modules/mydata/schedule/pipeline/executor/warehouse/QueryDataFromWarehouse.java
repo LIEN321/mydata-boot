@@ -68,7 +68,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         dataFilters = CollectionUtil.emptyIfNull(dataFilters);
 
         // 自定义输入的查询条件
-        String condition = (String) pipelineTask.getTaskConfig().get("CONDITION");
+        String condition = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_CONDITION);
 
         // 处理查询条件中的上下文变量
         if (paramBizData != null) {

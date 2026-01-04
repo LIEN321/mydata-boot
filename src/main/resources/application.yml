@@ -38,7 +38,8 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://svc-dev:3306/mydata_dev_0.9?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://svc-dev:3306/mydata_dev_0.10?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&autoReconnect=true&failOverReadOnly=false
+    #    url: jdbc:mysql://svc-dev:3306/mydata_install_0.9?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true&autoReconnect=true&failOverReadOnly=false
     username: root
     password: root
   jackson:
