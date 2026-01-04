@@ -197,6 +197,10 @@ public interface MyDataConstant {
      * 任务配置中的常量key：任务输出变量名
      */
     String TASK_CONFIG_KEY_OUTPUT = "OUTPUT";
+    /**
+     * 任务配置中的常量key：查询条件
+     */
+    String TASK_CONFIG_KEY_CONDITION = "CONDITION";
 
     /**
      * 任务的定时起始时间的格式
