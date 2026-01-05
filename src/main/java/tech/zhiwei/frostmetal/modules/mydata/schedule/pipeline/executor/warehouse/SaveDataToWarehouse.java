@@ -51,12 +51,12 @@ public class SaveDataToWarehouse extends TaskExecutor {
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
 
@@ -147,9 +147,9 @@ public class SaveDataToWarehouse extends TaskExecutor {
         if (!dataInsertList.isEmpty()) {
             bizDataDAO.insertBatch(warehouseName, dataCode, dataInsertList);
             savedDataList.addAll(dataInsertList);
-            log("新增数据 {} 条", dataInsertList.size());
+            info("新增数据 {} 条", dataInsertList.size());
         } else {
-            log("无新增数据");
+            info("无新增数据");
         }
 
         // 更新数据仓库的数据
@@ -166,12 +166,12 @@ public class SaveDataToWarehouse extends TaskExecutor {
             });
             savedDataList.addAll(dataUpdateList);
 
-            log("更新数据 {} 条", dataUpdateList.size());
+            info("更新数据 {} 条", dataUpdateList.size());
         } else {
-            log("无更新数据");
+            info("无更新数据");
         }
 
-        log("实际保存数据 {} 条，没有变化的数据 {} 条", savedDataList.size(), sameCount.get());
+        info("实际保存数据 {} 条，没有变化的数据 {} 条", savedDataList.size(), sameCount.get());
 
         // 输出参数
         Map<String, String> outputMap = getOutputMap();
@@ -184,6 +184,6 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         bizDataService.updateDataCount(dataId);
-        log("重新统计业务数据量");
+        info("重新统计业务数据量");
     }
 }

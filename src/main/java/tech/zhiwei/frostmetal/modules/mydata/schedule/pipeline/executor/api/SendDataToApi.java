@@ -63,7 +63,7 @@ public class SendDataToApi extends ApiTaskExecutor {
 
         // 字段映射
         Map<String, String> fieldMapping = getFieldMapping();
-        log("字段映射配置：{}", fieldMapping);
+        info("字段映射配置：{}", fieldMapping);
 
         // 获取应用信息
         App app = MyDataCache.getApp(pipelineTask.getAppId());
@@ -116,7 +116,7 @@ public class SendDataToApi extends ApiTaskExecutor {
                 Integer count = (Integer) batchConfig.get("COUNT");
 
                 if (isBatch) {
-                    log("分批模式配置：{}", batchConfig);
+                    info("分批模式配置：{}", batchConfig);
                 }
 
                 // 分批执行次数
@@ -152,7 +152,7 @@ public class SendDataToApi extends ApiTaskExecutor {
                     if (isBatch) {
                         // 暂停间隔
                         ThreadUtil.sleep(interval, TimeUnit.SECONDS);
-                        log("分批模式，等待 {} 秒", interval);
+                        info("分批模式，等待 {} 秒", interval);
                     }
                 } while (isBatch);
             }

@@ -32,7 +32,7 @@ public class ParseJsonToVar extends TaskExecutor {
         List<Map<String, Object>> varMappings = (List<Map<String, Object>>) getTaskConfig().get(MyDataConstant.JOB_DATA_VAR_MAPPING);
         if (CollectionUtil.isEmpty(varMappings)) {
 //            error("变量配置为空，结束执行。");
-            throw new IllegalArgumentException("字段映射为空，结束执行。");
+            fail("字段映射为空，结束执行。");
         }
 
         // 从上下文获取json
@@ -66,9 +66,9 @@ public class ParseJsonToVar extends TaskExecutor {
 
                 if (ObjectUtil.isNotNull(varValue)) {
                     jobContextData.put(varCode, varValue);
-                    log("设置变量成功：{} = {}", varCode, varValue);
+                    info("设置变量成功：{} = {}", varCode, varValue);
                 } else {
-                    log("设置变量失败：{} = null", varCode);
+                    info("设置变量失败：{} = null", varCode);
                 }
             });
         });

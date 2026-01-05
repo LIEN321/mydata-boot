@@ -46,7 +46,7 @@ public class SetPipelineVar extends TaskExecutor {
                 // 转为指定类型
                 varValue = MyDataUtil.convertDataType(varValue, varType);
                 jobContextData.put(varCode, varValue);
-                log("设置变量 {} = {}", varCode, varValue);
+                info("设置变量 {} = {}", varCode, varValue);
             }
         });
     }

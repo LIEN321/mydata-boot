@@ -61,7 +61,7 @@ public class ProcessData extends TaskExecutor {
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log("待处理的数据为空，结束执行");
+            info("待处理的数据为空，结束执行");
             return;
         }
 
@@ -97,14 +97,14 @@ public class ProcessData extends TaskExecutor {
         Map<String, String> fieldTypeMapping = dataFields.stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
 
         // log("处理前的数据：{}", bizDataList);
-        log("处理开始，共有{}条数据...", bizDataList.size());
+        info("处理开始，共有{}条数据...", bizDataList.size());
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
             processBizData(data, bizData, jobContextData, idFields, fieldTypeMapping, dataProcesses);
         });
         // log("处理后的数据：{}", bizDataList);
-        log("处理结束");
+        info("处理结束");
 
         // 输出参数
         jobContextData.put(bizDataKey, pipelineBizData);
@@ -161,12 +161,12 @@ public class ProcessData extends TaskExecutor {
             // 优先处理 置空 操作
             if (isSetNull(op)) {
                 bizData.put(key, null);
-                log("{} set null", key);
+                info("{} set null", key);
                 continue;
             }
             if (isSetEmpty(op)) {
                 bizData.put(key, StringUtil.EMPTY);
-                log("{} set empty string", key, op);
+                info("{} set empty string", key, op);
                 continue;
             }
 
@@ -211,7 +211,7 @@ public class ProcessData extends TaskExecutor {
                 }
                 Object newValue = processValue(dataValue, op, opValue, bizData);
                 bizData.put(key, newValue);
-                log("{} = {} {} {} = {}", key, dataValue, op, opValue, newValue);
+                info("{} = {} {} {} = {}", key, dataValue, op, opValue, newValue);
             } catch (Exception e) {
 //                error("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage());
                 throw new RuntimeException(StringUtil.format("处理字段值出错：字段名={}，字段值={}，操作={}，操作值={}，错误：{}", key, dataValue, op, opValue, e.getMessage()), e);

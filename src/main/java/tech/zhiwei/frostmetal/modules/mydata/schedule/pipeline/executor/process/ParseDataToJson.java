@@ -49,7 +49,7 @@ public class ParseDataToJson extends TaskExecutor {
         if (pipelineBizData == null || CollectionUtil.isEmpty(pipelineBizData.getBizData())) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
-            log("待处理的数据为空，结束执行");
+            info("待处理的数据为空，结束执行");
             return;
         }
 
@@ -79,7 +79,7 @@ public class ParseDataToJson extends TaskExecutor {
 
         // JSON模板
         String jsonTemplate = StringUtil.nullToEmpty((String) pipelineTask.getTaskConfig().get(MyDataConstant.JOB_KEY_JSON_TEMPLATE));
-        log("JSON模板：{}", jsonTemplate);
+        info("JSON模板：{}", jsonTemplate);
 
         // 将json字符串 替换${DATA_JSON}占位符
         Map<String, Object> map = MapUtil.newHashMap();

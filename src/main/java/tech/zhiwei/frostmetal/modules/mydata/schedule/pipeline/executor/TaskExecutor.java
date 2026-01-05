@@ -177,7 +177,7 @@ public abstract class TaskExecutor {
             Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
             // 若为 总是继续，则不抛出异常，继续下个task
             if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
-                log("因任务设置为\"失败继续执行\"，流水线继续执行...");
+                info("因任务设置为\"失败继续执行\"，流水线继续执行...");
                 log.info("任务设置为 失败继续执行...");
                 return;
             }
@@ -281,7 +281,7 @@ public abstract class TaskExecutor {
 
         List<DataField> dataFields = dataFieldService.listByData(dataId);
         if (CollectionUtil.isEmpty(dataFields)) {
-            error("保存业务数据失败：标准数据没有字段");
+            // error("保存业务数据失败：标准数据没有字段");
             throw new RuntimeException("保存业务数据失败：标准数据没有字段");
         }
         dataFieldMap.put(dataId, dataFields);
@@ -349,7 +349,7 @@ public abstract class TaskExecutor {
         String pipelineJsonKey = getInputMap().get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
         if (StringUtil.isEmpty(pipelineJsonKey)) {
 //            error("JSON变量名为空，结束执行。");
-            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
+            fail("输入参数无效：JSON变量名为空，结束执行。");
         }
         return (List<PipelineJson>) jobContextData.get(pipelineJsonKey);
     }
@@ -360,7 +360,7 @@ public abstract class TaskExecutor {
      * @param message 日志内容
      * @param params  占位符参数值
      */
-    public void log(String message, Object... params) {
+    public void info(String message, Object... params) {
         if (pipelineLog != null) {
             if (ArrayUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.length; i++) {
@@ -391,5 +391,16 @@ public abstract class TaskExecutor {
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [ERROR] " + StringUtil.format(message, params));
         }
         log.error(message, params);
+    }
+
+    /**
+     * 任务失败，直接抛出异常<br/>
+     * 后续在{@link TaskExecutor#execute(Long, Long, Long, Map)}中捕获异常，再统一记录日志
+     *
+     * @param message 日志内容
+     * @param params  占位符参数值
+     */
+    public void fail(String message, Object... params) throws RuntimeException {
+        throw new RuntimeException(StringUtil.format(message, params));
     }
 }

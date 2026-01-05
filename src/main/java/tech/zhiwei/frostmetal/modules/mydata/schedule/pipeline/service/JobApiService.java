@@ -108,18 +108,18 @@ public class JobApiService {
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
-        taskExecutor.log("\trequest url: [{}] {}", api.getApiMethod(), apiUrl);
-        taskExecutor.log("\trequest param : {}", reqParams);
-        taskExecutor.log("\trequest header : {}", reqHeaders);
-        taskExecutor.log("\trequest form : {}", reqForm);
-        taskExecutor.log("\trequest body : {}", reqBody);
+        taskExecutor.info("\trequest url: [{}] {}", api.getApiMethod(), apiUrl);
+        taskExecutor.info("\trequest param : {}", reqParams);
+        taskExecutor.info("\trequest header : {}", reqHeaders);
+        taskExecutor.info("\trequest form : {}", reqForm);
+        taskExecutor.info("\trequest body : {}", reqBody);
 
         // 发送请求，获取响应结果
         try (HttpResponse response = HttpUtil.send(api.getApiMethod(), apiUrl, reqParams, reqHeaders, reqForm, reqBody);) {
             String cookie = response.getCookieStr();
             String responseBody = response.body();
-            taskExecutor.log("\tresponse status : {}", response.getStatus());
-            taskExecutor.log("\tresponse body : {}", responseBody);
+            taskExecutor.info("\tresponse status : {}", response.getStatus());
+            taskExecutor.info("\tresponse body : {}", responseBody);
 
             return new PipelineApiResponse(response.getStatus(), responseBody, cookie);
         }

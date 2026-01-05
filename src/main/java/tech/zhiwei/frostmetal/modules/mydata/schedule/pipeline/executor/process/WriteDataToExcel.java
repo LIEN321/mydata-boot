@@ -55,7 +55,7 @@ public class WriteDataToExcel extends TaskExecutor {
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
 
@@ -65,11 +65,11 @@ public class WriteDataToExcel extends TaskExecutor {
         // 标准数据字段列表
         List<DataField> dataFields = pipelineBizData.getDataFields();
         List<DataField> visibleDataFields = dataFields.stream().filter(DataField::getDisplayMode).toList();
-        log("开始导出Excel文件");
+        info("开始导出Excel文件");
         File tempExcel = exportTempExcel(visibleDataFields, bizDataList);
         tempExcel = FileUtil.rename(tempExcel, pipelineTask.getTaskName() + "_" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
         File savedExcelFile = MyDataUtil.saveExcelFile(pipelineTask.getTenantId(), project.getProjectCode(), tempExcel);
-        log("导出文件成功，文件名：{}", tempExcel.getName());
+        info("导出文件成功，文件名：{}", tempExcel.getName());
 
         jobContextData.put(MyDataConstant.JOB_DATA_KEY_EXCEL_FILE, savedExcelFile);
     }

@@ -49,7 +49,7 @@ public class ParseJsonToData extends TaskExecutor {
         // 业务数据json
         List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
         if (ObjectUtil.isEmpty(pipelineJsons)) {
-            log("没有JSON待转换，结束执行。");
+            info("没有JSON待转换，结束执行。");
             return;
         }
 
@@ -59,7 +59,7 @@ public class ParseJsonToData extends TaskExecutor {
 //            error("字段映射为空，结束执行。");
             throw new IllegalArgumentException("字段映射为空，结束执行。");
         }
-        log("字段映射：{}", fieldMapping);
+        info("字段映射：{}", fieldMapping);
 
         // 输出配置
         Map<String, String> outputMap = getOutputMap();
@@ -168,6 +168,6 @@ public class ParseJsonToData extends TaskExecutor {
         jobContextData.put(bizDataKey, pipelineBizData);
 
         // log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
-        log("共获得数据 {} 条", bizDataList.size());
+        info("共获得数据 {} 条", bizDataList.size());
     }
 }

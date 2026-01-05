@@ -58,7 +58,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
         App app = MyDataCache.getApp(pipelineTask.getAppId());
         PipelineApp authedApp = doAppAuth(app);
 
-        log("将调用应用 {} 的接口", authedApp.getAppName());
+        info("将调用应用 {} 的接口", authedApp.getAppName());
 
         // 获取接口信息
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
@@ -76,7 +76,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
         // 分批的间隔
         Integer interval = (Integer) batchConfig.get("INTERVAL");
 
-        log("分批模式配置：{}", batchConfig);
+        info("分批模式配置：{}", batchConfig);
 
         // 流水线的json
         List<PipelineJson> pipelineJsons = CollectionUtil.newArrayList();
@@ -105,7 +105,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
             Map<String, String> fieldTypeMapping = null;
             if (paramBizData != null) {
                 if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
-                    log("没有业务数据可作为参数，结束执行");
+                    info("没有业务数据可作为参数，结束执行");
                     return;
                 } else {
                     // 字段编号-字段类型
@@ -114,7 +114,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
                 }
             }
 
-            log("第{}次调用接口", loopCount);
+            info("第{}次调用接口", loopCount);
 
             // 调用接口 获取json
             PipelineApiResponse apiResponse = callApi(authedApp, api, batchParams, bizDataMap);
@@ -153,16 +153,16 @@ public class GetJsonFromApi extends ApiTaskExecutor {
                 // 分批模式
                 // 调整递增参数值
                 JobBatchService.incBatchParam(batchParamList);
-                log("分批模式，调整分批参数：{}", batchParamList);
+                info("分批模式，调整分批参数：{}", batchParamList);
 
                 // 暂停间隔
                 ThreadUtil.sleep(interval, TimeUnit.SECONDS);
-                log("分批模式，等待 {} 秒", interval);
+                info("分批模式，等待 {} 秒", interval);
             }
         } while (isBatch);
 
         // 将结果保存到 job上下文
         setPipelineJson(jobContextData, pipelineJsons);
-        log("从API获取JSON完成");
+        info("从API获取JSON完成");
     }
 }

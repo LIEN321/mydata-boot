@@ -41,9 +41,9 @@ public class RemoveData extends TaskExecutor {
 
         // 自定义输入的查询条件
         String condition = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_CONDITION);
-        log("删除条件：{}", StringUtil.isEmpty(condition) ? "无" : condition);
+        info("删除条件：{}", StringUtil.isEmpty(condition) ? "无" : condition);
         long count = bizDataDAO.removeByCondition(warehouseName, data.getDataCode(), condition);
-        log("删除数据 {} 条", count);
+        info("删除数据 {} 条", count);
 
         // 更新业务数量
         bizDataService.updateDataCount(dataId);

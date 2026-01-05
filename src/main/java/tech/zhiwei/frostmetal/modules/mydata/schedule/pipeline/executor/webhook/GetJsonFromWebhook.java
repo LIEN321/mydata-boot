@@ -27,7 +27,7 @@ public class GetJsonFromWebhook extends TaskExecutor {
     public void doExecute(Map<String, Object> jobContextData) {
         PipelineTask pipelineTask = getPipelineTask();
         String originJsonString = (String) jobContextData.get(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY);
-        log("从Webhook接收的json：{}", originJsonString);
+        info("从Webhook接收的json：{}", originJsonString);
 
         // 提取业务数据json对象
         String fieldPrefix = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_FIELD_PREFIX);
@@ -37,6 +37,6 @@ public class GetJsonFromWebhook extends TaskExecutor {
 
         // 将结果保存到 job上下文
         setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));
-        log("从Webhook接收JSON完成");
+        info("从Webhook接收JSON完成");
     }
 }

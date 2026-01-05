@@ -41,7 +41,7 @@ public class TriggerPipeline extends TaskExecutor {
 
         List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
         if (ObjectUtil.isEmpty(pipelineJsons)) {
-            log("json内容为空，不触发流水线，结束执行。");
+            info("json内容为空，不触发流水线，结束执行。");
             return;
         }
 
@@ -55,16 +55,16 @@ public class TriggerPipeline extends TaskExecutor {
                 try {
                     Map<String, Object> map = MapUtil.newHashMap();
                     map.put(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY, pipelineJsonString);
-                    log("同步触发流水线开始，提交json={}", pipelineJson.getOriginJson());
+                    info("同步触发流水线开始，提交json={}", pipelineJson.getOriginJson());
                     pipelineJob.execute(map, targetPipelineId, MyDataConstant.JOB_TRIGGER_TYPE_WEBHOOK);
-                    log("同步触发流水线结束");
+                    info("同步触发流水线结束");
                 } catch (JobExecutionException e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 // 异步触发流水线
                 pipelineScheduler.webhookPipeline(pipelineTask.getTenantId(), targetPipelineId, pipelineJsonString);
-                log("异步触发流水线成功，提交json={}", pipelineJson.getOriginJson());
+                info("异步触发流水线成功，提交json={}", pipelineJson.getOriginJson());
             }
         });
     }

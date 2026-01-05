@@ -35,7 +35,7 @@ public class StopPipeline extends TaskExecutor {
         // 配置的条件
         List<Map<String, Object>> stopConditions = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("STOP_CONDITION");
         if (CollectionUtil.isEmpty(stopConditions)) {
-            log("未配置结束条件，继续执行");
+            info("未配置结束条件，继续执行");
             return;
         }
 
@@ -51,10 +51,10 @@ public class StopPipeline extends TaskExecutor {
             String op = condition.getOp();
             Object value = StringParser.autoParse((String) condition.getValue());
             if (PipelineUtil.compare(param, op, value)) {
-                log(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
+                info(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
                 throw new StopPipelineException();
             }
-            log("不满足终止条件：{} {} {}，继续...", param, op, value);
+            info("不满足终止条件：{} {} {}，继续...", param, op, value);
         });
     }
 }

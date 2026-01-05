@@ -73,7 +73,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 处理查询条件中的上下文变量
         if (paramBizData != null) {
             if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
-                log("没有业务数据可作为参数，结束执行");
+                info("没有业务数据可作为参数，结束执行");
                 return;
             } else {
                 Map<String, Object> bizDataMap = MapUtil.newHashMap();
@@ -98,14 +98,14 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 标准数据的编号
         String dataCode = data.getDataCode();
 
-        log("开始查询数据：{}", data.getDataName());
+        info("开始查询数据：{}", data.getDataName());
 
-        log("查询条件：{}", dataFilters);
+        info("查询条件：{}", dataFilters);
         // 查询业务数据
         List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters, condition);
         MyDataUtil.processBizData(bizDataList);
 
-        log("查询结果：共 {} 条", bizDataList.size());
+        info("查询结果：共 {} 条", bizDataList.size());
 
         // 字段列表
         List<DataField> dataFields = getDataFields(dataId);
