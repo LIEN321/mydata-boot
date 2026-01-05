@@ -193,7 +193,7 @@ public class PipelineJob implements InterruptableJob {
                         pipelineLog.setHistoryId(historyId);
                         pipelineLog.setTaskType(task.getTaskType());
                         pipelineLog.setTaskName(task.getTaskName());
-                        pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_READY);
+                        pipelineLog.setExecutionStatus(task.getStatus() == 1 ? MyDataConstant.PIPELINE_HISTORY_STATUS_READY : MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
                         pipelineLogService.save(pipelineLog);
 
                         taskLogIdMapping.put(task.getId(), pipelineLog.getId());
@@ -361,7 +361,8 @@ public class PipelineJob implements InterruptableJob {
     }
 
     /**
-     * 为流水线构造LiteFlow的EL表达式
+     * 为流水线构造LiteFlow的EL表达式<br/>
+     * 禁用的任务 不加入EL中
      *
      * @param tasks            待执行的任务列表
      * @param taskLogIdMapping 任务与执行记录的id映射
@@ -373,6 +374,10 @@ public class PipelineJob implements InterruptableJob {
         List<ELWrapper> elWrappers = CollectionUtil.newArrayList();
         // 遍历所有任务
         for (PipelineTask task : tasks) {
+            // 禁用的任务 不加入EL
+            if (task.getStatus() == 0) {
+                continue;
+            }
             String taskType = task.getTaskType();
             int taskRetry = ObjectUtil.defaultIfNull(task.getRetry(), 0);
             LFNodeBinding nodeBinding = new LFNodeBinding();

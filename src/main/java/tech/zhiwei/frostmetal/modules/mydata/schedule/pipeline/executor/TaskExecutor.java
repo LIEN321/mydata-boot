@@ -142,15 +142,15 @@ public abstract class TaskExecutor {
         this.pipelineLog = pipelineLog;
 
         try {
-            log("========== 任务开始执行，第{}次 ==========", executionCount);
-
             // 任务禁用状态
             if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
                 // 禁用的任务 状态为跳过
                 pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
-                log("该任务已禁用，不执行。");
+                info("该任务已禁用，不执行。");
                 return;
             }
+            
+            info("========== 任务开始执行，第{}次 ==========", executionCount);
 
             // 更新任务日志的执行状态
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
