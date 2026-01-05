@@ -213,7 +213,7 @@ public class LiteFlowComponentConfig {
             , nodeType = NodeTypeEnum.COMMON
     )
     public void processJsScript(NodeComponent nodeComponent) {
-        JsScript jsScript = new JsScript();
+        JsScript jsScript = new JsScript(nodeComponent);
         process(nodeComponent, jsScript);
     }
 }

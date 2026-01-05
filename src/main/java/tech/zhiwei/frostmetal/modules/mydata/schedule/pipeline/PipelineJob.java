@@ -6,7 +6,6 @@ import com.yomahub.liteflow.builder.el.ELWrapper;
 import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
 import com.yomahub.liteflow.common.entity.ValidationResp;
 import com.yomahub.liteflow.core.FlowExecutor;
-import com.yomahub.liteflow.enums.NodeTypeEnum;
 import com.yomahub.liteflow.flow.FlowBus;
 import com.yomahub.liteflow.flow.LiteflowResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -319,7 +318,7 @@ public class PipelineJob implements InterruptableJob {
             pipeline.setStatus(SysConstant.STATUS_DISABLED);
             // 更新流水线
             pipelineService.updateById(pipeline);
-            
+
             if (StringUtil.isEmpty(creatorEmail)) {
                 // TODO 记录未发送的通知
                 return;
@@ -388,19 +387,6 @@ public class PipelineJob implements InterruptableJob {
                     .retry(taskRetry)
                     .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
             );
-
-            if (taskType.equals(MyDataConstant.TASK_TYPE_SCRIPT_JS)) {
-                // 动态添加脚本组件
-                String nodeId = "script_" + task.getId() + "_" + DateUtil.current();
-                FlowBus.addScriptNodeAndCompile(nodeId, task.getTaskName(), NodeTypeEnum.SCRIPT, (String) task.getTaskConfig().get("SCRIPT"), "js");
-                scriptNodeIds.add(nodeId);
-
-                // 脚本节点追加到el中
-                elWrappers.add(ELBus.node(nodeId)
-                        .retry(taskRetry)
-                        .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
-                );
-            }
         }
 
         // TODO 暂时用串联模式，后续根据前端一起调整为复杂模式
