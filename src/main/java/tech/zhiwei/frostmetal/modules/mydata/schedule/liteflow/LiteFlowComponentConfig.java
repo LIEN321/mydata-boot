@@ -19,6 +19,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.script.JsScript;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.ParseJsonToVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.SetPipelineVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
@@ -204,5 +205,15 @@ public class LiteFlowComponentConfig {
     public void processSetPipelineVar(NodeComponent nodeComponent) {
         TaskExecutor taskExecutor = new SetPipelineVar();
         process(nodeComponent, taskExecutor);
+    }
+
+    @LiteflowMethod(value = LiteFlowMethodEnum.PROCESS
+            , nodeId = MyDataConstant.TASK_TYPE_SCRIPT_JS
+            , nodeName = "JS脚本"
+            , nodeType = NodeTypeEnum.COMMON
+    )
+    public void processJsScript(NodeComponent nodeComponent) {
+        JsScript jsScript = new JsScript();
+        process(nodeComponent, jsScript);
     }
 }

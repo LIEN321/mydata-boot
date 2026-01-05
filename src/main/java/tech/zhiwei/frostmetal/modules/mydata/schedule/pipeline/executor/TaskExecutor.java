@@ -25,6 +25,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ParseJsonToData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.WriteDataToExcel;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.script.JsScript;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.ParseJsonToVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var.SetPipelineVar;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.warehouse.QueryDataFromWarehouse;
@@ -101,6 +102,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_JSON_TO_VAR -> new ParseJsonToVar();
             // 设置变量
             case MyDataConstant.TASK_TYPE_SET_PIPELINE_VAR -> new SetPipelineVar();
+            // JS脚本
+            case MyDataConstant.TASK_TYPE_SCRIPT_JS -> new JsScript();
             // 其他不支持
             default -> throw new IllegalArgumentException("不支持的任务类型: " + task.getTaskType());
         };

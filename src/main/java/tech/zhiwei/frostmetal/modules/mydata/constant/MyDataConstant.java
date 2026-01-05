@@ -175,6 +175,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_JSON_TO_VAR = "JSON_TO_VAR";
     /**
+     * 任务类型：JS脚本
+     */
+    String TASK_TYPE_SCRIPT_JS = "SCRIPT_JS";
+    /**
      * 任务类型：设置流水线变量
      */
     String TASK_TYPE_SET_PIPELINE_VAR = "SET_PIPELINE_VAR";

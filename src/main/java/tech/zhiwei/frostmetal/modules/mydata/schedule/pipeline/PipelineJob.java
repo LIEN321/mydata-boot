@@ -4,7 +4,10 @@ import cn.hutool.core.date.DateUnit;
 import com.yomahub.liteflow.builder.el.ELBus;
 import com.yomahub.liteflow.builder.el.ELWrapper;
 import com.yomahub.liteflow.builder.el.LiteFlowChainELBuilder;
+import com.yomahub.liteflow.common.entity.ValidationResp;
 import com.yomahub.liteflow.core.FlowExecutor;
+import com.yomahub.liteflow.enums.NodeTypeEnum;
+import com.yomahub.liteflow.flow.FlowBus;
 import com.yomahub.liteflow.flow.LiteflowResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
@@ -71,15 +74,20 @@ public class PipelineJob implements InterruptableJob {
     private final IUserService userService = SpringUtil.getBean(IUserService.class);
     private final PipelineScheduler pipelineScheduler = SpringUtil.getBean(PipelineScheduler.class);
     private final IPipelineVarService pipelineVarService = SpringUtil.getBean(IPipelineVarService.class);
+    private final MydataConfiguration mydataConfig = SpringUtil.getBean(MydataConfiguration.class);
+    private FlowExecutor flowExecutor = SpringUtil.getBean(FlowExecutor.class);
 
     private volatile boolean interrupted = false;
 
-    // Job执行过程中的变量
+    /**
+     * 脚本组件id集合
+     */
+    private List<String> scriptNodeIds = CollectionUtil.newArrayList();
+
+    /**
+     * Job执行过程中的变量
+     */
     private final Map<String, Object> jobContextData = new HashMap<>();
-
-    private final MydataConfiguration mydataConfig = SpringUtil.getBean(MydataConfiguration.class);
-
-    private FlowExecutor flowExecutor = SpringUtil.getBean(FlowExecutor.class);
 
     /**
      * 执行流水线
@@ -254,6 +262,9 @@ public class PipelineJob implements InterruptableJob {
             failures++;
             pipeline.setConsecutiveFailures(failures);
             log.error(e.getMessage(), e);
+        } finally {
+            // 卸载el中的脚本节点
+            unloadScripts();
         }
 
         // 结束时间
@@ -362,28 +373,57 @@ public class PipelineJob implements InterruptableJob {
         List<ELWrapper> elWrappers = CollectionUtil.newArrayList();
         // 遍历所有任务
         for (PipelineTask task : tasks) {
+            String taskType = task.getTaskType();
             int taskRetry = ObjectUtil.defaultIfNull(task.getRetry(), 0);
             LFNodeBinding nodeBinding = new LFNodeBinding();
             nodeBinding.setTaskId(task.getId());
             nodeBinding.setTaskLogId(taskLogIdMapping.get(task.getId()));
             // 根据任务类型、任务id 构建EL的节点
-            elWrappers.add(ELBus.element(task.getTaskType())
+            elWrappers.add(ELBus.element(taskType)
                     .retry(taskRetry)
                     .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
             );
+
+            if (taskType.equals(MyDataConstant.TASK_TYPE_SCRIPT_JS)) {
+                // 动态添加脚本组件
+                String nodeId = "script_" + task.getId() + "_" + DateUtil.current();
+                FlowBus.addScriptNodeAndCompile(nodeId, task.getTaskName(), NodeTypeEnum.SCRIPT, (String) task.getTaskConfig().get("SCRIPT"), "js");
+                scriptNodeIds.add(nodeId);
+
+                // 脚本节点追加到el中
+                elWrappers.add(ELBus.node(nodeId)
+                        .retry(taskRetry)
+                        .bind(LiteFlowConstant.BIND_KEY_NODE_BINDING, JsonUtil.toJsonString(nodeBinding))
+                );
+            }
         }
 
         // TODO 暂时用串联模式，后续根据前端一起调整为复杂模式
-        // 将所有节点生成 串联 的EL
         if (CollectionUtil.isEmpty(elWrappers)) {
             return null;
         }
+        // 将所有节点生成 串联 的EL
         int pipelineRetry = ObjectUtil.defaultIfNull(pipeline.getRetry(), 0);
         String liteflowEl = ELBus.then(ArrayUtil.toArray(elWrappers, ELWrapper.class)).retry(pipelineRetry).toEL();
         // 校验EL是否正确
-        boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
-        AssertUtil.isTrue(isValid, "校验失败：配置的任务无法执行（LiteFLow），请重试或反馈问题！");
+        // boolean isValid = LiteFlowChainELBuilder.validate(liteflowEl);
+        ValidationResp validationResp = LiteFlowChainELBuilder.validateWithEx(liteflowEl);
+        if (!validationResp.isSuccess()) {
+            log.error("无法执行的EL={}，原因：{}", liteflowEl, validationResp.getCause().getMessage());
+            throw new RuntimeException(StringUtil.format("校验失败：配置的任务无法执行（LiteFLow），EL={}，原因=，请重试或反馈问题！", liteflowEl, validationResp.getCause().getMessage()));
+        }
 
         return liteflowEl;
+    }
+
+    /**
+     * 卸载本流程中的脚本节点
+     */
+    private void unloadScripts() {
+        if (CollectionUtil.isEmpty(scriptNodeIds)) {
+            return;
+        }
+
+        scriptNodeIds.forEach(FlowBus::unloadScriptNode);
     }
 }
