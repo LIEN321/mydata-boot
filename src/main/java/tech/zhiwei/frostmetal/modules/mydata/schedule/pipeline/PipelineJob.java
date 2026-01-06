@@ -32,6 +32,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineVarService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.LFNodeBinding;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -81,12 +82,13 @@ public class PipelineJob implements InterruptableJob {
     /**
      * 脚本组件id集合
      */
-    private List<String> scriptNodeIds = CollectionUtil.newArrayList();
+    private final List<String> scriptNodeIds = CollectionUtil.newArrayList();
 
     /**
      * Job执行过程中的变量
      */
-    private final Map<String, Object> jobContextData = new HashMap<>();
+    // private final Map<String, Object> pipelineContext = new HashMap<>();
+    private final PipelineContext pipelineContext = new PipelineContext();
 
     /**
      * 执行流水线
@@ -103,10 +105,10 @@ public class PipelineJob implements InterruptableJob {
         log.info("PipelineJob execute");
 
         // 触发流水线的参数 存入流程全局变量
-        jobContextData.putAll(triggerParam);
+        pipelineContext.putAll(triggerParam);
 
         // 流水线执行时 用于存储已认证应用的Map
-        jobContextData.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, PipelineApp>());
+        pipelineContext.put(PIPELINE_PARAM_KEY_AUTHED_APP, new HashMap<Long, PipelineApp>());
 
         // 查询流水线记录
         Pipeline pipeline = pipelineService.getById(pipelineId);
@@ -169,7 +171,7 @@ public class PipelineJob implements InterruptableJob {
                 if (CollectionUtil.isNotEmpty(pipelineVars)) {
                     pipelineVars.forEach(var -> {
                         try {
-                            jobContextData.put(var.getVarCode(), MyDataUtil.convertDataType(var.getVarValue(), var.getVarType()));
+                            pipelineContext.put(var.getVarCode(), MyDataUtil.convertDataType(var.getVarValue(), var.getVarType()));
                         } catch (Exception e) {
                             throw ExceptionUtil.wrapRuntime("流水线变量 {}={}({}) 解析失败，{}"
                                     , var.getVarCode(), var.getVarValue(), var.getVarType(), e.getMessage()
@@ -228,7 +230,7 @@ public class PipelineJob implements InterruptableJob {
                 // 新版按EL规则执行
                 Map<String, Object> params = MapUtil.newHashMap();
                 params.put(LiteFlowConstant.BIND_KEY_HISTORY_ID, historyId);
-                LiteflowResponse response = flowExecutor.execute2RespWithEL(el, params, null, jobContextData);
+                LiteflowResponse response = flowExecutor.execute2RespWithEL(el, params, null, pipelineContext);
                 if (!response.isSuccess()) {
                     throw response.getCause();
                 }
@@ -239,7 +241,7 @@ public class PipelineJob implements InterruptableJob {
                     for (PipelineTask task : tasks) {
                         // 执行任务
                         TaskExecutor taskExecutor = TaskExecutor.create(task);
-                        taskExecutor.execute(historyId, task.getId(), taskLogIdMapping.get(task.getId()), jobContextData);
+                        taskExecutor.execute(historyId, task.getId(), taskLogIdMapping.get(task.getId()), pipelineContext.getMap());
                     }
                 }
             }
@@ -262,8 +264,8 @@ public class PipelineJob implements InterruptableJob {
             pipeline.setConsecutiveFailures(failures);
             log.error(e.getMessage(), e);
         } finally {
-            // 卸载el中的脚本节点
-            unloadScripts();
+            // 清理流水线资源
+            clean();
         }
 
         // 结束时间
@@ -408,13 +410,13 @@ public class PipelineJob implements InterruptableJob {
     }
 
     /**
-     * 卸载本流程中的脚本节点
+     * 清理流水线资源
      */
-    private void unloadScripts() {
+    private void clean() {
+        // 卸载本流程中的脚本节点
         if (CollectionUtil.isEmpty(scriptNodeIds)) {
             return;
         }
-
         scriptNodeIds.forEach(FlowBus::unloadScriptNode);
     }
 }

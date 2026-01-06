@@ -8,6 +8,7 @@ import com.yomahub.liteflow.enums.NodeTypeEnum;
 import tech.zhiwei.frostmetal.modules.mydata.constant.LiteFlowConstant;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.LFNodeBinding;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -43,8 +44,9 @@ public class LiteFlowComponentConfig {
 
         LFNodeBinding nodeBinding = nodeComponent.getBindData(LiteFlowConstant.BIND_KEY_NODE_BINDING, LFNodeBinding.class);
 
-        Map<String, Object> jobContextData = nodeComponent.getFirstContextBean();
-        taskExecutor.execute(historyId, nodeBinding.getTaskId(), nodeBinding.getTaskLogId(), jobContextData);
+        // Map<String, Object> jobContextData = nodeComponent.getFirstContextBean();
+        PipelineContext pipelineContext = nodeComponent.getContextBean(PipelineContext.class);
+        taskExecutor.execute(historyId, nodeBinding.getTaskId(), nodeBinding.getTaskLogId(), pipelineContext.getMap());
     }
 
     @LiteflowMethod(value = LiteFlowMethodEnum.PROCESS
