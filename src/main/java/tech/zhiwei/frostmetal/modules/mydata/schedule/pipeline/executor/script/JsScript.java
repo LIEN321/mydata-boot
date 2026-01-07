@@ -51,7 +51,8 @@ public class JsScript extends TaskExecutor {
 
         try {
             // 执行js脚本
-            executeJavaScript(jsScript, jobContextData);
+            // executeJavaScript(jsScript, pipelineContext);
+            executeJavaScriptSafely(jsScript, pipelineContext);
             info("js脚本执行成功");
         } catch (Exception e) {
             fail("js脚本执行异常：{}", e.getMessage());
@@ -98,6 +99,63 @@ public class JsScript extends TaskExecutor {
             info("脚本执行完成");
         } catch (Exception e) {
             fail("执行js脚本异常：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 使用GraalVM独立执行，完全避免LiteFlow依赖
+     */
+    private void executeJavaScriptSafely(String script, PipelineContext pipelineContext) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> future = null;
+
+        try {
+            future = executor.submit(() -> {
+                try {
+                    // 使用GraalVM执行
+                    HostAccess hostAccess = HostAccess.newBuilder()
+                            .allowAccess(PipelineContext.class.getMethod("get", String.class))
+                            .allowAccess(PipelineContext.class.getMethod("put", String.class, Object.class))
+                            .build();
+ 
+                    Context context = Context.newBuilder("js")
+                            .allowHostAccess(hostAccess)
+                            .allowIO(false)          // 禁止文件IO
+                            .allowCreateThread(false) // 禁止创建线程
+                            .allowNativeAccess(false) // 禁止本地代码
+                            .allowCreateProcess(false) // 禁止创建进程
+                            .allowHostClassLoading(false)  // 禁止动态加载类
+                            .build();
+
+                    // 绑定变量
+                    Value bindings = context.getBindings("js");
+                    bindings.putMember("context", pipelineContext);
+
+                    // 执行脚本
+                    context.eval("js", script);
+                    context.close();
+
+                } catch (Exception e) {
+                    throw new RuntimeException("脚本执行失败: " + e.getMessage(), e);
+                }
+            });
+
+            // 5秒超时
+            future.get(5, TimeUnit.SECONDS);
+
+        } catch (TimeoutException e) {
+            if (future != null) {
+                future.cancel(true);
+            }
+            throw new RuntimeException("脚本执行超时（5秒）");
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            throw new RuntimeException(cause != null ? cause.getMessage() : e.getMessage());
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
+            executor.shutdownNow();
         }
     }
 
