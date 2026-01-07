@@ -6,6 +6,7 @@ import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineScheduler;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -32,14 +33,14 @@ public class TriggerPipeline extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
 
         // 是否同步执行流水线，默认true
         Boolean isSync = (Boolean) pipelineTask.getTaskConfig().getOrDefault("SYNC", true);
 
-        List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
+        List<PipelineJson> pipelineJsons = getPipelineJson(pipelineContext);
         if (ObjectUtil.isEmpty(pipelineJsons)) {
             info("json内容为空，不触发流水线，结束执行。");
             return;

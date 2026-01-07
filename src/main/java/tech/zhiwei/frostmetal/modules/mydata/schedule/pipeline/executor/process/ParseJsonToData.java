@@ -12,6 +12,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -38,7 +39,7 @@ public class ParseJsonToData extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
 
@@ -47,7 +48,7 @@ public class ParseJsonToData extends TaskExecutor {
 
         // 从上下文获取json
         // 业务数据json
-        List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
+        List<PipelineJson> pipelineJsons = getPipelineJson(pipelineContext);
         if (ObjectUtil.isEmpty(pipelineJsons)) {
             info("没有JSON待转换，结束执行。");
             return;
@@ -165,7 +166,7 @@ public class ParseJsonToData extends TaskExecutor {
 
         // 数据存入任务上下文数据中
         PipelineBizData pipelineBizData = new PipelineBizData(dataId, data.getDataCode(), usedDataFields, bizDataList);
-        jobContextData.put(bizDataKey, pipelineBizData);
+        pipelineContext.put(bizDataKey, pipelineBizData);
 
         // log("共获得数据 {} 条，内容为：{}", bizDataList.size(), bizDataList);
         info("共获得数据 {} 条", bizDataList.size());

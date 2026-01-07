@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.BizDataProcess;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.tool.codec.Base64;
@@ -42,7 +43,7 @@ public class ProcessData extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
 
         // 输入参数
@@ -54,7 +55,7 @@ public class ProcessData extends TaskExecutor {
         }
 
         // 获取上下文的业务数据
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
@@ -101,13 +102,13 @@ public class ProcessData extends TaskExecutor {
 
         // 遍历数据，并进行处理
         bizDataList.forEach(bizData -> {
-            processBizData(data, bizData, jobContextData, idFields, fieldTypeMapping, dataProcesses);
+            processBizData(data, bizData, pipelineContext, idFields, fieldTypeMapping, dataProcesses);
         });
         // log("处理后的数据：{}", bizDataList);
         info("处理结束");
 
         // 输出参数
-        jobContextData.put(bizDataKey, pipelineBizData);
+        pipelineContext.put(bizDataKey, pipelineBizData);
     }
 
     /**
@@ -147,7 +148,7 @@ public class ProcessData extends TaskExecutor {
      * @param fieldTypeMapping   数据字段类型
      * @param bizDataProcessList 处理方式
      */
-    private void processBizData(Data data, Map<String, Object> bizData, Map<String, Object> jobContextData, List<DataField> idFields, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
+    private void processBizData(Data data, Map<String, Object> bizData, PipelineContext pipelineContext, List<DataField> idFields, Map<String, String> fieldTypeMapping, List<BizDataProcess> bizDataProcessList) {
         for (BizDataProcess bizDataProcess : bizDataProcessList) {
             // 处理的字段编号
             String key = bizDataProcess.getKey();
@@ -203,7 +204,7 @@ public class ProcessData extends TaskExecutor {
                     opValue = JobVarService.processExistedDataVar(opValue.toString(), queryData, fieldTypeMapping);
                 }
                 // 解析 ${field}
-                opValue = JobVarService.processDataFieldVar(opValue.toString(), MapUtil.union(bizData, jobContextData), fieldTypeMapping);
+                opValue = JobVarService.processDataFieldVar(opValue.toString(), MapUtil.union(bizData, pipelineContext.getMap()), fieldTypeMapping);
 
                 if (MyDataConstant.TASK_FILTER_TYPE_FIELD.equals(type)) {
                     // 处理值是字段，从数据中取出字段的值

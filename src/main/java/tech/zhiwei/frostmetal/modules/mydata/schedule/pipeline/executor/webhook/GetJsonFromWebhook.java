@@ -3,12 +3,11 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.webhook
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
 import tech.zhiwei.tool.collection.CollectionUtil;
-
-import java.util.Map;
 
 /**
  * 从Webhook接收JSON
@@ -24,9 +23,9 @@ public class GetJsonFromWebhook extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
-        String originJsonString = (String) jobContextData.get(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY);
+        String originJsonString = (String) pipelineContext.get(MyDataConstant.JOB_DATA_KEY_WEBHOOK_REQUEST_BODY);
         info("从Webhook接收的json：{}", originJsonString);
 
         // 提取业务数据json对象
@@ -36,7 +35,7 @@ public class GetJsonFromWebhook extends TaskExecutor {
         PipelineJson pipelineJson = JobJsonService.pipelineJson(originJsonString, fieldPrefix);
 
         // 将结果保存到 job上下文
-        setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));
+        setPipelineJson(pipelineContext, CollectionUtil.toList(pipelineJson));
         info("从Webhook接收JSON完成");
     }
 }

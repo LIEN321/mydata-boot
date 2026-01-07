@@ -5,6 +5,7 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -34,7 +35,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 输入参数
         Map<String, String> inputMap = getInputMap();
 
@@ -46,8 +47,8 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         // 业务数据集合
-//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) pipelineContext.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
@@ -178,9 +179,9 @@ public class SaveDataToWarehouse extends TaskExecutor {
         String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
         if (StringUtil.isNotEmpty(savedDataKey)) {
             MyDataUtil.processBizData(savedDataList);
-//            jobContextData.put(savedDataKey, savedDataList);
+//            pipelineContext.put(savedDataKey, savedDataList);
             pipelineBizData.setBizData(savedDataList);
-            jobContextData.put(savedDataKey, pipelineBizData);
+            pipelineContext.put(savedDataKey, pipelineBizData);
         }
 
         bizDataService.updateDataCount(dataId);

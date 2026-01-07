@@ -3,6 +3,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.var;
 import cn.hutool.json.JSON;
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.process.ProcessData;
@@ -27,7 +28,7 @@ public class ParseJsonToVar extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 变量配置
         List<Map<String, Object>> varMappings = (List<Map<String, Object>>) getTaskConfig().get(MyDataConstant.JOB_DATA_VAR_MAPPING);
         if (CollectionUtil.isEmpty(varMappings)) {
@@ -36,7 +37,7 @@ public class ParseJsonToVar extends TaskExecutor {
         }
 
         // 从上下文获取json
-        List<PipelineJson> pipelineJsons = getPipelineJson(jobContextData);
+        List<PipelineJson> pipelineJsons = getPipelineJson(pipelineContext);
         if (ObjectUtil.isEmpty(pipelineJsons)) {
 //            throw new IllegalArgumentException("没有JSON待转换，结束执行。");
             error("没有JSON待转换，结束执行。");
@@ -65,7 +66,7 @@ public class ParseJsonToVar extends TaskExecutor {
                 varValue = ProcessData.processValue(varValue, op, null, null);
 
                 if (ObjectUtil.isNotNull(varValue)) {
-                    jobContextData.put(varCode, varValue);
+                    pipelineContext.put(varCode, varValue);
                     info("设置变量成功：{} = {}", varCode, varValue);
                 } else {
                     info("设置变量失败：{} = null", varCode);

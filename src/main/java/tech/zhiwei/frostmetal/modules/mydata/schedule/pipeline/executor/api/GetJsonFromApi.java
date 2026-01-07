@@ -11,6 +11,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
@@ -39,8 +40,8 @@ public class GetJsonFromApi extends ApiTaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
-        super.doExecute(jobContextData);
+    public void doExecute(PipelineContext pipelineContext) {
+        super.doExecute(pipelineContext);
 
         PipelineTask pipelineTask = getPipelineTask();
 
@@ -51,7 +52,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
         PipelineBizData paramBizData = null;
         if (StringUtil.isNotEmpty(paramBizDataKey)) {
             // 上下文业务数据
-            paramBizData = (PipelineBizData) jobContextData.get(paramBizDataKey);
+            paramBizData = (PipelineBizData) pipelineContext.get(paramBizDataKey);
         }
 
         // 获取应用信息
@@ -101,7 +102,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
                 batchParams = JobBatchService.parseToMap(batchParamList);
             }
 
-            Map<String, Object> bizDataMap = ObjectUtil.cloneByStream(jobContextData);
+            Map<String, Object> bizDataMap = ObjectUtil.cloneByStream(pipelineContext.getMap());
             Map<String, String> fieldTypeMapping = null;
             if (paramBizData != null) {
                 if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
@@ -162,7 +163,7 @@ public class GetJsonFromApi extends ApiTaskExecutor {
         } while (isBatch);
 
         // 将结果保存到 job上下文
-        setPipelineJson(jobContextData, pipelineJsons);
+        setPipelineJson(pipelineContext, pipelineJsons);
         info("从API获取JSON完成");
     }
 }

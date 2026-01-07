@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -30,7 +31,7 @@ public class ParseDataToJson extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
 
@@ -45,7 +46,7 @@ public class ParseDataToJson extends TaskExecutor {
         }
 
         // 上下文业务数据
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null || CollectionUtil.isEmpty(pipelineBizData.getBizData())) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
@@ -95,7 +96,7 @@ public class ParseDataToJson extends TaskExecutor {
             });
         }
         map.put(MyDataConstant.JOB_DATA_KEY_DATA_JSON, dataJson.toString());
-        map.putAll(jobContextData);
+        map.putAll(pipelineContext.getMap());
 
         String json = StringUtil.substitute(jsonTemplate, map);
         try {
@@ -104,7 +105,7 @@ public class ParseDataToJson extends TaskExecutor {
             // log("转换后的JSON：{}", json);
 
             PipelineJson pipelineJson = new PipelineJson(jsonObject, CollectionUtil.toList(jsonObject));
-            setPipelineJson(jobContextData, CollectionUtil.toList(pipelineJson));
+            setPipelineJson(pipelineContext, CollectionUtil.toList(pipelineJson));
         } catch (Exception e) {
 //            error("转换后的json无效，结束执行，json={}", json);
             throw new RuntimeException(StringUtil.format("转换后的json无效，结束执行，json={}", json));

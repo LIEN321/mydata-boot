@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponseConfig;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -68,16 +69,16 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     /**
      * 流水线上下文
      */
-    private Map<String, Object> jobContextData;
+    private PipelineContext pipelineContext;
 
     // public ApiTaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
     // super(pipelineTask, pipelineLog);
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
-        this.jobContextData = jobContextData;
-        authedApps = (Map<Long, PipelineApp>) jobContextData.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
+    public void doExecute(PipelineContext pipelineContext) {
+        this.pipelineContext = pipelineContext;
+        authedApps = (Map<Long, PipelineApp>) pipelineContext.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
     }
 
     /**
@@ -195,42 +196,41 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // 替换业务数据变量值
         try {
             url = JobVarService.processDataFieldVar(url, bizData);
-            url = JobVarService.processDataFieldVar(url, jobContextData);
+            url = JobVarService.processDataFieldVar(url, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(queryParams, bizData);
-            JobVarService.processDataFieldVar(queryParams, jobContextData);
+            JobVarService.processDataFieldVar(queryParams, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqHeaders, bizData);
-            JobVarService.processDataFieldVar(reqHeaders, jobContextData);
+            JobVarService.processDataFieldVar(reqHeaders, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqForm, bizData);
-            JobVarService.processDataFieldVar(reqForm, jobContextData);
+            JobVarService.processDataFieldVar(reqForm, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
         }
         try {
             reqBody = JobVarService.processDataFieldVar(reqBody, bizData);
-            reqBody = JobVarService.processDataFieldVar(reqBody, jobContextData);
+            reqBody = JobVarService.processDataFieldVar(reqBody, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
         this.info("""
-                                                
                         \trequest url: [{}] {}
                         \trequest param : {}
                         \trequest header : {}
@@ -244,7 +244,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             String cookie = response.getCookieStr();
             String responseBody = response.body();
             this.info("""
-                                                        
+                            
                             \tresponse status : {}
                             \tresponse body : {}
                             """

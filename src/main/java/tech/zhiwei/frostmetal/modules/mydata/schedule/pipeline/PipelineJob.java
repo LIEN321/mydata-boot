@@ -241,7 +241,7 @@ public class PipelineJob implements InterruptableJob {
                     for (PipelineTask task : tasks) {
                         // 执行任务
                         TaskExecutor taskExecutor = TaskExecutor.create(task);
-                        taskExecutor.execute(historyId, task.getId(), taskLogIdMapping.get(task.getId()), pipelineContext.getMap());
+                        taskExecutor.execute(historyId, task.getId(), taskLogIdMapping.get(task.getId()), pipelineContext);
                     }
                 }
             }

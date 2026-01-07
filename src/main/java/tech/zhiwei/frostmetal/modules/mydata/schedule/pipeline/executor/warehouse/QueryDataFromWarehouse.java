@@ -8,6 +8,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -35,7 +36,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
 
         // 输入参数
@@ -45,7 +46,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         PipelineBizData paramBizData = null;
         if (StringUtil.isNotEmpty(paramBizDataKey)) {
             // 上下文业务数据
-            paramBizData = (PipelineBizData) jobContextData.get(paramBizDataKey);
+            paramBizData = (PipelineBizData) pipelineContext.get(paramBizDataKey);
         }
 
         Long dataId = pipelineTask.getDataId();
@@ -110,8 +111,8 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 字段列表
         List<DataField> dataFields = getDataFields(dataId);
         // 输出参数
-//        jobContextData.put(bizDataKey, bizDataList);
+//        pipelineContext.put(bizDataKey, bizDataList);
         PipelineBizData outputBizData = new PipelineBizData(dataId, dataCode, dataFields, bizDataList);
-        jobContextData.put(outputBizDataKey, outputBizData);
+        pipelineContext.put(outputBizDataKey, outputBizData);
     }
 }

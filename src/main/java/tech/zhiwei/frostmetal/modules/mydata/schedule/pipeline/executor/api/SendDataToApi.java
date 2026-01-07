@@ -11,6 +11,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.map.MapUtil;
@@ -34,8 +35,8 @@ public class SendDataToApi extends ApiTaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
-        super.doExecute(jobContextData);
+    public void doExecute(PipelineContext pipelineContext) {
+        super.doExecute(pipelineContext);
 
         PipelineTask pipelineTask = getPipelineTask();
 
@@ -48,8 +49,8 @@ public class SendDataToApi extends ApiTaskExecutor {
         }
 
         // 获取业务数据
-//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) pipelineContext.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
             error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
@@ -73,7 +74,7 @@ public class SendDataToApi extends ApiTaskExecutor {
         AppApi api = MyDataCache.getApi(pipelineTask.getApiId());
 
         Map<String, Object> map = MapUtil.newHashMap();
-        map.putAll(jobContextData);
+        map.putAll(pipelineContext.getMap());
 
         // 多数据模式，批量推送
         if (MyDataConstant.API_DATA_MODE_LIST == api.getDataMode()) {

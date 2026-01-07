@@ -46,7 +46,7 @@ public class LiteFlowComponentConfig {
 
         // Map<String, Object> jobContextData = nodeComponent.getFirstContextBean();
         PipelineContext pipelineContext = nodeComponent.getContextBean(PipelineContext.class);
-        taskExecutor.execute(historyId, nodeBinding.getTaskId(), nodeBinding.getTaskLogId(), pipelineContext.getMap());
+        taskExecutor.execute(historyId, nodeBinding.getTaskId(), nodeBinding.getTaskLogId(), pipelineContext);
     }
 
     @LiteflowMethod(value = LiteFlowMethodEnum.PROCESS

@@ -14,6 +14,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -111,10 +112,10 @@ public abstract class TaskExecutor {
     /**
      * 执行指定的流水线任务
      *
-     * @param taskId         流水线任务id
-     * @param jobContextData 上下文数据
+     * @param taskId          流水线任务id
+     * @param pipelineContext 上下文数据
      */
-    public final void execute(Long historyId, Long taskId, Long taskLogId, Map<String, Object> jobContextData) {
+    public final void execute(Long historyId, Long taskId, Long taskLogId, PipelineContext pipelineContext) {
         PipelineTask pipelineTask = taskService.getById(taskId);
         AssertUtil.notNull(pipelineTask);
         this.pipelineTask = pipelineTask;
@@ -156,7 +157,7 @@ public abstract class TaskExecutor {
             pipelineLogService.updateById(pipelineLog);
 
             // 执行任务
-            doExecute(jobContextData);
+            doExecute(pipelineContext);
 
             // 执行成功
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
@@ -234,7 +235,7 @@ public abstract class TaskExecutor {
     /**
      * 执行任务的抽象方法，子类实现具体逻辑
      */
-    public abstract void doExecute(Map<String, Object> jobContextData);
+    public abstract void doExecute(PipelineContext pipelineContext);
 
     /**
      * 获取当前任务 操作数据的数据仓库名称
@@ -329,13 +330,13 @@ public abstract class TaskExecutor {
     /**
      * 设置流水线上下文的json
      *
-     * @param jobContextData 流水线上下文数据
-     * @param pipelineJsons  流水线json
+     * @param pipelineContext 流水线上下文数据
+     * @param pipelineJsons   流水线json
      */
-    protected void setPipelineJson(Map<String, Object> jobContextData, List<PipelineJson> pipelineJsons) {
+    protected void setPipelineJson(PipelineContext pipelineContext, List<PipelineJson> pipelineJsons) {
         Map<String, String> output = getOutputMap();
         String pipelineJsonKey = output.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
-        jobContextData.put(pipelineJsonKey, pipelineJsons);
+        pipelineContext.put(pipelineJsonKey, pipelineJsons);
     }
 
     /**
@@ -344,13 +345,13 @@ public abstract class TaskExecutor {
      * @param jobContextData 流水线上下文数据
      * @return 流水线json
      */
-    protected List<PipelineJson> getPipelineJson(Map<String, Object> jobContextData) {
+    protected List<PipelineJson> getPipelineJson(PipelineContext pipelineContext) {
         String pipelineJsonKey = getInputMap().get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
         if (StringUtil.isEmpty(pipelineJsonKey)) {
 //            error("JSON变量名为空，结束执行。");
             fail("输入参数无效：JSON变量名为空，结束执行。");
         }
-        return (List<PipelineJson>) jobContextData.get(pipelineJsonKey);
+        return (List<PipelineJson>) pipelineContext.get(pipelineJsonKey);
     }
 
     /**
@@ -394,7 +395,7 @@ public abstract class TaskExecutor {
 
     /**
      * 任务失败，直接抛出异常<br/>
-     * 后续在{@link TaskExecutor#execute(Long, Long, Long, Map)}中捕获异常，再统一记录日志
+     * 后续在{@link TaskExecutor#execute(Long, Long, Long, PipelineContext)}中捕获异常，再统一记录日志
      *
      * @param message 日志内容
      * @param params  占位符参数值

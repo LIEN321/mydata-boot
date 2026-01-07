@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -35,7 +36,7 @@ public class WriteDataToExcel extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
         // 输入参数
         Map<String, String> inputMap = getInputMap();
@@ -48,7 +49,7 @@ public class WriteDataToExcel extends TaskExecutor {
         }
 
         // 业务数据集合
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
@@ -71,7 +72,7 @@ public class WriteDataToExcel extends TaskExecutor {
         File savedExcelFile = MyDataUtil.saveExcelFile(pipelineTask.getTenantId(), project.getProjectCode(), tempExcel);
         info("导出文件成功，文件名：{}", tempExcel.getName());
 
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_EXCEL_FILE, savedExcelFile);
+        pipelineContext.put(MyDataConstant.JOB_DATA_KEY_EXCEL_FILE, savedExcelFile);
     }
 
     private File exportTempExcel(List<DataField> dataFields, List<Map<String, Object>> bizDataList) {

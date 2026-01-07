@@ -6,12 +6,11 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.tool.lang.AssertUtil;
 import tech.zhiwei.tool.lang.StringUtil;
 import tech.zhiwei.tool.spring.SpringUtil;
-
-import java.util.Map;
 
 /**
  * 从数仓中清空指定业务数据
@@ -28,7 +27,7 @@ public class RemoveData extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
         Long dataId = pipelineTask.getDataId();
 
