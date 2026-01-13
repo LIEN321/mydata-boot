@@ -128,8 +128,9 @@ public class GetJsonFromApi extends ApiTaskExecutor {
                 break;
             }
 
+            String prefix = JobVarService.processDataFieldVar(fieldPrefix, bizDataMap);
             // 将json字符串转 提取业务数据
-            PipelineJson subPipelineJson = JobJsonService.pipelineJson(originJsonString, fieldPrefix);
+            PipelineJson subPipelineJson = JobJsonService.pipelineJson(originJsonString, prefix);
 
             if (JobJsonService.hasNoData(subPipelineJson)) {
                 error("没有有效的业务数据，结束执行");
