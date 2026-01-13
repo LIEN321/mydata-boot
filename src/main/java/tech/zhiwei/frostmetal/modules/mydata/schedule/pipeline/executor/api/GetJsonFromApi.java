@@ -6,7 +6,6 @@ import tech.zhiwei.frostmetal.modules.mydata.cache.MyDataCache;
 import tech.zhiwei.frostmetal.modules.mydata.constant.MyDataConstant;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.App;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.AppApi;
-import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
@@ -15,6 +14,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineCont
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobBatchService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobJsonService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.json.JsonUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -24,7 +24,6 @@ import tech.zhiwei.tool.thread.ThreadUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 从API获取JSON
@@ -103,14 +102,12 @@ public class GetJsonFromApi extends ApiTaskExecutor {
             }
 
             Map<String, Object> bizDataMap = ObjectUtil.cloneByStream(pipelineContext.getMap());
-            Map<String, String> fieldTypeMapping = null;
             if (paramBizData != null) {
                 if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
                     info("没有业务数据可作为参数，结束执行");
                     return;
                 } else {
-                    // 字段编号-字段类型
-                    fieldTypeMapping = paramBizData.getDataFields().stream().collect(Collectors.toMap(DataField::getFieldCode, DataField::getFieldType));
+                    // 业务数据加入参数
                     bizDataMap.putAll(paramBizData.getBizData().get(0));
                 }
             }
