@@ -15,6 +15,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizD
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
 import tech.zhiwei.tool.lang.ObjectUtil;
@@ -112,7 +113,7 @@ public class ParseJsonToData extends TaskExecutor {
 
                 // 根据映射 解析出json中的数据 并存入数据
                 dataJsons.forEach(o -> {
-                    JSONObject jsonObject = (JSONObject) o;
+                    JSON jsonObject = (JSON) o;
                     Map<String, Object> produceData = MapUtil.newHashMap();
                     fieldMapping.forEach((dataFieldCode, apiFieldCode) -> {
                         // 若字段映射中 未设置api参数名，则跳过处理；
@@ -122,16 +123,16 @@ public class ParseJsonToData extends TaskExecutor {
 
                         // 获取业务数据值
                         Object value;
-                        // /field 根目录格式
-                        if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
+
+                        if (JobVarService.isFieldExp(apiFieldCode)) {
+                            // 从上下文解析${表达式}的值
+                            value = JobVarService.processDataFieldVar(apiFieldCode, pipelineContext.getMap());
+                        } else if (StringUtil.startWith(apiFieldCode, MyDataConstant.FIELD_MAPPING_ROOT)) {
+                            // /field 根目录格式
                             value = originJson.getByPath(apiFieldCode.substring(MyDataConstant.FIELD_MAPPING_ROOT.length()));
                         } else {
                             value = jsonObject.getByPath(apiFieldCode);
                         }
-                        // TODO 未获取到值，再解析属性表达式 从任务变量尝试获取数据
-//                    if (value == null && JobVarService.isFieldExp(apiCode)) {
-//                        value = JobVarService.parseDataFieldVar(apiCode, taskJob.getTaskVar(), taskJob.getFieldTypeMapping());
-//                    }
                         // 若接口数据中 没有执行的字段名，则跳过处理
                         if (value == null) {
                             return;
