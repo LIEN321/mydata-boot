@@ -10,6 +10,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -35,7 +36,7 @@ public class WriteDataToExcel extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
         // 输入参数
         Map<String, String> inputMap = getInputMap();
@@ -48,14 +49,14 @@ public class WriteDataToExcel extends TaskExecutor {
         }
 
         // 业务数据集合
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
             throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
 
@@ -65,13 +66,13 @@ public class WriteDataToExcel extends TaskExecutor {
         // 标准数据字段列表
         List<DataField> dataFields = pipelineBizData.getDataFields();
         List<DataField> visibleDataFields = dataFields.stream().filter(DataField::getDisplayMode).toList();
-        log("开始导出Excel文件");
+        info("开始导出Excel文件");
         File tempExcel = exportTempExcel(visibleDataFields, bizDataList);
         tempExcel = FileUtil.rename(tempExcel, pipelineTask.getTaskName() + "_" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_MS_PATTERN), true, true);
         File savedExcelFile = MyDataUtil.saveExcelFile(pipelineTask.getTenantId(), project.getProjectCode(), tempExcel);
-        log("导出文件成功，文件名：{}", tempExcel.getName());
+        info("导出文件成功，文件名：{}", tempExcel.getName());
 
-        jobContextData.put(MyDataConstant.JOB_DATA_KEY_EXCEL_FILE, savedExcelFile);
+        pipelineContext.put(MyDataConstant.JOB_DATA_KEY_EXCEL_FILE, savedExcelFile);
     }
 
     private File exportTempExcel(List<DataField> dataFields, List<Map<String, Object>> bizDataList) {

@@ -217,6 +217,24 @@ public class BizDataDAO {
     }
 
     /**
+     * 根据指定条件删除业务数据
+     *
+     * @param dbCode    数仓编号
+     * @param dataCode  数据编号
+     * @param condition 过滤条件
+     * @return 删除记录数量
+     */
+    public long removeByCondition(String dbCode, String dataCode, String condition) {
+        Query query = new Query();
+        // 自定义查询条件
+        if (StringUtil.isNotEmpty(condition)) {
+            Criteria criteria = CriteriaParser.parse(condition);
+            query.addCriteria(criteria);
+        }
+        return mongoFactory.getTemplate(dbCode).remove(query, dataCode).getDeletedCount();
+    }
+
+    /**
      * 补充数据的 系统字段值
      *
      * @param bizData

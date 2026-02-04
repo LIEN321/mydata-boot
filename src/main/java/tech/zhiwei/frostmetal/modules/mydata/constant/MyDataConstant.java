@@ -175,6 +175,10 @@ public interface MyDataConstant {
      */
     String TASK_TYPE_JSON_TO_VAR = "JSON_TO_VAR";
     /**
+     * 任务类型：JS脚本
+     */
+    String TASK_TYPE_SCRIPT_JS = "SCRIPT_JS";
+    /**
      * 任务类型：设置流水线变量
      */
     String TASK_TYPE_SET_PIPELINE_VAR = "SET_PIPELINE_VAR";
@@ -197,6 +201,10 @@ public interface MyDataConstant {
      * 任务配置中的常量key：任务输出变量名
      */
     String TASK_CONFIG_KEY_OUTPUT = "OUTPUT";
+    /**
+     * 任务配置中的常量key：查询条件
+     */
+    String TASK_CONFIG_KEY_CONDITION = "CONDITION";
 
     /**
      * 任务的定时起始时间的格式

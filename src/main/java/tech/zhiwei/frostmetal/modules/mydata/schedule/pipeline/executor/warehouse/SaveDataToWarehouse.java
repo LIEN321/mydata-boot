@@ -5,6 +5,7 @@ import tech.zhiwei.frostmetal.modules.mydata.data.BizDataDAO;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IBizDataService;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
 import tech.zhiwei.tool.collection.CollectionUtil;
@@ -34,7 +35,7 @@ public class SaveDataToWarehouse extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 输入参数
         Map<String, String> inputMap = getInputMap();
 
@@ -46,17 +47,17 @@ public class SaveDataToWarehouse extends TaskExecutor {
         }
 
         // 业务数据集合
-//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) jobContextData.get(bizDataKey);
-        PipelineBizData pipelineBizData = (PipelineBizData) jobContextData.get(bizDataKey);
+//        List<Map<String, Object>> bizDataList = (List<Map<String, Object>>) pipelineContext.get(bizDataKey);
+        PipelineBizData pipelineBizData = (PipelineBizData) pipelineContext.get(bizDataKey);
         if (pipelineBizData == null) {
 //            error("执行失败：前置任务没有输出有效的业务数据");
 //            throw new IllegalArgumentException("执行失败：前置任务没有输出有效的业务数据");
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
         List<Map<String, Object>> bizDataList = pipelineBizData.getBizData();
         if (CollectionUtil.isEmpty(bizDataList)) {
-            log("没有待保存的业务数据，结束执行。");
+            info("没有待保存的业务数据，结束执行。");
             return;
         }
 
@@ -147,9 +148,9 @@ public class SaveDataToWarehouse extends TaskExecutor {
         if (!dataInsertList.isEmpty()) {
             bizDataDAO.insertBatch(warehouseName, dataCode, dataInsertList);
             savedDataList.addAll(dataInsertList);
-            log("新增数据 {} 条", dataInsertList.size());
+            info("新增数据 {} 条", dataInsertList.size());
         } else {
-            log("无新增数据");
+            info("无新增数据");
         }
 
         // 更新数据仓库的数据
@@ -166,24 +167,24 @@ public class SaveDataToWarehouse extends TaskExecutor {
             });
             savedDataList.addAll(dataUpdateList);
 
-            log("更新数据 {} 条", dataUpdateList.size());
+            info("更新数据 {} 条", dataUpdateList.size());
         } else {
-            log("无更新数据");
+            info("无更新数据");
         }
 
-        log("实际保存数据 {} 条，没有变化的数据 {} 条", savedDataList.size(), sameCount.get());
+        info("实际保存数据 {} 条，没有变化的数据 {} 条", savedDataList.size(), sameCount.get());
 
         // 输出参数
         Map<String, String> outputMap = getOutputMap();
         String savedDataKey = outputMap.get(MyDataConstant.JOB_DATA_KEY_SAVED_DATA);
         if (StringUtil.isNotEmpty(savedDataKey)) {
             MyDataUtil.processBizData(savedDataList);
-//            jobContextData.put(savedDataKey, savedDataList);
+//            pipelineContext.put(savedDataKey, savedDataList);
             pipelineBizData.setBizData(savedDataList);
-            jobContextData.put(savedDataKey, pipelineBizData);
+            pipelineContext.put(savedDataKey, pipelineBizData);
         }
 
         bizDataService.updateDataCount(dataId);
-        log("重新统计业务数据量");
+        info("重新统计业务数据量");
     }
 }

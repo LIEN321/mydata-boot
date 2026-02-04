@@ -2,6 +2,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.email;
 
 import tech.zhiwei.frostmetal.modules.mydata.mail.MailSender;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.tool.lang.StringUtil;
@@ -22,7 +23,7 @@ public class SendEmail extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
         Map<String, String> emailConfig = (Map<String, String>) pipelineTask.getTaskConfig().get("EMAIL");
         if (MapUtil.isEmpty(emailConfig)) {
@@ -35,34 +36,33 @@ public class SendEmail extends TaskExecutor {
 //            error("发送邮件失败，收件人地址无效");
             throw new IllegalArgumentException("发送邮件失败，收件人地址无效");
         }
-        address = JobVarService.processDataFieldVar(address, jobContextData);
+        address = JobVarService.processDataFieldVar(address, pipelineContext.getMap());
 
         String subject = emailConfig.get("SUBJECT");
         if (StringUtil.isEmpty(subject)) {
 //            error("发送邮件失败，邮件主题无效");
             throw new IllegalArgumentException("发送邮件失败，邮件主题无效");
         }
-        subject = JobVarService.processDataFieldVar(subject, jobContextData);
+        subject = JobVarService.processDataFieldVar(subject, pipelineContext.getMap());
 
         String content = emailConfig.get("CONTENT");
         if (StringUtil.isEmpty(content)) {
 //            error("发送邮件失败，邮件内容无效");
             throw new IllegalArgumentException("发送邮件失败，邮件内容无效");
         }
-        content = JobVarService.processDataFieldVar(content, jobContextData);
+        content = JobVarService.processDataFieldVar(content, pipelineContext.getMap());
 
         String fileKey = emailConfig.get("FILE");
         File file = null;
         if (StringUtil.isNotEmpty(fileKey)) {
-            file = (File) jobContextData.get(fileKey);
+            file = (File) pipelineContext.get(fileKey);
             if (file == null) {
-                error("发送失败，前置任务没有生成文件，变量名为{}", fileKey);
-                throw new IllegalArgumentException("发送邮件失败，配置的附件文件无效");
+                fail("发送失败，前置任务没有生成文件，变量名为{}", fileKey);
             }
         }
 
-        log("发送邮件开始");
+        info("发送邮件开始");
         MailSender.sendHtml(address, subject, content, file);
-        log("发送邮件结束");
+        info("发送邮件结束");
     }
 }

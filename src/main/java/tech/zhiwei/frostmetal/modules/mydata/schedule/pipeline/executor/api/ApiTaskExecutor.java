@@ -13,6 +13,7 @@ import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.PipelineJob;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponse;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApiResponseConfig;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineApp;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -68,16 +69,16 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
     /**
      * 流水线上下文
      */
-    private Map<String, Object> jobContextData;
+    private PipelineContext pipelineContext;
 
     // public ApiTaskExecutor(PipelineTask pipelineTask, PipelineLog pipelineLog) {
     // super(pipelineTask, pipelineLog);
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
-        this.jobContextData = jobContextData;
-        authedApps = (Map<Long, PipelineApp>) jobContextData.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
+    public void doExecute(PipelineContext pipelineContext) {
+        this.pipelineContext = pipelineContext;
+        authedApps = (Map<Long, PipelineApp>) pipelineContext.get(PipelineJob.PIPELINE_PARAM_KEY_AUTHED_APP);
     }
 
     /**
@@ -195,42 +196,41 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // 替换业务数据变量值
         try {
             url = JobVarService.processDataFieldVar(url, bizData);
-            url = JobVarService.processDataFieldVar(url, jobContextData);
+            url = JobVarService.processDataFieldVar(url, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(queryParams, bizData);
-            JobVarService.processDataFieldVar(queryParams, jobContextData);
+            JobVarService.processDataFieldVar(queryParams, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Param中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqHeaders, bizData);
-            JobVarService.processDataFieldVar(reqHeaders, jobContextData);
+            JobVarService.processDataFieldVar(reqHeaders, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Header中的参数出错，原因：" + e.getMessage());
         }
         try {
             JobVarService.processDataFieldVar(reqForm, bizData);
-            JobVarService.processDataFieldVar(reqForm, jobContextData);
+            JobVarService.processDataFieldVar(reqForm, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Form中的参数出错，原因：" + e.getMessage());
         }
         try {
             reqBody = JobVarService.processDataFieldVar(reqBody, bizData);
-            reqBody = JobVarService.processDataFieldVar(reqBody, jobContextData);
+            reqBody = JobVarService.processDataFieldVar(reqBody, pipelineContext.getMap());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("解析请求Body中的参数出错，原因：" + e.getMessage());
         }
 
-        this.log("""
-                        
+        this.info("""
                         \trequest url: [{}] {}
                         \trequest param : {}
                         \trequest header : {}
@@ -243,7 +243,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         try (HttpResponse response = HttpUtil.send(method, url, queryParams, reqHeaders, reqForm, reqBody)) {
             String cookie = response.getCookieStr();
             String responseBody = response.body();
-            this.log("""
+            this.info("""
                             
                             \tresponse status : {}
                             \tresponse body : {}
@@ -268,13 +268,13 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // 认证类型
         String authType = app.getAuthType();
         if (StringUtil.isEmpty(authType)) {
-            log("应用{} 无需认证...", app.getAppName());
+            info("应用{} 无需认证...", app.getAppName());
             return pipelineApp;
         }
 
         // 检查是否已认证过
         if (authedApps.containsKey(app.getId())) {
-            log("应用已在流水线中认证，无需重复认证");
+            info("应用已在流水线中认证，无需重复认证");
             return authedApps.get(app.getId());
         }
 
@@ -285,7 +285,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
         // app query params
         Map<String, Object> appQueryParams = pipelineApp.getQueryParams();
 
-        log("应用{} 认证开始，认证方式为{}", app.getAppName(), app.getAuthType());
+        info("应用{} 认证开始，认证方式为{}", app.getAppName(), app.getAuthType());
         // jwt 认证
         if (APP_AUTH_TYPE_JWT.equals(authType)) {
             Map<String, Object> jwtConfig = (Map<String, Object>) authConfig.get(APP_AUTH_TYPE_JWT);
@@ -304,28 +304,28 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
             String token = responseData;
             String apiFieldPrefix = api.getFieldPrefix();
             if (StringUtil.isNotEmpty(apiFieldPrefix)) {
-                log("从 {} 中的 {} 提取token", responseData, apiFieldPrefix);
+                info("从 {} 中的 {} 提取token", responseData, apiFieldPrefix);
                 // 获取接口返回的json
                 JSON json = JsonUtil.parse(responseData);
                 // json中提取token
                 token = (String) json.getByPath(apiFieldPrefix);
             } else {
-                log("API 未配置层级，使用响应的全部内容作为token");
+                info("API 未配置层级，使用响应的全部内容作为token");
             }
-            log("token={}", token);
+            info("token={}", token);
 
             // add to
             String addTo = (String) jwtConfig.get(JWT_CONFIG_ADD_TO);
             // header
             if (MyDataConstant.HTTP_HEADER.equals(addTo)) {
-                log("token 添加到 header");
+                info("token 添加到 header");
                 String key = (String) jwtConfig.get(JWT_CONFIG_HEADER_KEY);
                 String prefix = (String) jwtConfig.get(JWT_CONFIG_HEADER_PREFIX);
                 prefix = StringUtil.isNotEmpty(prefix) ? prefix : "";
                 String value = prefix + token;
                 appHeaders.put(key, value);
             } else if (MyDataConstant.HTTP_QUERY.equals(addTo)) {
-                log("token 添加到 query param");
+                info("token 添加到 query param");
                 String paramName = (String) jwtConfig.get(JWT_CONFIG_QUERY_PARAM);
                 appQueryParams.put(paramName, token);
             }
@@ -367,7 +367,7 @@ public abstract class ApiTaskExecutor extends TaskExecutor {
 
         authedApps.put(app.getId(), pipelineApp);
 
-        log("应用{} 认证结束。", app.getAppName());
+        info("应用{} 认证结束。", app.getAppName());
         return pipelineApp;
     }
 }

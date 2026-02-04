@@ -146,6 +146,11 @@
                 <artifactId>liteflow-el-builder</artifactId>
                 <version>${liteflow.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.yomahub</groupId>
+                <artifactId>liteflow-script-graaljs</artifactId>
+                <version>${liteflow.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -268,6 +273,10 @@
         <dependency>
             <groupId>com.yomahub</groupId>
             <artifactId>liteflow-el-builder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yomahub</groupId>
+            <artifactId>liteflow-script-graaljs</artifactId>
         </dependency>
 
         <!-- junit -->

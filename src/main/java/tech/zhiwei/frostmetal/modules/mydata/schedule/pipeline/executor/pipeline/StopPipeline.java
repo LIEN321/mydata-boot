@@ -3,6 +3,7 @@ package tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.pipelin
 import lombok.extern.slf4j.Slf4j;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineCondition;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.StopPipelineException;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.util.PipelineUtil;
@@ -28,14 +29,14 @@ public class StopPipeline extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         // 当前流水线任务
         PipelineTask pipelineTask = getPipelineTask();
 
         // 配置的条件
         List<Map<String, Object>> stopConditions = (List<Map<String, Object>>) pipelineTask.getTaskConfig().get("STOP_CONDITION");
         if (CollectionUtil.isEmpty(stopConditions)) {
-            log("未配置结束条件，继续执行");
+            info("未配置结束条件，继续执行");
             return;
         }
 
@@ -47,14 +48,14 @@ public class StopPipeline extends TaskExecutor {
         // 遍历条件，有一个成立 则结束流水线
         pipelineConditions.forEach(condition -> {
             String key = condition.getKey();
-            Object param = jobContextData.get(key);
+            Object param = pipelineContext.get(key);
             String op = condition.getOp();
             Object value = StringParser.autoParse((String) condition.getValue());
             if (PipelineUtil.compare(param, op, value)) {
-                log(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
+                info(StringUtil.format("满足终止条件：{} {} {}，终止流水线", key, op, value));
                 throw new StopPipelineException();
             }
-            log("不满足终止条件：{} {} {}，继续...", param, op, value);
+            info("不满足终止条件：{} {} {}，继续...", param, op, value);
         });
     }
 }

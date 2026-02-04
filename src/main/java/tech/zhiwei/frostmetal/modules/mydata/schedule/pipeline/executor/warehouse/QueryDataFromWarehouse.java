@@ -8,6 +8,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Data;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.DataField;
 import tech.zhiwei.frostmetal.modules.mydata.manage.entity.PipelineTask;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineBizData;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.TaskExecutor;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.service.JobVarService;
 import tech.zhiwei.frostmetal.modules.mydata.util.MyDataUtil;
@@ -35,7 +36,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
     // }
 
     @Override
-    public void doExecute(Map<String, Object> jobContextData) {
+    public void doExecute(PipelineContext pipelineContext) {
         PipelineTask pipelineTask = getPipelineTask();
 
         // 输入参数
@@ -45,7 +46,7 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         PipelineBizData paramBizData = null;
         if (StringUtil.isNotEmpty(paramBizDataKey)) {
             // 上下文业务数据
-            paramBizData = (PipelineBizData) jobContextData.get(paramBizDataKey);
+            paramBizData = (PipelineBizData) pipelineContext.get(paramBizDataKey);
         }
 
         Long dataId = pipelineTask.getDataId();
@@ -68,12 +69,12 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         dataFilters = CollectionUtil.emptyIfNull(dataFilters);
 
         // 自定义输入的查询条件
-        String condition = (String) pipelineTask.getTaskConfig().get("CONDITION");
+        String condition = (String) pipelineTask.getTaskConfig().get(MyDataConstant.TASK_CONFIG_KEY_CONDITION);
 
         // 处理查询条件中的上下文变量
         if (paramBizData != null) {
             if (CollectionUtil.isEmpty(paramBizData.getBizData())) {
-                log("没有业务数据可作为参数，结束执行");
+                info("没有业务数据可作为参数，结束执行");
                 return;
             } else {
                 Map<String, Object> bizDataMap = MapUtil.newHashMap();
@@ -98,20 +99,20 @@ public class QueryDataFromWarehouse extends TaskExecutor {
         // 标准数据的编号
         String dataCode = data.getDataCode();
 
-        log("开始查询数据：{}", data.getDataName());
+        info("开始查询数据：{}", data.getDataName());
 
-        log("查询条件：{}", dataFilters);
+        info("查询条件：{}", dataFilters);
         // 查询业务数据
         List<Map<String, Object>> bizDataList = bizDataDAO.list(warehouseName, dataCode, dataFilters, condition);
         MyDataUtil.processBizData(bizDataList);
 
-        log("查询结果：共 {} 条", bizDataList.size());
+        info("查询结果：共 {} 条", bizDataList.size());
 
         // 字段列表
         List<DataField> dataFields = getDataFields(dataId);
         // 输出参数
-//        jobContextData.put(bizDataKey, bizDataList);
+//        pipelineContext.put(bizDataKey, bizDataList);
         PipelineBizData outputBizData = new PipelineBizData(dataId, dataCode, dataFields, bizDataList);
-        jobContextData.put(outputBizDataKey, outputBizData);
+        pipelineContext.put(outputBizDataKey, outputBizData);
     }
 }

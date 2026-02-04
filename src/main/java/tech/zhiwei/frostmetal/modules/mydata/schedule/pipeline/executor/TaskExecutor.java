@@ -14,6 +14,7 @@ import tech.zhiwei.frostmetal.modules.mydata.manage.entity.Project;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IDataFieldService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineLogService;
 import tech.zhiwei.frostmetal.modules.mydata.manage.service.IPipelineTaskService;
+import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineContext;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.bean.PipelineJson;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.GetJsonFromApi;
 import tech.zhiwei.frostmetal.modules.mydata.schedule.pipeline.executor.api.SendDataToApi;
@@ -101,6 +102,8 @@ public abstract class TaskExecutor {
             case MyDataConstant.TASK_TYPE_JSON_TO_VAR -> new ParseJsonToVar();
             // 设置变量
             case MyDataConstant.TASK_TYPE_SET_PIPELINE_VAR -> new SetPipelineVar();
+            // JS脚本
+            case MyDataConstant.TASK_TYPE_SCRIPT_JS -> throw new RuntimeException("旧版本不支持JS脚本！");
             // 其他不支持
             default -> throw new IllegalArgumentException("不支持的任务类型: " + task.getTaskType());
         };
@@ -109,10 +112,10 @@ public abstract class TaskExecutor {
     /**
      * 执行指定的流水线任务
      *
-     * @param taskId         流水线任务id
-     * @param jobContextData 上下文数据
+     * @param taskId          流水线任务id
+     * @param pipelineContext 上下文数据
      */
-    public final void execute(Long historyId, Long taskId, Long taskLogId, Map<String, Object> jobContextData) {
+    public final void execute(Long historyId, Long taskId, Long taskLogId, PipelineContext pipelineContext) {
         PipelineTask pipelineTask = taskService.getById(taskId);
         AssertUtil.notNull(pipelineTask);
         this.pipelineTask = pipelineTask;
@@ -139,22 +142,22 @@ public abstract class TaskExecutor {
         this.pipelineLog = pipelineLog;
 
         try {
-            log("========== 任务开始执行，第{}次 ==========", executionCount);
-
             // 任务禁用状态
             if (ObjectUtil.equals(pipelineTask.getStatus(), SysConstant.STATUS_DISABLED)) {
                 // 禁用的任务 状态为跳过
                 pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SKIP);
-                log("该任务已禁用，不执行。");
+                info("该任务已禁用，不执行。");
                 return;
             }
+
+            info("========== 任务开始执行，第{}次 ==========", executionCount);
 
             // 更新任务日志的执行状态
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_RUNNING);
             pipelineLogService.updateById(pipelineLog);
 
             // 执行任务
-            doExecute(jobContextData);
+            doExecute(pipelineContext);
 
             // 执行成功
             pipelineLog.setExecutionStatus(MyDataConstant.PIPELINE_HISTORY_STATUS_SUCCESS);
@@ -174,7 +177,7 @@ public abstract class TaskExecutor {
             Integer preCondition = ObjectUtil.defaultIfNull(pipelineTask.getPreCondition(), MyDataConstant.PIPELINE_TASK_PRE_CONDITION_SUCCESS);
             // 若为 总是继续，则不抛出异常，继续下个task
             if (MyDataConstant.PIPELINE_TASK_PRE_CONDITION_ALWAYS == preCondition) {
-                log("因任务设置为\"失败继续执行\"，流水线继续执行...");
+                info("因任务设置为\"失败继续执行\"，流水线继续执行...");
                 log.info("任务设置为 失败继续执行...");
                 return;
             }
@@ -232,7 +235,7 @@ public abstract class TaskExecutor {
     /**
      * 执行任务的抽象方法，子类实现具体逻辑
      */
-    public abstract void doExecute(Map<String, Object> jobContextData);
+    public abstract void doExecute(PipelineContext pipelineContext);
 
     /**
      * 获取当前任务 操作数据的数据仓库名称
@@ -278,7 +281,7 @@ public abstract class TaskExecutor {
 
         List<DataField> dataFields = dataFieldService.listByData(dataId);
         if (CollectionUtil.isEmpty(dataFields)) {
-            error("保存业务数据失败：标准数据没有字段");
+            // error("保存业务数据失败：标准数据没有字段");
             throw new RuntimeException("保存业务数据失败：标准数据没有字段");
         }
         dataFieldMap.put(dataId, dataFields);
@@ -327,13 +330,13 @@ public abstract class TaskExecutor {
     /**
      * 设置流水线上下文的json
      *
-     * @param jobContextData 流水线上下文数据
-     * @param pipelineJsons  流水线json
+     * @param pipelineContext 流水线上下文数据
+     * @param pipelineJsons   流水线json
      */
-    protected void setPipelineJson(Map<String, Object> jobContextData, List<PipelineJson> pipelineJsons) {
+    protected void setPipelineJson(PipelineContext pipelineContext, List<PipelineJson> pipelineJsons) {
         Map<String, String> output = getOutputMap();
         String pipelineJsonKey = output.get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
-        jobContextData.put(pipelineJsonKey, pipelineJsons);
+        pipelineContext.put(pipelineJsonKey, pipelineJsons);
     }
 
     /**
@@ -342,13 +345,13 @@ public abstract class TaskExecutor {
      * @param jobContextData 流水线上下文数据
      * @return 流水线json
      */
-    protected List<PipelineJson> getPipelineJson(Map<String, Object> jobContextData) {
+    protected List<PipelineJson> getPipelineJson(PipelineContext pipelineContext) {
         String pipelineJsonKey = getInputMap().get(MyDataConstant.JOB_DATA_KEY_PIPELINE_JSON);
         if (StringUtil.isEmpty(pipelineJsonKey)) {
 //            error("JSON变量名为空，结束执行。");
-            throw new IllegalArgumentException("JSON变量名为空，结束执行。");
+            fail("输入参数无效：JSON变量名为空，结束执行。");
         }
-        return (List<PipelineJson>) jobContextData.get(pipelineJsonKey);
+        return (List<PipelineJson>) pipelineContext.get(pipelineJsonKey);
     }
 
     /**
@@ -357,10 +360,11 @@ public abstract class TaskExecutor {
      * @param message 日志内容
      * @param params  占位符参数值
      */
-    public void log(String message, Object... params) {
+    public void info(String message, Object... params) {
         if (pipelineLog != null) {
             if (ArrayUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.length; i++) {
+                    // 临时减少参数长度，减少日志内容
                     params[i] = StringUtil.sub(StringUtil.toStringOrEmpty(params[i]), 0, 10000);
                 }
             }
@@ -387,5 +391,16 @@ public abstract class TaskExecutor {
             pipelineLog.setTaskLog((existingLog == null ? "" : existingLog + "\n") + "[" + DateUtil.nowInMillis() + "] [ERROR] " + StringUtil.format(message, params));
         }
         log.error(message, params);
+    }
+
+    /**
+     * 任务失败，直接抛出异常<br/>
+     * 后续在{@link TaskExecutor#execute(Long, Long, Long, PipelineContext)}中捕获异常，再统一记录日志
+     *
+     * @param message 日志内容
+     * @param params  占位符参数值
+     */
+    public void fail(String message, Object... params) throws RuntimeException {
+        throw new RuntimeException(StringUtil.format(message, params));
     }
 }
